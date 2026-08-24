@@ -1,0 +1,35 @@
+{
+  "theme_id": "crt_green",
+  "name": "CRT Green Phosphor",
+
+  "palette": {
+    "primary": "#33ff33",
+    "secondary": "#1a8c1a",
+    "background": "#0a0a0a",
+    "warning": "#ffcc00",
+    "danger": "#ff3333",
+    "squad_ally": "#66ff66",
+    "squad_leader": "#ffff33"
+  },
+
+  "font": {
+    "primary": "VT323",
+    "fallback": "Courier New",
+    "size_base": 16
+  },
+
+  "effects": {
+    "scanlines": true,
+    "flicker": true,
+    "vignette": 0.3,
+    "grain": 0.15
+  },
+
+  "elements": {
+    "compass": { "style": "analog_tape", "position": "top_center" },
+    "ammo": { "style": "text_block", "position": "bottom_right" },
+    "squad_status": { "style": "sidebar_list", "position": "left" },
+    "map": { "style": "paper_fold", "open_key": "M" },
+    "radio_indicator": { "style": "frequency_dial", "position": "bottom_left" }
+  }
+}

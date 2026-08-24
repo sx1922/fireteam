@@ -1,0 +1,28 @@
+{
+  "id": "coldwar",
+  "name": "Iron Curtain Edge",
+  "version": "1.0.0",
+  "author": "FIRETEAM Team",
+  "description": "Default Cold War tactical setting, 1968-1985. NATO vs Warsaw Pact.",
+  "icon": "materials/fireteam/packs/coldwar_icon.png",
+
+  "era": { "start": 1968, "end": 1985 },
+
+  "recommended_addons": [
+    { "workshop_id": "000000001", "name": "ARC9 Cold War Weapons", "type": "weapon" },
+    { "workshop_id": "000000002", "name": "LVS Wheeled Vehicles", "type": "vehicle" },
+    { "workshop_id": "000000003", "name": "Cold War Sound Pack", "type": "sound" }
+  ],
+
+  "config_overrides": {
+    "voice.model": "analog_radio",
+    "voice.distance_max": 800,
+    "voice.interference": true,
+    "hud.theme": "crt_green",
+    "ballistics.bullet_drop": true,
+    "ballistics.suppression_mult": 1.2,
+    "marker.style": "chalk",
+    "squad.max_size": 6,
+    "squad.friendly_fire": false
+  }
+}

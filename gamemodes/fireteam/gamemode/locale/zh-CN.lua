@@ -1,0 +1,44 @@
+-- gamemode/locale/zh-CN.lua
+-- FIRETEAM 简体中文本地化
+
+return {
+    -- 小队
+    squad_created          = "小队已创建",
+    squad_disbanded        = "小队已解散",
+    squad_joined           = "你已加入小队",
+    squad_left             = "你已离开小队",
+    squad_full             = "小队已满员",
+    squad_not_found        = "未找到该小队",
+    already_in_squad       = "你已经在小队中",
+    not_in_squad           = "你不在任何小队中",
+    leader_promoted        = "%s 已成为队长",
+    member_kicked          = "%s 已被踢出小队",
+    not_leader             = "只有队长才能执行此操作",
+
+    -- 职业
+    class_selected         = "职业已选择: %s",
+    class_locked           = "该职业已锁定",
+    class_limit_reached    = "该职业名额已满",
+    loadout_given          = "装备已发放",
+
+    -- 标记
+    marker_placed          = "标记已放置",
+    marker_removed         = "标记已移除",
+    marker_limit_reached   = "标记数量已达上限",
+    too_far_from_marker    = "距离标记过远",
+
+    -- 载具
+    vehicle_locked         = "载具锁定 - 非本队成员",
+    vehicle_no_seat        = "没有空余座位",
+    vehicle_destroyed      = "载具已被摧毁",
+
+    -- 压制
+    suppressed_light       = "受到压制",
+    suppressed_heavy       = "猛烈火力",
+    suppressed_pinned      = "被火力压制",
+
+    -- 系统
+    setting_pack_loaded    = "设定包已加载: %s",
+    setting_pack_failed    = "设定包加载失败: %s",
+    hud_theme_updated      = "HUD 主题已更新"
+}

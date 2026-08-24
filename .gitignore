@@ -1,0 +1,9 @@
+# ZCode workspace metadata
+.zcode/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# GMod compile artifacts
+*.gma

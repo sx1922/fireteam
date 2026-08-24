@@ -1,0 +1,32 @@
+{
+  "theme_id": "my_theme",
+  "name": "My Custom Theme",
+
+  "palette": {
+    "primary": "#33ff33",
+    "secondary": "#1a8c1a",
+    "background": "#0a0a0a",
+    "warning": "#ffcc00",
+    "danger": "#ff3333"
+  },
+
+  "font": {
+    "primary": "Roboto",
+    "fallback": "Arial",
+    "size_base": 16
+  },
+
+  "effects": {
+    "scanlines": false,
+    "flicker": false,
+    "vignette": 0.2,
+    "grain": 0.0
+  },
+
+  "elements": {
+    "compass": { "style": "digital_bar", "position": "top_center" },
+    "ammo": { "style": "text_block", "position": "bottom_right" },
+    "squad_status": { "style": "sidebar_list", "position": "left" },
+    "map": { "style": "digital", "open_key": "M" }
+  }
+}

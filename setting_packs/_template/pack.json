@@ -1,0 +1,27 @@
+{
+  "id": "my_setting",
+  "name": "My Custom Setting",
+  "version": "1.0.0",
+  "author": "Your Name",
+  "description": "Describe your setting here",
+  "icon": "materials/fireteam/packs/my_setting_icon.png",
+
+  "era": { "start": 1990, "end": 2020 },
+
+  "recommended_addons": [
+    {
+      "workshop_id": "000000000",
+      "name": "Example Weapon Pack",
+      "type": "weapon"
+    }
+  ],
+
+  "config_overrides": {
+    "voice.model": "digital",
+    "voice.distance_max": 1000,
+    "hud.theme": "modern_digital",
+    "ballistics.bullet_drop": true,
+    "ballistics.suppression_mult": 1.0,
+    "marker.style": "digital"
+  }
+}
