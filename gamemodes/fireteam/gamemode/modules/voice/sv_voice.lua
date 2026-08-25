@@ -24,8 +24,11 @@ function Fireteam.Voice.SetChannel(ply, channelId)
         local classId = Fireteam.Class.GetPlayerClass(ply)
         if type(channel.access) == "table" then
             if not classId or not table.HasValue(channel.access, classId) then
-                ply:ChatPrint("[FIRETEAM] You don't have access to channel: " .. (channel.name or channelId))
-                return false
+                -- 扩展点：其他模块可授权（座位模块用它放行车载电台）
+                if not hook.Run("Fireteam.Voice.CanAccessChannel", ply, channelId) then
+                    ply:ChatPrint("[FIRETEAM] You don't have access to channel: " .. (channel.name or channelId))
+                    return false
+                end
             end
         end
     end

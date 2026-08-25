@@ -84,5 +84,16 @@ return {
     -- 语音氛围
     voice_status_idle      = "STANDBY",
     voice_status_tx        = "TRANSMITTING",
-    voice_status_rx        = "RECEIVING x%d"
+    voice_status_rx        = "RECEIVING x%d",
+
+    -- 载具座位
+    seat_locked_class      = "This seat requires class: %s",
+    seat_enter_hint        = "Enter %s (%d/%d)",
+    seat_exit_hint         = "Press E to exit",
+    seat_radio_hint        = "Vehicle radio channels: %s",
+    seat_generic_name      = "Vehicle",
+    seat_role_driver       = "Driver",
+    seat_role_gunner       = "Gunner",
+    seat_role_commander    = "Commander",
+    seat_role_passenger    = "Passenger"
 }

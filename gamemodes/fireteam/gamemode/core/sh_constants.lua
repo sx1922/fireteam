@@ -128,6 +128,7 @@ Fireteam.NET = {
     SUPPRESSION_UPDATE   = "FT_SuppressionUpdate",
     MAP_INFO             = "FT_MapInfo",
     ROUNDS_STATE         = "FT_RoundsState",
+    SEAT_UPDATE          = "FT_SeatUpdate",
 
     -- 双向（同一字符串按 realm 各自收发）
     CLASS_ASSIGN         = "FT_ClassAssign",
@@ -157,7 +158,9 @@ Fireteam.HOOKS = {
     CONFIG_CHANGED      = "Fireteam.Config.Changed",
     CLASS_ASSIGNED      = "Fireteam.Class.Assigned",
     ROUND_STATE_CHANGED = "Fireteam.Rounds.StateChanged",
-    ROUND_ENDED         = "Fireteam.Rounds.Ended"
+    ROUND_ENDED         = "Fireteam.Rounds.Ended",
+    PLAYER_ENTER_VEHICLE = "Fireteam.Seats.Entered",
+    PLAYER_EXIT_VEHICLE  = "Fireteam.Seats.Left"
 }
 
 Fireteam.Log.Info("常量", "✓ 常量已加载 (v" .. Fireteam.VERSION .. ")")

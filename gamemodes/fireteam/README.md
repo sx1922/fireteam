@@ -257,6 +257,8 @@ end)
 | `tacmap.enabled` | boolean | `true` | 战术地图（M 键） |
 | `tacmap.grid_step` | number | `1024` | 地图网格步长（世界单位） |
 | `tacmap.allow_click_place` | boolean | `true` | 点击地图放置路点 |
+| `seats.enabled` | boolean | `true` | 载具座位职业门槛与交互提示 |
+| `voice.ambience` | boolean | `true` | 电台氛围音（咔嗒/静噪） |
 
 ## 目录结构
 
@@ -320,7 +322,7 @@ gamemodes/fireteam/
 - [x] 胜负判定引擎
 - [ ] 观察者 / 旁观者模式
 - [x] 语音电台氛围音（通话咔嗒 / 静噪底声 / 干扰衰减，原始语音流受引擎边界不可截获）
-- [ ] 载具座位交互
+- [x] 载具座位交互（E 键提示 / 职业门槛座位 / 车载电台）
 - [ ] 设定包 Workshop 分发格式
 - [ ] 管理面板（F10）
 

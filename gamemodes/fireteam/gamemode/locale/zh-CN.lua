@@ -84,5 +84,16 @@ return {
     -- 语音氛围
     voice_status_idle      = "待机",
     voice_status_tx        = "发送中",
-    voice_status_rx        = "接收中 ×%d"
+    voice_status_rx        = "接收中 ×%d",
+
+    -- 载具座位
+    seat_locked_class      = "该座位需要职业: %s",
+    seat_enter_hint        = "上车 %s（%d/%d）",
+    seat_exit_hint         = "按 E 下车",
+    seat_radio_hint        = "车载电台可用频道: %s",
+    seat_generic_name      = "载具",
+    seat_role_driver       = "驾驶员",
+    seat_role_gunner       = "炮手",
+    seat_role_commander    = "车长",
+    seat_role_passenger    = "乘员"
 }
