@@ -30,6 +30,16 @@ return {
     -- ══ 回合制任务数据（rounds 模块消费）══
     -- 位置写法两种：{ x=,y=,z= } 绝对坐标，或
     -- { anchor="map_center"|"nav_random", offset={x=,y=,z=} } 地图相对锚点。
+    --
+    -- 剧本（多套任务/出生点切换）写法：把 objectives/spawns 包进 scenarios 表，
+    --   default_scenario = "scenario_a",
+    --   scenarios = {
+    --       scenario_a = { name="...", name_zh="...", objectives={...}, spawns={...}, timings={ briefing=8, round_time=420 } },
+    --       scenario_b = { ... },
+    --   }
+    -- 每个剧本可带 timings 短键覆盖（warmup/briefing/round_time/ended/intermission）。
+    -- 切换用控制台 ft_scenario <id> 或 F10 管理面板，下一回合简报生效。
+    -- 不声明 scenarios 时，下方平铺的 objectives/spawns 作为隐式单剧本照常工作（向后兼容）。
     rounds = {
         enabled = false,             -- 模板包默认关闭；启用请改 true 并配置 objectives
         warmup_time = 30,            -- 热身秒数

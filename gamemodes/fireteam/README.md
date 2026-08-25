@@ -131,7 +131,7 @@ gmad create -name "FIRETEAM" -out "fireteam.gma"
 [FIRETEAM] ✓ Module loader ready
 [FIRETEAM] ✓ Setting loader ready
 [FIRETEAM] Discovered 8 module(s)
-[FIRETEAM] ✓ Setting pack active: Iron Curtain: NATO vs Warsaw Pact (v1.1.0)
+[FIRETEAM] ✓ Setting pack active: Iron Curtain Germany (v1.2.0)
 [FIRETEAM] ✓ Bootstrap complete
 ```
 
@@ -187,10 +187,17 @@ setting_packs/your_pack/
 
 | ID | 名称 | 时代 | 通讯模型 |
 | --- | --- | --- | --- |
-| coldwar | Iron Curtain: NATO vs Warsaw Pact | 1968–1985 | 模拟电台 |
+| coldwar | Iron Curtain Germany | 1968–1985 | 模拟电台 |
 | _template | 空白模板 | — | — |
 
-coldwar 包内置 9 个现实国家阵营：北约的美国/英国/西德/法国，华约的苏联/东德/波兰/捷克斯洛伐克，以及中立联合国军事观察员。各国独立职业表（华约含政委）、武器与载具池、按语言区分的语音包和侧翼出生带。
+coldwar 包内置 8 个现实国家阵营：北约的美国/英国/西德/法国，华约的苏联/东德/波兰/捷克斯洛伐克。各国独立职业表（华约含政委）、武器与载具池、按语言区分的语音包和侧翼出生带，每国 `lore` 字段记录其在想定中的历史角色。
+
+内置两个可切换剧本（`ft_scenario <id>` 或 F10 管理面板切换，下一回合简报生效）：
+
+- **fulda_gap 富尔达缺口**（默认）——北约西翼防御带对华约东翼突击轴的全线会战。目标轮转：阿尔法点哨所占区 → 巴特黑斯费尔德中继站摧毁 → 金齐希河谷撤离 → 福格尔斯贝格背水一战。
+- **berlin 西柏林之战**——美英法三国守军紧凑中央防区，西德远郊解围，苏军/东德东弧主攻、波/捷第二梯队。城市攻坚节奏更快（简报 8s / 回合 7min）。目标轮转：查理检查站突破 → 瘫痪守军通讯 → 滕珀尔霍夫空运撤出 → 驻军最后抵抗。
+
+旧版平铺 `objectives`/`spawns` 结构仍受支持：不声明 `scenarios` 表时作为隐式单剧本照常运行。
 
 ### 自定义设定包
 

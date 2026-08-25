@@ -33,6 +33,11 @@ Fireteam.Config.Register("rounds.enabled", true, {
     type = "boolean",
     desc = "Master switch for the round system"
 })
+-- 剧本选择："" = 按设定包 default_scenario 自动；切换在下一回合简报生效
+Fireteam.Config.Register("rounds.scenario", "", {
+    type = "string",
+    desc = "Scenario override (empty = pack default)"
+})
 
 -- ═══════════════════════════════════════
 -- 设定包读取
@@ -44,15 +49,24 @@ function Fireteam.Rounds.GetPackConfig()
     return rules and rules.rounds or nil
 end
 
---- 节奏参数（设定包可覆盖，缺省值在此兜底）
+--- 节奏参数（设定包可覆盖，缺省值在此兜底；剧本级 timings 再覆盖一层）
 function Fireteam.Rounds.GetTimings()
     local cfg = Fireteam.Rounds.GetPackConfig() or {}
+    local scenario = Fireteam.Rounds.ResolveScenario() or {}
+    local st = scenario.timings or {}
+    -- 注意不能用 ipairs({...})：首参为 nil 时会整表零迭代，未覆盖项将丢失兜底
+    local function num(...)
+        for i = 1, select("#", ...) do
+            local n = tonumber((select(i, ...)))
+            if n then return n end
+        end
+    end
     return {
-        warmup       = tonumber(cfg.warmup_time) or 30,
-        briefing     = tonumber(cfg.briefing_time) or 10,
-        round_time   = tonumber(cfg.round_time) or 600,
-        ended        = tonumber(cfg.ended_time) or 10,
-        intermission = tonumber(cfg.intermission_time) or 15,
+        warmup       = num(st.warmup, cfg.warmup_time, 30),
+        briefing     = num(st.briefing, cfg.briefing_time, 10),
+        round_time   = num(st.round_time, cfg.round_time, 600),
+        ended        = num(st.ended, cfg.ended_time, 10),
+        intermission = num(st.intermission, cfg.intermission_time, 15),
     }
 end
 
@@ -63,10 +77,61 @@ function Fireteam.Rounds.IsEnabled()
     return cfg ~= nil and cfg.enabled ~= false
 end
 
---- 目标模板列表
-function Fireteam.Rounds.GetObjectiveTemplates()
+-- ═══════════════════════════════════════
+-- 剧本（scenarios）解析
+-- ═══════════════════════════════════════
+--- 设定包声明的剧本表 { [id] = { name, name_zh, objectives, spawns, timings? } }
+--- 未声明时返回 nil（旧结构走隐式单剧本）
+function Fireteam.Rounds.GetScenarioList()
     local cfg = Fireteam.Rounds.GetPackConfig()
-    return cfg and istable(cfg.objectives) and cfg.objectives or {}
+    return cfg and istable(cfg.scenarios) and cfg.scenarios or nil
+end
+
+--- 当前生效剧本：
+--- config rounds.scenario 显式指定 > 包 default_scenario > 第一个剧本；
+--- 无 scenarios 表时把旧平铺结构包成隐式单剧本（向后兼容，老包零破坏）
+function Fireteam.Rounds.ResolveScenario()
+    local cfg = Fireteam.Rounds.GetPackConfig()
+    if not cfg then return nil end
+
+    local scenarios = istable(cfg.scenarios) and cfg.scenarios or nil
+    if not scenarios then
+        return {
+            id         = "default",
+            name       = "Default",
+            name_zh    = "默认",
+            objectives = istable(cfg.objectives) and cfg.objectives or {},
+            spawns     = istable(cfg.spawns) and cfg.spawns or {},
+            timings    = nil,
+        }
+    end
+
+    local want = Fireteam.Config.Get("rounds.scenario")
+    if not (want and want ~= "" and scenarios[want]) then
+        want = nil
+        if cfg.default_scenario and scenarios[cfg.default_scenario] then
+            want = cfg.default_scenario
+        else
+            want = next(scenarios)   -- pairs 顺序不定，但仅作兜底
+        end
+    end
+
+    local s = scenarios[want]
+    if not istable(s) then return nil end
+    return {
+        id         = want,
+        name       = s.name or want,
+        name_zh    = s.name_zh or s.name or want,
+        objectives = istable(s.objectives) and s.objectives or {},
+        spawns     = istable(s.spawns) and s.spawns or {},
+        timings    = istable(s.timings) and s.timings or nil,
+    }
+end
+
+--- 目标模板列表（当前剧本的）
+function Fireteam.Rounds.GetObjectiveTemplates()
+    local scenario = Fireteam.Rounds.ResolveScenario()
+    return scenario and scenario.objectives or {}
 end
 
 -- ═══════════════════════════════════════

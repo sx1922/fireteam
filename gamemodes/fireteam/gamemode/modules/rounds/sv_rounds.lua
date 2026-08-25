@@ -26,11 +26,13 @@ local function BuildSnapshot()
         obj = {
             type     = ctx.template.type,
             name     = ctx.template.name or "",
+            name_zh  = ctx.template.name_zh or "",
             label    = ctx.def.label or "",
             progress = math.Clamp(ctx.def.getProgress and ctx.def.getProgress(ctx) or 0, 0, 1),
             params   = ctx.def.describe and ctx.def.describe(ctx) or nil,
         }
     end
+    local scenario = Fireteam.Rounds.ResolveScenario()
     return {
         state    = machine.state,
         endTime  = machine.stateUntil,
@@ -39,6 +41,11 @@ local function BuildSnapshot()
         winner   = machine.winner,
         reason   = machine.reason,
         objective = obj,
+        scenario = scenario and {
+            id      = scenario.id,
+            name    = scenario.name,
+            name_zh = scenario.name_zh,
+        } or nil,
     }
 end
 
@@ -53,9 +60,9 @@ end
 -- 出生点与冻结
 -- ═══════════════════════════════════════
 local function GetFactionSpawns(factionId)
-    local cfg = Fireteam.Rounds.GetPackConfig() or {}
-    if not istable(cfg.spawns) then return {} end
-    local list = cfg.spawns[factionId]
+    local scenario = Fireteam.Rounds.ResolveScenario()
+    if not scenario or not istable(scenario.spawns) then return {} end
+    local list = scenario.spawns[factionId]
     return istable(list) and list or {}
 end
 
@@ -381,6 +388,52 @@ concommand.Add("ft_round_state", function(ply)
         machine.state, machine.roundNumber, machine.stateUntil,
         table.ToString(machine.scores, "scores", "|"))
     if IsValid(ply) then ply:PrintMessage(HUD_PRINTCONSOLE, msg) else print("[FIRETEAM] " .. msg) end
+end)
+
+-- ═══════════════════════════════════════
+-- 剧本切换（config rounds.scenario）
+-- 进行中的回合不打断：新剧本在下一回合简报生效
+-- ═══════════════════════════════════════
+hook.Add(Fireteam.HOOKS.CONFIG_CHANGED, "Fireteam.Rounds.ScenarioChanged", function(key, oldVal, newVal)
+    if key ~= "rounds.scenario" then return end
+
+    local list = Fireteam.Rounds.GetScenarioList()
+    if list and newVal and newVal ~= "" and not list[newVal] then
+        Fireteam.Log.Warn("回合", "剧本 '" .. tostring(newVal) .. "' 不在当前设定包中，将回落到默认剧本")
+        return
+    end
+    local scenario = Fireteam.Rounds.ResolveScenario()
+    if scenario then
+        Fireteam.Log.Info("回合", string.format("剧本切换: %s → %s（下一回合简报生效）",
+            tostring(oldVal), scenario.id))
+        BroadcastSnapshot()   -- 让面板/横幅立即反映即将使用的剧本
+    end
+end)
+
+concommand.Add("ft_scenario", function(ply, cmd, args)
+    -- 服务器控制台或管理员可用；无参列出可选剧本
+    if IsValid(ply) and not ply:IsAdmin() then return end
+
+    local list = Fireteam.Rounds.GetScenarioList()
+    if not list then
+        print("[FIRETEAM] 当前设定包未定义 scenarios（使用隐式单剧本）")
+        return
+    end
+
+    local id = args[1]
+    if not id then
+        print("[FIRETEAM] 可用剧本:")
+        for sid in pairs(list) do
+            print("  " .. sid .. (sid == (Fireteam.Config.Get("rounds.scenario") or "") and "  ← 当前指定" or ""))
+        end
+        return
+    end
+
+    if not list[id] then
+        print("[FIRETEAM] 未找到剧本 '" .. id .. "'")
+        return
+    end
+    Fireteam.Config.Set("rounds.scenario", id)
 end)
 
 concommand.Add("ft_round_next", function(ply)

@@ -52,8 +52,10 @@ local function DrawBanner(c)
     local cx = x + w / 2
     local cy = y + math.Round(16 * scale)
 
-    -- 状态名 + 回合号
+    -- 状态名 + 剧本名 + 回合号
     local title = L(stateKey)
+    local scn = Fireteam.Rounds.GetScenarioName()
+    if scn then title = scn .. " · " .. title end
     if c.round > 0 then
         title = string.format("%s · #%d", title, c.round)
     end
@@ -73,7 +75,12 @@ local function DrawBanner(c)
     -- 目标行 + 进度条（仅 ACTIVE）
     if c.state == "active" and obj then
         local label = L(obj.label ~= "" and obj.label or "objective_unknown")
-        if obj.name and obj.name ~= "" then label = label .. " — " .. obj.name end
+        local objName = obj.name
+        local cv = GetConVar("gmod_language")
+        if cv and cv:GetString():sub(1, 2) == "zh" and obj.name_zh and obj.name_zh ~= "" then
+            objName = obj.name_zh
+        end
+        if objName and objName ~= "" then label = label .. " — " .. objName end
         draw.SimpleText(label, Fireteam.UI.Font("small"), cx, y + h - math.Round(30 * scale),
             Fireteam.UI.Color("warning"), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         Fireteam.UI.DrawProgressBar(

@@ -21,11 +21,6 @@ for _, id in ipairs(WTO) do
     }
 end
 
-pools.un_observers = {
-    tags = { "neutral" },
-    max_weapons_per_class = 3
-}
-
 return {
 
     global_filter = {

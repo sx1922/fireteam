@@ -58,7 +58,6 @@ return {
         east_germany   = "sound/fireteam/coldwar/voice_de/",
         ussr           = "sound/fireteam/coldwar/voice_ru/",
         poland         = "sound/fireteam/coldwar/voice_pl/",
-        czechoslovakia = "sound/fireteam/coldwar/voice_cs/",
-        un_observers   = "sound/fireteam/coldwar/voice_en/"
+        czechoslovakia = "sound/fireteam/coldwar/voice_cs/"
     }
 }

@@ -10,6 +10,7 @@ Fireteam.Rounds.Client = Fireteam.Rounds.Client or {
     winner    = nil,
     reason    = "",
     objective = nil,
+    scenario  = nil,
 }
 
 net.Receive(Fireteam.NET.ROUNDS_STATE, function()
@@ -24,9 +25,18 @@ net.Receive(Fireteam.NET.ROUNDS_STATE, function()
     c.winner    = snap.winner  -- string | nil
     c.reason    = snap.reason or ""
     c.objective = istable(snap.objective) and snap.objective or nil
+    c.scenario  = istable(snap.scenario) and snap.scenario or nil
 
     hook.Run("Fireteam.Rounds.ClientStateChanged", c.state)
 end)
+
+--- 当前剧本显示名（中文客户端用 name_zh）
+function Fireteam.Rounds.GetScenarioName()
+    local s = Fireteam.Rounds.Client.scenario
+    if not s then return nil end
+    local lang = GetConVar("gmod_language") and GetConVar("gmod_language"):GetString() or "en"
+    return (lang == "zh-CN" and s.name_zh) and s.name_zh or s.name
+end
 
 --- 剩余秒数（客户端本地时钟推算）
 function Fireteam.Rounds.GetTimeRemaining()
