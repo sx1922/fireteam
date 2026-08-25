@@ -111,6 +111,23 @@ function Fireteam.Config.GetAll()
     return out
 end
 
+--- 全量元数据（管理面板用）：{ key = {value, default, type, min, max, desc, options} }
+function Fireteam.Config.DescribeAll()
+    local out = {}
+    for k, e in pairs(registry) do
+        out[k] = {
+            value   = e.value,
+            default = e.default,
+            type    = e.type,
+            min     = e.min,
+            max     = e.max,
+            desc    = e.desc,
+            options = e.options,
+        }
+    end
+    return out
+end
+
 -- ─────────────────────────────────────
 -- 默认配置注册
 -- ─────────────────────────────────────

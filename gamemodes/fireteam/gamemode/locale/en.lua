@@ -103,5 +103,28 @@ return {
     spec_hint              = "LMB next · MMB prev · RMB cycle view",
     spec_mode_eye          = "First person",
     spec_mode_chase        = "Third person",
-    spec_mode_roam         = "Free look"
+    spec_mode_roam         = "Free look",
+
+    -- 管理面板
+    ui_admin_title         = "FIRETEAM — Admin Panel",
+    ui_hint_f10_close      = "F10 to close",
+    admin_denied           = "Admin permission required.",
+    ui_admin_tab_config    = "Config",
+    ui_admin_tab_rounds    = "Rounds",
+    ui_admin_tab_players   = "Players",
+    ui_admin_tab_packs     = "Packs",
+    admin_apply            = "Apply",
+    admin_reset            = "Reset to default",
+    admin_round_state      = "Round state: %s",
+    admin_round_advance    = "Advance to next phase",
+    admin_round_end_score  = "End round (by score)",
+    admin_round_end_draw   = "Force draw",
+    admin_col_name         = "Player",
+    admin_col_squad        = "Squad",
+    admin_col_class        = "Class",
+    admin_col_faction      = "Faction",
+    admin_col_ping         = "Ping",
+    admin_active_pack      = "ACTIVE",
+    admin_activate         = "Activate",
+    admin_reload_pack      = "Reload"
 }

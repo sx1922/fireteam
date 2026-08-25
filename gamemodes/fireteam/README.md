@@ -258,6 +258,8 @@ end)
 | `tacmap.grid_step` | number | `1024` | 地图网格步长（世界单位） |
 | `tacmap.allow_click_place` | boolean | `true` | 点击地图放置路点 |
 | `seats.enabled` | boolean | `true` | 载具座位职业门槛与交互提示 |
+| `seats.prompt_distance` | number | `160` | 上车提示触发距离 |
+| `spectate.enabled` | boolean | `true` | 死亡后旁观队友 |
 | `voice.ambience` | boolean | `true` | 电台氛围音（咔嗒/静噪） |
 
 ## 目录结构
@@ -324,7 +326,7 @@ gamemodes/fireteam/
 - [x] 语音电台氛围音（通话咔嗒 / 静噪底声 / 干扰衰减，原始语音流受引擎边界不可截获）
 - [x] 载具座位交互（E 键提示 / 职业门槛座位 / 车载电台）
 - [ ] 设定包 Workshop 分发格式
-- [ ] 管理面板（F10）
+- [x] 管理面板（F10，配置 / 回合控制 / 玩家总览 / 设定包切换）
 
 ### 💭 远期愿景 (v1.0)
 

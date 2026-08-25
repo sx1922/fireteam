@@ -129,6 +129,7 @@ Fireteam.NET = {
     MAP_INFO             = "FT_MapInfo",
     ROUNDS_STATE         = "FT_RoundsState",
     SEAT_UPDATE          = "FT_SeatUpdate",
+    ADMIN_STATE          = "FT_AdminState",
 
     -- 双向（同一字符串按 realm 各自收发）
     CLASS_ASSIGN         = "FT_ClassAssign",
@@ -141,7 +142,8 @@ Fireteam.NET = {
     SQUAD_LEAVE          = "FT_SquadLeave",
     SQUAD_READY          = "FT_SquadReady",
     VOICE_SWITCH_CHANNEL = "FT_VoiceSwitchChannel",
-    SPECTATE_CONTROL     = "FT_SpecControl"
+    SPECTATE_CONTROL     = "FT_SpecControl",
+    ADMIN_ACTION         = "FT_AdminAction"
 }
 
 -- ═══════════════════════════════════════

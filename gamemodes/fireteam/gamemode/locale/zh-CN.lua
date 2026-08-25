@@ -103,5 +103,28 @@ return {
     spec_hint              = "左键 下一位 · 中键 上一位 · 右键 切换视角",
     spec_mode_eye          = "第一人称",
     spec_mode_chase        = "第三人称追尾",
-    spec_mode_roam         = "自由视角"
+    spec_mode_roam         = "自由视角",
+
+    -- 管理面板
+    ui_admin_title         = "FIRETEAM — 管理面板",
+    ui_hint_f10_close      = "按 F10 关闭",
+    admin_denied           = "需要管理员权限。",
+    ui_admin_tab_config    = "配置",
+    ui_admin_tab_rounds    = "回合",
+    ui_admin_tab_players   = "玩家",
+    ui_admin_tab_packs     = "设定包",
+    admin_apply            = "应用",
+    admin_reset            = "重置为默认值",
+    admin_round_state      = "回合状态: %s",
+    admin_round_advance    = "进入下一阶段",
+    admin_round_end_score  = "结束回合（按比分结算）",
+    admin_round_end_draw   = "强制平局",
+    admin_col_name         = "玩家",
+    admin_col_squad        = "小队",
+    admin_col_class        = "职业",
+    admin_col_faction      = "阵营",
+    admin_col_ping         = "延迟",
+    admin_active_pack      = "当前",
+    admin_activate         = "激活",
+    admin_reload_pack      = "重新加载"
 }

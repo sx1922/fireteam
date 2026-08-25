@@ -330,6 +330,26 @@ function Fireteam.Rounds.GetState()
     return machine.state
 end
 
+--- 管理接口：立即触发到点转移（供 F10 面板复用）
+function Fireteam.Rounds.AdminAdvance()
+    machine.stateUntil = CurTime() - 1
+end
+
+--- 管理接口：强制结算。winner 为 faction id / "draw" / nil(按比分)
+function Fireteam.Rounds.AdminEnd(winner)
+    if machine.state ~= STATE.ACTIVE then return false end
+    local w
+    if winner == "draw" then
+        w = nil
+    elseif winner then
+        w = winner
+    else
+        w = EvaluateWinner(nil)
+    end
+    EndRound(w, "admin")
+    return true
+end
+
 -- ═══════════════════════════════════════
 -- 设定包切换 / 开局启动
 -- ═══════════════════════════════════════
@@ -365,23 +385,12 @@ end)
 
 concommand.Add("ft_round_next", function(ply)
     if not AdminAllowed(ply) then return end
-    machine.stateUntil = CurTime() - 1
+    Fireteam.Rounds.AdminAdvance()
 end)
 
 concommand.Add("ft_round_end", function(ply, cmd, args)
     if not AdminAllowed(ply) then return end
-    if machine.state ~= STATE.ACTIVE then return end
-
-    local arg = args[1]
-    local winner
-    if arg == "draw" then
-        winner = nil                          -- 强制平局
-    elseif arg then
-        winner = arg                          -- 强制指定阵营胜
-    else
-        winner = EvaluateWinner(nil)          -- 无参：按当前比分结算
-    end
-    EndRound(winner, "admin")
+    Fireteam.Rounds.AdminEnd(args[1])
 end)
 
 Fireteam.Log.Info("回合", "✓ 回合框架服务端已加载")
