@@ -1,6 +1,9 @@
 # ZCode workspace metadata
 .zcode/
 
+# Work logs (local only, never pushed)
+worklog/
+
 # Windows
 Thumbs.db
 Desktop.ini

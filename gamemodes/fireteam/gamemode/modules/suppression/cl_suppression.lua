@@ -10,7 +10,7 @@ local currentSuppression = 0
 Fireteam.HUD.SuppressionSpread = 0  -- 供 HUD 准星使用
 
 -- 接收压制值
-net.Receive("FT_SuppressionUpdate", function()
+net.Receive(Fireteam.NET.SUPPRESSION_UPDATE, function()
     currentSuppression = net.ReadFloat()
 end)
 

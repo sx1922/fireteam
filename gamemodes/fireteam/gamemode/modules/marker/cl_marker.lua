@@ -62,7 +62,7 @@ hook.Add("PlayerButtonDown", "Fireteam.Marker.PlaceKey", function(ply, button)
         local tr = LocalPlayer():GetEyeTrace()
         local pos = tr.HitPos + tr.HitNormal * 5
 
-        net.Start("FT_MarkerPlace")
+        net.Start(Fireteam.NET.MARKER_PLACE)
             net.WriteVector(pos)
             net.WriteString(Fireteam.Marker.TYPE.WAYPOINT)
             net.WriteString("")

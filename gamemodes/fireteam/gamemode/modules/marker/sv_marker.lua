@@ -152,18 +152,16 @@ function Fireteam.Marker.SyncToAll()
 end
 
 -- ═══════════════════════════════════════
--- 网络请求
+-- 网络请求（消息名统一注册于 Fireteam.NET）
 -- ═══════════════════════════════════════
-util.AddNetworkString("FT_MarkerPlace")
-net.Receive("FT_MarkerPlace", function(len, ply)
+net.Receive(Fireteam.NET.MARKER_PLACE, function(len, ply)
     local pos = net.ReadVector()
     local mType = net.ReadString()
     local label = net.ReadString()
     Fireteam.Marker.Add(ply, pos, mType, label)
 end)
 
-util.AddNetworkString("FT_MarkerRemove")
-net.Receive("FT_MarkerRemove", function(len, ply)
+net.Receive(Fireteam.NET.MARKER_REMOVE, function(len, ply)
     local markerId = net.ReadInt(16)
     Fireteam.Marker.Remove(ply, markerId)
 end)

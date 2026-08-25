@@ -122,10 +122,26 @@ end
 
 -- ─────────────────────────────────────
 -- 加载所有已发现模块
+-- 顺序：MODULE_LOAD_PRIORITY 数值升序 → 字母序，保证确定性
 -- ─────────────────────────────────────
+local function SortedModuleIds()
+    local ids = {}
+    for id in pairs(Fireteam.Modules.Registry) do
+        ids[#ids + 1] = id
+    end
+    local prio = Fireteam.MODULE_LOAD_PRIORITY or {}
+    table.sort(ids, function(a, b)
+        local pa = prio[a] or 100
+        local pb = prio[b] or 100
+        if pa ~= pb then return pa < pb end
+        return a < b
+    end)
+    return ids
+end
+
 function Fireteam.Modules.LoadAll()
     local loaded, failed = 0, 0
-    for id, _ in pairs(Fireteam.Modules.Registry) do
+    for _, id in ipairs(SortedModuleIds()) do
         if Fireteam.Modules.Load(id) then
             loaded = loaded + 1
         else

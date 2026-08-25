@@ -8,10 +8,12 @@ AddCSLuaFile("core/sh_api_registry.lua")
 AddCSLuaFile("core/sh_net_protocol.lua")
 AddCSLuaFile("core/sh_weapon_interface.lua")
 AddCSLuaFile("core/sh_vehicle_interface.lua")
+AddCSLuaFile("core/sh_locale.lua")
 
 -- 日志系统必须最先加载（后续所有核心文件依赖 Fireteam.Log）
 include("core/sh_logger.lua")
 include("core/sh_constants.lua")
+include("core/sh_locale.lua")
 include("core/sh_config_registry.lua")
 include("core/sh_api_registry.lua")
 include("core/sh_net_protocol.lua")

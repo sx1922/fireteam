@@ -53,7 +53,7 @@ end
 
 -- 小队相关
 Fireteam.API.Register("Fireteam.API.GetSquad", function(ply)
-    return ply.FT_Squad
+    return ply.FT_SquadData
 end, "Get player's current squad table",
     { { name = "ply", type = "Player", desc = "Target player" } },
     { { type = "table|nil", desc = "Squad table or nil" } })
@@ -61,7 +61,7 @@ end, "Get player's current squad table",
 Fireteam.API.Register("Fireteam.API.GetSquadMembers", function(squadId)
     local members = {}
     for _, p in ipairs(player.GetAll()) do
-        if p.FT_Squad and p.FT_Squad.id == squadId then
+        if p.FT_SquadData and p.FT_SquadData.id == squadId then
             table.insert(members, p)
         end
     end

@@ -6,9 +6,6 @@ Fireteam.Suppression = Fireteam.Suppression or {}
 
 local suppressionValues = {}  -- [Player] = { value, lastHit }
 
--- 注册网络消息（先于任何使用）
-util.AddNetworkString("FT_SuppressionUpdate")
-
 -- ═══════════════════════════════════════
 -- 子弹飞过时增加压制
 -- ═══════════════════════════════════════
@@ -67,7 +64,7 @@ function Fireteam.Suppression.Add(ply, amount)
     suppressionValues[ply].lastHit = CurTime()
 
     -- 同步给客户端
-    net.Start("FT_SuppressionUpdate")
+    net.Start(Fireteam.NET.SUPPRESSION_UPDATE)
         net.WriteFloat(suppressionValues[ply].value)
     net.Send(ply)
 end
@@ -86,7 +83,7 @@ timer.Create("Fireteam.Suppression.Decay", 0.5, 0, function()
         if CurTime() - data.lastHit > 3 then
             data.value = math.max(0, data.value - 0.1)
 
-            net.Start("FT_SuppressionUpdate")
+            net.Start(Fireteam.NET.SUPPRESSION_UPDATE)
                 net.WriteFloat(data.value)
             net.Send(ply)
 

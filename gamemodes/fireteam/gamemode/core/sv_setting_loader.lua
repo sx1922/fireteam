@@ -7,8 +7,7 @@ Fireteam.Setting.Discovered = Fireteam.Setting.Discovered or {}
 Fireteam.Setting.Active = nil
 Fireteam.Setting.Data = {}
 
--- 网络消息注册（必须在 net.Start 之前完成）
-util.AddNetworkString(Fireteam.NET.SETTING_CHANGED)
+-- 网络消息统一由 sh_net_protocol.lua 注册，此处无需重复 AddNetworkString
 
 -- ─────────────────────────────────────
 -- 扫描所有设定包
@@ -175,6 +174,20 @@ function Fireteam.Setting.Activate(packId)
     net.Start(Fireteam.NET.SETTING_CHANGED)
         net.WriteString(packId)
         net.WriteString(meta.name)
+    net.Broadcast()
+
+    -- 推送 HUD 主题标识，客户端据此强制重载主题缓存
+    local themeId = Fireteam.Config.Get("hud.theme") or "crt_green"
+    local hudThemeFile = meta._path .. "hud_theme.json"
+    if file.Exists(hudThemeFile, meta._realm) then
+        local theme = util.JSONToTable(file.Read(hudThemeFile, meta._realm) or "")
+        if theme and theme.theme_id then
+            themeId = theme.theme_id
+            Fireteam.Config.Set("hud.theme", themeId, { silent = true })
+        end
+    end
+    net.Start(Fireteam.NET.HUD_THEME)
+        net.WriteString(themeId)
     net.Broadcast()
 
     Fireteam.Log.Info("设定包", "✓ 已激活: " .. meta.name .. " (v" .. (meta.version or "?") .. ")")

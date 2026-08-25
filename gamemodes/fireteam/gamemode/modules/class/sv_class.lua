@@ -116,10 +116,9 @@ hook.Add("PlayerSpawn", "Fireteam.Class.Respawn", function(ply)
 end)
 
 -- ═══════════════════════════════════════
--- 网络：客户端请求分配职业
+-- 网络：客户端请求分配职业（消息名统一注册于 Fireteam.NET）
 -- ═══════════════════════════════════════
-util.AddNetworkString("FT_ClassAssign")
-net.Receive("FT_ClassAssign", function(len, ply)
+net.Receive(Fireteam.NET.CLASS_ASSIGN, function(len, ply)
     local classId = net.ReadString()
     Fireteam.Class.Assign(ply, classId)
 end)

@@ -78,9 +78,12 @@ function Fireteam.Config.Set(key, value, opts)
 
     if not opts.silent then
         hook.Run(Fireteam.HOOKS.CONFIG_CHANGED, key, old, value)
-        -- 服务端广播给客户端
+        -- 服务端广播给客户端（WriteType 自带类型标识，客户端用 ReadType 还原）
         if SERVER then
-            Fireteam.Net.SendToAll(Fireteam.NET.CONFIG_SYNC, key, value)
+            net.Start(Fireteam.NET.CONFIG_SYNC)
+                net.WriteString(key)
+                net.WriteType(value)
+            net.Broadcast()
         end
     end
 
@@ -167,5 +170,21 @@ local function RegisterDefaults()
 end
 
 RegisterDefaults()
+
+-- ─────────────────────────────────────
+-- 客户端：接收服务端配置同步
+-- （服务端权威，直接写入本地注册表并触发本地 hook 供 UI 响应）
+-- ─────────────────────────────────────
+if CLIENT then
+    net.Receive(Fireteam.NET.CONFIG_SYNC, function()
+        local key = net.ReadString()
+        local value = net.ReadType()
+        local entry = registry[key]
+        if not entry then return end
+        local old = entry.value
+        entry.value = value
+        hook.Run(Fireteam.HOOKS.CONFIG_CHANGED, key, old, value)
+    end)
+end
 
 Fireteam.Log.Info("配置", "✓ 配置注册表就绪 (" .. table.Count(registry) .. " 项)")

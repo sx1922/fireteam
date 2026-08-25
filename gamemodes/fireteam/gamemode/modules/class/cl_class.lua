@@ -54,7 +54,7 @@ function Fireteam.Class.OpenSelectPanel()
         end
 
         btn.DoClick = function()
-            net.Start("FT_ClassAssign")
+            net.Start(Fireteam.NET.CLASS_ASSIGN)
                 net.WriteString(classId)
             net.SendToServer()
             classPanel:Remove()

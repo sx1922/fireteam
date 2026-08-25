@@ -267,28 +267,24 @@ hook.Add("PlayerDisconnected", "Fireteam.Squad.Cleanup", function(ply)
 end)
 
 -- ═══════════════════════════════════════
--- 网络消息处理
+-- 网络消息处理（消息名统一注册于 Fireteam.NET）
 -- ═══════════════════════════════════════
-util.AddNetworkString("FT_SquadCreate")
-net.Receive("FT_SquadCreate", function(len, ply)
+net.Receive(Fireteam.NET.SQUAD_CREATE, function(len, ply)
     local name = net.ReadString()
     local faction = net.ReadString()
     Fireteam.Squad.Create(ply, name, faction)
 end)
 
-util.AddNetworkString("FT_SquadJoin")
-net.Receive("FT_SquadJoin", function(len, ply)
+net.Receive(Fireteam.NET.SQUAD_JOIN, function(len, ply)
     local squadId = net.ReadInt(8)
     Fireteam.Squad.Join(ply, squadId)
 end)
 
-util.AddNetworkString("FT_SquadLeave")
-net.Receive("FT_SquadLeave", function(len, ply)
+net.Receive(Fireteam.NET.SQUAD_LEAVE, function(len, ply)
     Fireteam.Squad.Leave(ply)
 end)
 
-util.AddNetworkString("FT_SquadReady")
-net.Receive("FT_SquadReady", function(len, ply)
+net.Receive(Fireteam.NET.SQUAD_READY, function(len, ply)
     local ready = net.ReadBool()
     Fireteam.Squad.SetReady(ply, ready)
 end)

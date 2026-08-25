@@ -38,6 +38,15 @@ Fireteam.MODULE_STATE = {
     DISABLED  = 4
 }
 
+-- 模块加载优先级（数值小者先加载，未列出者默认 100；同级按字母序）
+Fireteam.MODULE_LOAD_PRIORITY = {
+    squad   = 10,
+    class   = 20,
+    marker  = 30,
+    voice   = 40,
+    hud     = 50,
+}
+
 -- ═══════════════════════════════════════
 -- 武器 / 载具抽象分类
 -- ═══════════════════════════════════════
@@ -105,17 +114,30 @@ Fireteam.HUD_THEME = {
 
 -- ═══════════════════════════════════════
 -- 网络消息 ID（集中管理避免冲突）
+-- 全部消息由 sh_net_protocol.lua 在服务端统一 util.AddNetworkString，
+-- 模块内不要再重复注册。
 -- ═══════════════════════════════════════
 Fireteam.NET = {
-    CONFIG_SYNC       = "FT_ConfigSync",
-    SETTING_CHANGED   = "FT_SettingChanged",
-    SQUAD_UPDATE      = "FT_SquadUpdate",
-    MARKER_ADD        = "FT_MarkerAdd",
-    MARKER_REMOVE     = "FT_MarkerRemove",
-    CLASS_ASSIGN      = "FT_ClassAssign",
-    VOICE_CHANNEL     = "FT_VoiceChannel",
-    HUD_THEME         = "FT_HUDTheme",
-    ASSET_WARNING     = "FT_AssetWarning"
+    -- 服务端 → 客户端
+    CONFIG_SYNC          = "FT_ConfigSync",
+    SETTING_CHANGED      = "FT_SettingChanged",
+    SQUAD_UPDATE         = "FT_SquadUpdate",
+    MARKER_ADD           = "FT_MarkerAdd",
+    VOICE_CHANNEL        = "FT_VoiceChannel",
+    HUD_THEME            = "FT_HUDTheme",
+    SUPPRESSION_UPDATE   = "FT_SuppressionUpdate",
+
+    -- 双向（同一字符串按 realm 各自收发）
+    CLASS_ASSIGN         = "FT_ClassAssign",
+
+    -- 客户端 → 服务端（请求）
+    MARKER_PLACE         = "FT_MarkerPlace",
+    MARKER_REMOVE        = "FT_MarkerRemove",
+    SQUAD_CREATE         = "FT_SquadCreate",
+    SQUAD_JOIN           = "FT_SquadJoin",
+    SQUAD_LEAVE          = "FT_SquadLeave",
+    SQUAD_READY          = "FT_SquadReady",
+    VOICE_SWITCH_CHANNEL = "FT_VoiceSwitchChannel"
 }
 
 -- ═══════════════════════════════════════
@@ -123,7 +145,7 @@ Fireteam.NET = {
 -- ═══════════════════════════════════════
 Fireteam.HOOKS = {
     MODULE_LOADED       = "Fireteam.Module.Loaded",
-    MODULE_UNLOADED     = "Fireteam.Module.Unloaded",
+    MODULE_UNLOADED     = "Fireteam.Module.Unloaded",  -- 保留：运行时卸载尚未实现，当前无触发点
     SETTING_LOADED      = "Fireteam.Setting.Loaded",
     SETTING_UNLOAD      = "Fireteam.Setting.Unload",
     WEAPON_DISCOVER     = "Fireteam.Weapon.Discover",

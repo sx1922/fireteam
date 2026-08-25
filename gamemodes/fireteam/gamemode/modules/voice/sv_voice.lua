@@ -78,10 +78,9 @@ hook.Add("PlayerCanHearPlayersVoice", "Fireteam.Voice.DistanceCheck", function(l
 end)
 
 -- ═══════════════════════════════════════
--- 网络请求
+-- 网络请求（消息名统一注册于 Fireteam.NET）
 -- ═══════════════════════════════════════
-util.AddNetworkString("FT_VoiceSwitchChannel")
-net.Receive("FT_VoiceSwitchChannel", function(len, ply)
+net.Receive(Fireteam.NET.VOICE_SWITCH_CHANNEL, function(len, ply)
     local channelId = net.ReadString()
     Fireteam.Voice.SetChannel(ply, channelId)
 end)
