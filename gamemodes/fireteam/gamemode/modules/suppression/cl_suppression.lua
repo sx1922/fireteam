@@ -63,28 +63,25 @@ hook.Add("CalcView", "Fireteam.Suppression.Shake", function(ply, pos, angles, fo
 end)
 
 -- ═══════════════════════════════════════
--- 压制提示
+-- 压制提示（文案经 Locale，配色走主题语义色）
 -- ═══════════════════════════════════════
 hook.Add("HUDPaint", "Fireteam.Suppression.Indicator", function()
     if currentSuppression < 0.3 then return end
 
     local level = Fireteam.Suppression.GetLevel(currentSuppression)
-    local texts = { "", "SUPPRESSED", "HEAVY FIRE", "PINNED DOWN", "PINNED DOWN" }
-    local colors = {
-        Color(255, 255, 255, 0),
-        Color(255, 200, 50),
-        Color(255, 120, 0),
-        Color(255, 50, 50),
-        Color(255, 50, 50)
-    }
+    -- level 1/2/3 → 轻/重/钉死
+    local textKeys = { nil, "suppressed_light", "suppressed_heavy", "suppressed_pinned" }
+    local colorNames = { nil, "warning", "warning", "danger" }
 
-    local text = texts[level + 1] or ""
-    local color = colors[level + 1] or Color(255, 255, 255)
+    local key = textKeys[level + 1]
+    local colorName = colorNames[level + 1]
 
-    if text ~= "" then
+    if key then
         local alpha = 150 + math.sin(CurTime() * 5) * 100
-        draw.SimpleText(text, "DermaLarge", ScrW() / 2, ScrH() * 0.35,
-            Color(color.r, color.g, color.b, alpha), TEXT_ALIGN_CENTER)
+        local base = Fireteam.UI.Color(colorName)
+        draw.SimpleText(Fireteam.Locale.Get(key), Fireteam.UI.Font("large"),
+            ScrW() / 2, ScrH() * 0.35,
+            Color(base.r, base.g, base.b, alpha), TEXT_ALIGN_CENTER)
     end
 end)
 

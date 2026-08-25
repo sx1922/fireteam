@@ -4,6 +4,9 @@
 if not Fireteam then Fireteam = {} end
 Fireteam.Marker = Fireteam.Marker or {}
 
+local kit = Fireteam.UI
+local L = Fireteam.Locale.Get
+
 local cachedMarkers = {}
 
 -- 接收标记数据
@@ -24,7 +27,7 @@ hook.Add("PostDrawTranslucentRenderables", "Fireteam.Marker.Draw3D", function()
         local pos = marker.pos
         if not isvector(pos) then continue end
 
-        local color = Fireteam.Marker.COLORS[marker.type] or Color(255, 255, 255)
+        local color = Fireteam.Marker.GetTypeColor(marker.type)
         local screenPos = pos:ToScreen()
 
         if screenPos.visible then
@@ -33,21 +36,21 @@ hook.Add("PostDrawTranslucentRenderables", "Fireteam.Marker.Draw3D", function()
             local dist = LocalPlayer():GetPos():Distance(pos)
             size = math.Clamp(800 / dist * 10, 8, 32)
 
-            draw.SimpleText("▼", "DermaDefault", screenPos.x, screenPos.y,
+            draw.SimpleText("▼", kit.Font("medium"), screenPos.x, screenPos.y,
                 color, TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
 
             -- 标签
             if marker.label and marker.label ~= "" then
-                draw.SimpleText(marker.label, "DermaDefault",
+                draw.SimpleText(marker.label, kit.Font("small"),
                     screenPos.x, screenPos.y - size - 4,
                     color, TEXT_ALIGN_CENTER, TEXT_ALIGN_BOTTOM)
             end
 
             -- 距离
             local distText = math.floor(dist / 52.5) .. "m"
-            draw.SimpleText(distText, "DermaDefault",
+            draw.SimpleText(distText, kit.Font("small"),
                 screenPos.x, screenPos.y + size + 4,
-                Color(200, 200, 200), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+                kit.Color("text_muted"), TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
         end
     end
 end)
@@ -68,7 +71,7 @@ hook.Add("PlayerButtonDown", "Fireteam.Marker.PlaceKey", function(ply, button)
             net.WriteString("")
         net.SendToServer()
 
-        chat.AddText(Color(100, 200, 255), "[FIRETEAM] Marker placed.")
+        chat.AddText(kit.Color("info"), "[FIRETEAM] " .. L("marker_placed"))
     end
 end)
 

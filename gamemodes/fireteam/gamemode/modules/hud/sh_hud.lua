@@ -19,8 +19,7 @@ if CLIENT then
     net.Receive(Fireteam.NET.SETTING_CHANGED, function()
         Fireteam.Setting.ActiveId = net.ReadString()
         net.ReadString() -- pack name，预留
-        Fireteam.HUD.CurrentTheme = nil
-        colorCache = {}
+        Fireteam.HUD.ResetThemeCache()
     end)
 end
 
@@ -80,8 +79,15 @@ function Fireteam.HUD.GetTheme()
             primary = "#33ff33",
             secondary = "#1a8c1a",
             background = "#0a0a0a",
+            surface = "#101810",
+            border = "#1e3a1e",
+            text = "#d0ffd0",
+            text_muted = "#6fa06f",
+            accent = "#39ff6a",
+            success = "#33ff33",
             warning = "#ffcc00",
-            danger = "#ff3333"
+            danger = "#ff3333",
+            info = "#64b4ff"
         },
         font = { primary = "DermaDefault", size_base = 16 },
         effects = { scanlines = false, vignette = 0 }
@@ -100,21 +106,25 @@ function Fireteam.HUD.ParseColor(hex)
     return Color(r, g, b)
 end
 
--- 获取主题颜色（缓存）
+-- 获取主题颜色（委托 UI Kit 统一管理：语义名 → 主题色 → 默认色兜底）
 function Fireteam.HUD.GetColor(name)
-    if colorCache[name] then return colorCache[name] end
-    local theme = Fireteam.HUD.GetTheme()
-    if theme.palette and theme.palette[name] then
-        colorCache[name] = Fireteam.HUD.ParseColor(theme.palette[name])
-        return colorCache[name]
-    end
-    return Color(255, 255, 255)
+    return Fireteam.UI.Color(name)
+end
+
+-- ─────────────────────────────────────
+-- 主题缓存重置（双端入口）
+-- 客户端 SETTING_CHANGED / HUD_THEME 消息与服务端
+-- Setting.Loaded hook 均走此处；同时广播给 UI Kit 失效取色与字体缓存。
+-- ─────────────────────────────────────
+function Fireteam.HUD.ResetThemeCache()
+    Fireteam.HUD.CurrentTheme = nil
+    colorCache = {}
+    hook.Run("Fireteam.UI.ThemeInvalidated")
 end
 
 -- 主题变更时清缓存（服务端侧：设定包重载）
 hook.Add("Fireteam.Setting.Loaded", "HUD.ClearCache", function()
-    Fireteam.HUD.CurrentTheme = nil
-    colorCache = {}
+    Fireteam.HUD.ResetThemeCache()
 end)
 
 print("[FIRETEAM:HUD] ✓ Shared definitions loaded")

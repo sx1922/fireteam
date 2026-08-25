@@ -1,8 +1,12 @@
 -- modules/class/cl_class.lua
 -- FIRETEAM Class System - Client UI
+-- 面板走 UI Kit 主题壳层，文案经 Fireteam.Locale。
 
 if not Fireteam then Fireteam = {} end
 Fireteam.Class = Fireteam.Class or {}
+
+local kit = Fireteam.UI
+local L = Fireteam.Locale.Get
 
 local classPanel = nil
 
@@ -12,6 +16,8 @@ net.Receive(Fireteam.NET.CLASS_ASSIGN, function()
     local classId = net.ReadString()
     if IsValid(ply) and ply == LocalPlayer() then
         LocalPlayer().FT_Class = classId
+        chat.AddText(kit.Color("primary"), "[FIRETEAM] "
+            .. L("class_selected", classId))
     end
 end)
 
@@ -25,33 +31,44 @@ function Fireteam.Class.OpenSelectPanel()
 
     local mySquad = Fireteam.Squad.GetMySquad()
     if not mySquad then
-        chat.AddText(Color(255, 100, 100), "[FIRETEAM] Join a squad first to select a class.")
+        chat.AddText(kit.Color("danger"), "[FIRETEAM] "
+            .. L("ui_join_squad_first"))
         return
     end
 
     local availableClasses = Fireteam.Class.GetByFaction(mySquad.faction)
 
-    classPanel = vgui.Create("DFrame")
-    classPanel:SetSize(600, 450)
-    classPanel:Center()
-    classPanel:SetTitle("FIRETEAM - Select Class")
-    classPanel:MakePopup()
+    local W = math.Round(620 * (ScrW() / 1920))
+    local H = math.Round(470 * (ScrH() / 1080))
+    classPanel = kit.CreateFrame(L("ui_class_title"), W, H, {
+        blur = true,
+        hints = { L("ui_hint_esc_close") }
+    })
 
     local scroll = vgui.Create("DScrollPanel", classPanel)
     scroll:Dock(FILL)
-    scroll:DockMargin(10, 10, 10, 10)
+    scroll:DockMargin(14, classPanel.ftContentTop, 14, classPanel.ftContentBottom + 6)
 
     for classId, data in pairs(availableClasses) do
-        local btn = scroll:Add("DButton")
-        btn:SetTall(50)
-        btn:Dock(TOP)
-        btn:DockMargin(0, 4, 0, 4)
-        btn:SetText(data.name .. " (" .. data.name_zh .. ")")
+        local isCurrent = (LocalPlayer().FT_Class == classId)
 
-        -- 高亮当前职业
-        if LocalPlayer().FT_Class == classId then
-            btn:SetColor(Color(51, 255, 51))
-        end
+        -- 职业卡片按钮
+        local btn = scroll:Add("DButton")
+        btn:SetTall(46)
+        btn:Dock(TOP)
+        btn:DockMargin(30, isCurrent and 8 or 4, 30, 2)
+        btn:SetText((data.name or classId)
+            .. (data.name_zh and (" · " .. data.name_zh) or "")
+            .. (isCurrent and ("   ✓ " .. L("ui_current")) or ""))
+        kit.StyleButton(btn, { style = isCurrent and "primary" or "ghost" })
+
+        -- 描述标签（能力）
+        local descLabel = scroll:Add("DLabel")
+        descLabel:SetText("  " .. L("ui_abilities", table.concat(data.abilities or {}, ", ")))
+        kit.StyleLabel(descLabel, { font = "small", color = "text_muted" })
+        descLabel:Dock(TOP)
+        descLabel:DockMargin(38, 0, 38, 6)
+        descLabel:SizeToContentsY()
 
         btn.DoClick = function()
             net.Start(Fireteam.NET.CLASS_ASSIGN)
@@ -59,12 +76,6 @@ function Fireteam.Class.OpenSelectPanel()
             net.SendToServer()
             classPanel:Remove()
         end
-
-        -- 描述标签
-        local descLabel = scroll:Add("DLabel")
-        descLabel:SetText("  Abilities: " .. table.concat(data.abilities or {}, ", "))
-        descLabel:Dock(TOP)
-        descLabel:SetTextColor(Color(150, 150, 150))
     end
 end
 

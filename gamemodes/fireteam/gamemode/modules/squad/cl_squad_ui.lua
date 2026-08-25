@@ -1,8 +1,12 @@
 -- modules/squad/cl_squad_ui.lua
 -- FIRETEAM Squad System - Client UI
+-- 面板走 UI Kit 主题壳层，文案经 Fireteam.Locale。
 
 if not Fireteam then Fireteam = {} end
 Fireteam.Squad = Fireteam.Squad or {}
+
+local kit = Fireteam.UI
+local L = Fireteam.Locale.Get
 
 local cachedSquads = {}
 local squadPanel = nil
@@ -42,35 +46,40 @@ function Fireteam.Squad.IsMySquadLeader(squad)
 end
 
 -- ═══════════════════════════════════════
--- HUD 小队状态栏（左侧）
+-- HUD 小队状态栏（位置由 elements.squad_status 决定）
 -- ═══════════════════════════════════════
 local function DrawSquadHUD()
     local mySquad = Fireteam.Squad.GetMySquad()
     if not mySquad then return end
 
-    local startX, startY = 20, ScrH() * 0.3
-    local lineHeight = 28
-    local memberCount = #((mySquad.members or {}))
+    local members = mySquad.members or {}
+    local lineHeight = 24
+    local panelW = math.Round(230 * (ScrW() / 1920))
+    local panelH = lineHeight * (#members + 1) + 20
+    local elem = kit.GetElement("squad_status")
+    local x, y = kit.ResolveAnchor(elem.position or "left", panelW, panelH)
 
-    -- 背景
-    draw.RoundedBox(4, startX - 8, startY - 8, 220, lineHeight * (memberCount + 1) + 16, Color(10, 10, 10, 180))
+    kit.DrawPanel(x, y, panelW, panelH, { fillAlpha = 180 })
 
     -- 小队名
-    draw.SimpleText(mySquad.name or "Squad", "DermaDefault", startX, startY, Color(51, 255, 51), TEXT_ALIGN_LEFT)
-    startY = startY + lineHeight
+    draw.SimpleText(mySquad.name or "Squad", kit.Font("medium"),
+        x + 10, y + 10, kit.Color("primary"), TEXT_ALIGN_LEFT)
+    kit.DrawDivider(x + 8, y + 34, panelW - 16)
 
     -- 成员列表
-    for _, info in ipairs(mySquad.members or {}) do
-        local color = Color(200, 200, 200)
+    local rowY = y + 42
+    for _, info in ipairs(members) do
+        local colorName = "squad_ally"
         if info.idx == mySquad.leaderIdx then
-            color = Color(255, 255, 51)  -- 队长黄色
+            colorName = "squad_leader"
         elseif not info.alive then
-            color = Color(255, 50, 50)   -- 死亡红色
+            colorName = "danger"
         end
 
-        local prefix = info.idx == mySquad.leaderIdx and "★ " or "  "
-        draw.SimpleText(prefix .. info.name, "DermaDefault", startX, startY, color, TEXT_ALIGN_LEFT)
-        startY = startY + lineHeight
+        local prefix = info.idx == mySquad.leaderIdx and "★ " or "   "
+        draw.SimpleText(prefix .. info.name, kit.Font("small"),
+            x + 10, rowY, kit.Color(colorName), TEXT_ALIGN_LEFT)
+        rowY = rowY + lineHeight
     end
 end
 
@@ -84,31 +93,40 @@ function Fireteam.Squad.OpenPanel()
         squadPanel:Remove()
     end
 
-    squadPanel = vgui.Create("DFrame")
-    squadPanel:SetSize(500, 400)
-    squadPanel:Center()
-    squadPanel:SetTitle("FIRETEAM - Squad Management")
-    squadPanel:SetDraggable(true)
-    squadPanel:ShowCloseButton(true)
-    squadPanel:MakePopup()
+    local W, H = math.Round(520 * (ScrW() / 1920)), math.Round(430 * (ScrH() / 1080))
+    squadPanel = kit.CreateFrame(L("ui_squad_title"), W, H, {
+        blur = true,
+        hints = { L("ui_hint_esc_close") }
+    })
 
     local scroll = vgui.Create("DScrollPanel", squadPanel)
     scroll:Dock(FILL)
-    scroll:DockMargin(10, 10, 10, 10)
+    scroll:DockMargin(12, squadPanel.ftContentTop, 12, squadPanel.ftContentBottom + 6)
 
     -- 当前小队信息
     local mySquad = Fireteam.Squad.GetMySquad()
     if mySquad then
         local infoLabel = scroll:Add("DLabel")
-        infoLabel:SetText("Current Squad: " .. mySquad.name .. " [" .. mySquad.faction .. "]")
+        infoLabel:SetText(L("ui_current_squad", mySquad.name, mySquad.faction))
+        kit.StyleLabel(infoLabel, { font = "medium", color = "primary" })
         infoLabel:Dock(TOP)
-        infoLabel:DockMargin(0, 0, 0, 10)
+        infoLabel:DockMargin(0, 0, 0, 4)
+        infoLabel:SizeToContentsY()
+
+        local stateLabel = scroll:Add("DLabel")
+        stateLabel:SetText(L("ui_member_count", #(mySquad.members or {})))
+        kit.StyleLabel(stateLabel, { font = "small", color = "text_muted" })
+        stateLabel:Dock(TOP)
+        stateLabel:DockMargin(0, 0, 0, 12)
+        stateLabel:SizeToContentsY()
 
         -- 离开按钮
         local leaveBtn = scroll:Add("DButton")
-        leaveBtn:SetText("Leave Squad")
+        leaveBtn:SetTall(36)
         leaveBtn:Dock(TOP)
-        leaveBtn:DockMargin(0, 0, 0, 20)
+        leaveBtn:DockMargin(120, 8, 120, 20)
+        leaveBtn:SetText(L("ui_leave_squad"))
+        kit.StyleButton(leaveBtn, { style = "danger" })
         leaveBtn.DoClick = function()
             net.Start(Fireteam.NET.SQUAD_LEAVE)
             net.SendToServer()
@@ -117,22 +135,57 @@ function Fireteam.Squad.OpenPanel()
     else
         -- 创建小队
         local nameLabel = scroll:Add("DLabel")
-        nameLabel:SetText("Squad Name:")
+        nameLabel:SetText(L("ui_squad_name"))
+        kit.StyleLabel(nameLabel, { font = "body" })
         nameLabel:Dock(TOP)
+        nameLabel:SizeToContentsY()
 
         local nameEntry = scroll:Add("DTextEntry")
+        nameEntry:SetTall(32)
         nameEntry:Dock(TOP)
-        nameEntry:SetPlaceholderText("Enter squad name...")
-        nameEntry:DockMargin(0, 4, 0, 10)
+        nameEntry:SetPlaceholderText(L("ui_squad_name_placeholder"))
+        nameEntry:DockMargin(0, 6, 0, 10)
+
+        -- 阵营选择（数据来自设定包 factions）
+        local factionLabel = scroll:Add("DLabel")
+        factionLabel:SetText(L("ui_select_faction"))
+        kit.StyleLabel(factionLabel, { font = "body" })
+        factionLabel:Dock(TOP)
+        factionLabel:DockMargin(0, 6, 0, 4)
+        factionLabel:SizeToContentsY()
+
+        local selectedFaction = nil
+        local factionCombo = scroll:Add("DComboBox")
+        factionCombo:SetTall(30)
+        factionCombo:Dock(TOP)
+        factionCombo:DockMargin(0, 2, 0, 10)
+
+        local factions = Fireteam.Setting.GetData("factions") or {}
+        local firstId = nil
+        for factionId, def in pairs(factions) do
+            local displayName = (def.name_zh or def.name or factionId)
+                .. " (" .. factionId .. ")"
+            factionCombo:AddChoice(displayName, factionId)
+            firstId = firstId or factionId
+        end
+        if firstId then
+            factionCombo:ChooseOptionValue(firstId)
+            selectedFaction = firstId
+        end
+        factionCombo.OnSelect = function(_, _, _, value)
+            selectedFaction = value
+        end
 
         local createBtn = scroll:Add("DButton")
-        createBtn:SetText("Create Squad")
+        createBtn:SetTall(36)
         createBtn:Dock(TOP)
-        createBtn:DockMargin(0, 0, 0, 20)
+        createBtn:DockMargin(120, 8, 120, 20)
+        createBtn:SetText(L("ui_create_squad"))
+        kit.StyleButton(createBtn, { style = "primary" })
         createBtn.DoClick = function()
             net.Start(Fireteam.NET.SQUAD_CREATE)
                 net.WriteString(nameEntry:GetText() or "New Squad")
-                net.WriteString("western_alliance")
+                net.WriteString(selectedFaction or "western_alliance")
             net.SendToServer()
             squadPanel:Remove()
         end
@@ -140,15 +193,27 @@ function Fireteam.Squad.OpenPanel()
 
     -- 可用小队列表
     local listLabel = scroll:Add("DLabel")
-    listLabel:SetText("Available Squads:")
+    listLabel:SetText(L("ui_available_squads"))
+    kit.StyleLabel(listLabel, { font = "medium", color = "text_muted" })
     listLabel:Dock(TOP)
     listLabel:DockMargin(0, 10, 0, 5)
+    listLabel:SizeToContentsY()
 
-    for id, squad in pairs(cachedSquads) do
+    local ids = {}
+    for id in pairs(cachedSquads) do
+        ids[#ids + 1] = id
+    end
+    table.sort(ids)
+
+    for _, id in ipairs(ids) do
+        local squad = cachedSquads[id]
         local joinBtn = scroll:Add("DButton")
-        joinBtn:SetText(squad.name .. " [" .. squad.faction .. "] - " .. #(squad.members or {}) .. " members")
+        joinBtn:SetTall(34)
         joinBtn:Dock(TOP)
-        joinBtn:DockMargin(0, 2, 0, 2)
+        joinBtn:DockMargin(40, 3, 40, 3)
+        joinBtn:SetText(squad.name .. " [" .. squad.faction .. "] · "
+            .. L("ui_member_count", #(squad.members or {})))
+        kit.StyleButton(joinBtn, { style = "ghost" })
         joinBtn.DoClick = function()
             net.Start(Fireteam.NET.SQUAD_JOIN)
                 net.WriteInt(id, 8)

@@ -40,5 +40,21 @@ return {
     -- 系统
     setting_pack_loaded    = "Setting pack loaded: %s",
     setting_pack_failed    = "Failed to load setting pack: %s",
-    hud_theme_updated      = "HUD theme updated"
+    hud_theme_updated      = "HUD theme updated",
+
+    -- UI 面板
+    ui_squad_title         = "FIRETEAM — Squad Management",
+    ui_class_title         = "FIRETEAM — Select Class",
+    ui_current_squad       = "Current Squad: %s [%s]",
+    ui_member_count        = "%d member(s)",
+    ui_leave_squad         = "Leave Squad",
+    ui_squad_name          = "Squad Name:",
+    ui_squad_name_placeholder = "Enter squad name...",
+    ui_select_faction      = "Faction:",
+    ui_create_squad        = "Create Squad",
+    ui_available_squads    = "Available Squads",
+    ui_join_squad_first    = "Join a squad first to select a class.",
+    ui_abilities           = "Abilities: %s",
+    ui_current             = "CURRENT",
+    ui_hint_esc_close      = "ESC to close"
 }

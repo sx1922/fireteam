@@ -40,5 +40,21 @@ return {
     -- 系统
     setting_pack_loaded    = "设定包已加载: %s",
     setting_pack_failed    = "设定包加载失败: %s",
-    hud_theme_updated      = "HUD 主题已更新"
+    hud_theme_updated      = "HUD 主题已更新",
+
+    -- UI 面板
+    ui_squad_title         = "FIRETEAM — 小队管理",
+    ui_class_title         = "FIRETEAM — 选择职业",
+    ui_current_squad       = "当前小队: %s [%s]",
+    ui_member_count        = "%d 名成员",
+    ui_leave_squad         = "离开小队",
+    ui_squad_name          = "小队名称:",
+    ui_squad_name_placeholder = "输入小队名称...",
+    ui_select_faction      = "阵营:",
+    ui_create_squad        = "创建小队",
+    ui_available_squads    = "可用小队",
+    ui_join_squad_first    = "请先加入小队再选择职业。",
+    ui_abilities           = "能力: %s",
+    ui_current             = "当前",
+    ui_hint_esc_close      = "按 ESC 关闭"
 }

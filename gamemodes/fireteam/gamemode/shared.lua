@@ -9,6 +9,7 @@ AddCSLuaFile("core/sh_net_protocol.lua")
 AddCSLuaFile("core/sh_weapon_interface.lua")
 AddCSLuaFile("core/sh_vehicle_interface.lua")
 AddCSLuaFile("core/sh_locale.lua")
+AddCSLuaFile("core/sh_ui_kit.lua")
 
 -- 日志系统必须最先加载（后续所有核心文件依赖 Fireteam.Log）
 include("core/sh_logger.lua")
@@ -19,6 +20,7 @@ include("core/sh_api_registry.lua")
 include("core/sh_net_protocol.lua")
 include("core/sh_weapon_interface.lua")
 include("core/sh_vehicle_interface.lua")
+include("core/sh_ui_kit.lua")
 
 -- 全局表初始化（仅声明，不赋值）
 Fireteam = Fireteam or {}
