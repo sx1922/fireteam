@@ -126,5 +126,17 @@ return {
     admin_col_ping         = "延迟",
     admin_active_pack      = "当前",
     admin_activate         = "激活",
-    admin_reload_pack      = "重新加载"
+    admin_reload_pack      = "重新加载",
+
+    -- AI 队友
+    ai_disabled            = "AI 队友已被禁用。",
+    ai_need_squad          = "加入小队后才能部署 AI 队友。",
+    ai_limit_reached       = "AI 队友数量已达上限（%d）。",
+    ai_deployed            = "已部署 %d 名 AI 队友。",
+    ai_removed             = "已回收 %d 名 AI 队友。",
+    ai_stance_set          = "AI 姿态：%s",
+    ai_filled              = "回合补位：已补充 %d 名 AI 队友。",
+    stance_follow          = "跟随",
+    stance_hold            = "驻守",
+    stance_goto            = "前往路点"
 }

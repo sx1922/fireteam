@@ -126,5 +126,17 @@ return {
     admin_col_ping         = "Ping",
     admin_active_pack      = "ACTIVE",
     admin_activate         = "Activate",
-    admin_reload_pack      = "Reload"
+    admin_reload_pack      = "Reload",
+
+    -- AI 队友
+    ai_disabled            = "AI teammates are disabled.",
+    ai_need_squad          = "Join a squad to deploy AI teammates.",
+    ai_limit_reached       = "AI teammate limit reached (%d).",
+    ai_deployed            = "Deployed %d AI teammate(s).",
+    ai_removed             = "Recalled %d AI teammate(s).",
+    ai_stance_set          = "AI stance: %s",
+    ai_filled              = "Round fill: %d AI teammate(s) added.",
+    stance_follow          = "Follow",
+    stance_hold            = "Hold",
+    stance_goto            = "Move to waypoint"
 }

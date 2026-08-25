@@ -47,6 +47,9 @@ function Fireteam.Marker.Add(ply, pos, markerType, label)
     -- 同步给同小队成员
     Fireteam.Marker.SyncToSquad(squad.id)
 
+    -- 扩展点：AI 队友等消费方据此响应路点指令
+    hook.Run(Fireteam.HOOKS.MARKER_ADDED, ply, marker)
+
     return marker
 end
 

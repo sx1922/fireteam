@@ -145,14 +145,25 @@ ft_setting_pack coldwar
 
 # 开启调试日志（0=关 1=基础 2=详细）
 ft_debug 1
+
+# 回合控制（管理员）
+ft_round_next          # 进入下一阶段
+ft_round_end [阵营|draw]  # 结束回合，缺省按比分结算
+
+# AI 队友
+ft_ai_add [数量]        # 部署 AI 队友（需在小队中）
+ft_ai_remove           # 回收全部 AI 队友
+ft_ai_stance follow|hold  # 切换跟随/驻守姿态
+ft_ai_fill [人数]       # （管理员）全体小队补位
 ```
 
 游戏内操作：
 
 1. 按 **F7** 打开小队面板 → 创建或加入小队
 2. 按 **F8** 选择职业 → 自动分配装备
-3. 按 **F6** 在准星位置放置标记
-4. 语音默认走小队频道，无需额外操作
+3. 按 **F6** 在准星位置放置标记（路点/集合点会指挥 AI 队友机动）
+4. 按 **M** 打开战术地图；按 **F10** 管理员面板
+5. 语音默认走小队频道，无需额外操作
 
 ## 设定包系统
 
@@ -260,6 +271,9 @@ end)
 | `seats.enabled` | boolean | `true` | 载具座位职业门槛与交互提示 |
 | `seats.prompt_distance` | number | `160` | 上车提示触发距离 |
 | `spectate.enabled` | boolean | `true` | 死亡后旁观队友 |
+| `ai.enabled` | boolean | `true` | AI 队友总开关 |
+| `ai.max_per_player` | number | `2` | 每名玩家 AI 队友上限 |
+| `ai.autofill_size` | number | `0` | 回合开始自动补位目标人数（0=关闭） |
 | `voice.ambience` | boolean | `true` | 电台氛围音（咔嗒/静噪） |
 
 ## 目录结构
@@ -331,7 +345,7 @@ gamemodes/fireteam/
 ### 💭 远期愿景 (v1.0)
 
 - [ ] 可视化设定包编辑器（浏览器面板）
-- [ ] AI 小队成员
+- [x] AI 小队成员（接口级：NextBot 队友部署/跟随/驻守、路点指令挂接标记系统、回合补位框架）
 - [ ] 多小队联合作战（排级）
 - [ ] 回放 / 录像系统
 - [ ] 官方战役设定包（越战 / 海湾 / 现代）

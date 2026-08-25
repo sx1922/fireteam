@@ -163,7 +163,9 @@ Fireteam.HOOKS = {
     ROUND_STATE_CHANGED = "Fireteam.Rounds.StateChanged",
     ROUND_ENDED         = "Fireteam.Rounds.Ended",
     PLAYER_ENTER_VEHICLE = "Fireteam.Seats.Entered",
-    PLAYER_EXIT_VEHICLE  = "Fireteam.Seats.Left"
+    PLAYER_EXIT_VEHICLE  = "Fireteam.Seats.Left",
+    MARKER_ADDED         = "Fireteam.Marker.Added",
+    AI_DEPLOYED          = "Fireteam.AI.Deployed"
 }
 
 Fireteam.Log.Info("常量", "✓ 常量已加载 (v" .. Fireteam.VERSION .. ")")
