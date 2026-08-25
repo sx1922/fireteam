@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/version-0.1.0--alpha-orange" alt="version">
   <img src="https://img.shields.io/badge/GMod-250814%2B-blue" alt="gmod">
   <img src="https://img.shields.io/badge/Lua-5.1-green" alt="lua">
-  <img src="https://img.shields.io/badge/status-skeleton--complete-yellow" alt="status">
+  <img src="https://img.shields.io/badge/status-alpha-yellow" alt="status">
 </p>
 
 ## 目录
@@ -37,10 +37,15 @@ FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
 - 🪖 **职业系统** — 基于 Tag 的装备匹配，不写死武器类名
 - 🗺️ **标记系统** — 路点、敌人、目标点标记与同步
 - 📻 **语音通讯** — 频道制语音，支持干扰/距离衰减
+- ⏱️ **回合制引擎** — 状态机 + 目标接口（占区/摧毁/撤离/歼灭）+ 计分，支持多剧本切换
+- 🛰️ **战术地图** — M 键程序化"纸质图纸"地图，与标记系统联动
+- 🤖 **AI 队友** — NextBot 跟随/驻守/自主交战，响应路点指令与回合补位
+- 👻 **观察者模式** — 阵亡后旁观队友（第一/第三/自由视角），回合制联动
 - 🎨 **HUD 主题** — 可配置的界面风格（CRT / 纸质 / 现代）
 - 💥 **弹道模拟** — 子弹下坠、伤害衰减
 - 😰 **压制系统** — 屏幕模糊、准星扩散、视觉震动
 - 🔌 **适配器层** — 自动识别 ARC9 / TFA / LVS / Simfphys
+- 🧰 **运维工具** — F10 管理面板 + F9 可视化设定包编辑器
 
 > ⚠️ FIRETEAM 是**框架**，不是完整游戏模式。它提供战术小队的基础设施，
 > 具体的玩法循环（夺旗、攻防、合作 PvE）由上层逻辑或设定包定义。
@@ -63,6 +68,13 @@ FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
 | Class | `modules/class/` | 职业分配、属性应用、装备加载 |
 | Marker | `modules/marker/` | 标记放置/移除/过期、3D 渲染 |
 | Voice | `modules/voice/` | 频道切换、距离/权限拦截 |
+| Rounds | `modules/rounds/` | 回合状态机、目标类型（占区/摧毁/撤离/歼灭）、计分、多剧本解析 |
+| TacMap | `modules/tacmap/` | M 键战术地图、世界坐标投影、点击放置路点 |
+| Spectate | `modules/spectate/` | 阵亡旁观队友（第一/第三/自由视角）、回合联动 |
+| Seats | `modules/seats/` | 载具座位职业门槛、上车提示、车载电台 |
+| AI | `modules/ai/` | NextBot AI 队友：跟随/驻守/交战、回合补位 |
+| Admin | `modules/admin/` | F10 管理面板：配置 / 回合控制 / 玩家总览 / 设定包切换 |
+| PackEditor | `modules/packeditor/` | F9 设定包可视化编辑（schema 表单）、JSON 导出 |
 | HUD | `modules/hud/` | 准星、弹药、生命、指南针、特效 |
 | Ballistics | `modules/ballistics/` | 子弹下坠、伤害衰减 |
 | Suppression | `modules/suppression/` | 压制值累积/衰减、视觉效果 |
@@ -149,6 +161,10 @@ ft_debug 1
 # 回合控制（管理员）
 ft_round_next          # 进入下一阶段
 ft_round_end [阵营|draw]  # 结束回合，缺省按比分结算
+
+# 剧本切换（下一回合简报生效，不打断进行中的回合）
+ft_scenario            # 列出当前设定包的可用剧本
+ft_scenario berlin     # 切换到指定剧本（也可在 F10 配置页修改 rounds.scenario）
 
 # AI 队友
 ft_ai_add [数量]        # 部署 AI 队友（需在小队中）
@@ -258,6 +274,8 @@ end)
 | F7 | 打开小队管理面板 |
 | F8 | 打开职业选择面板 |
 | M | 打开战术地图 |
+| F9 | 设定包编辑器（管理员） |
+| F10 | 管理面板：配置 / 回合控制 / 玩家总览 / 设定包切换（管理员） |
 
 ## 配置项一览
 
@@ -274,6 +292,7 @@ end)
 | `squad.max_size` | number | `6` | 小队上限 |
 | `squad.friendly_fire` | boolean | `false` | 友军伤害 |
 | `rounds.enabled` | boolean | `true` | 回合系统总开关（仍需设定包提供任务数据） |
+| `rounds.scenario` | string | `""` | 剧本选择（空 = 按设定包 default_scenario；下一回合简报生效） |
 | `tacmap.enabled` | boolean | `true` | 战术地图（M 键） |
 | `tacmap.grid_step` | number | `1024` | 地图网格步长（世界单位） |
 | `tacmap.allow_click_place` | boolean | `true` | 点击地图放置路点 |
@@ -309,6 +328,13 @@ gamemodes/fireteam/
 │   │   ├── class/                  # 职业
 │   │   ├── marker/                 # 标记
 │   │   ├── voice/                  # 语音
+│   │   ├── rounds/                 # 回合制（含多剧本）
+│   │   ├── tacmap/                 # 战术地图
+│   │   ├── spectate/               # 观察者模式
+│   │   ├── seats/                  # 载具座位
+│   │   ├── ai/                     # AI 队友
+│   │   ├── admin/                  # F10 管理面板
+│   │   ├── packeditor/             # F9 设定包编辑器
 │   │   ├── hud/                    # HUD
 │   │   ├── ballistics/             # 弹道
 │   │   ├── suppression/            # 压制
@@ -341,7 +367,7 @@ gamemodes/fireteam/
 - [x] 多语言（en / zh-CN）
 - [x] API 文档
 
-### 🔜 计划中 (v0.2.0)
+### ✅ 近期迭代 (v0.2.x)
 
 - [x] 战术地图（M 键，标记同步到地图）
 - [x] 回合制 / 任务生成框架
@@ -349,8 +375,8 @@ gamemodes/fireteam/
 - [x] 观察者模式（死亡旁观队友，第一/第三/自由视角，回合制联动）
 - [x] 语音电台氛围音（通话咔嗒 / 静噪底声 / 干扰衰减，原始语音流受引擎边界不可截获）
 - [x] 载具座位交互（E 键提示 / 职业门槛座位 / 车载电台）
-- [ ] 设定包 Workshop 分发格式
 - [x] 管理面板（F10，配置 / 回合控制 / 玩家总览 / 设定包切换）
+- [ ] 设定包 Workshop 分发格式
 
 ### 💭 远期愿景 (v1.0)
 
