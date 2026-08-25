@@ -9,7 +9,7 @@
   <img src="https://img.shields.io/badge/version-0.1.0--alpha-orange" alt="version">
   <img src="https://img.shields.io/badge/GMod-250814%2B-blue" alt="gmod">
   <img src="https://img.shields.io/badge/Lua-5.1-green" alt="lua">
-  <img src="https://img.shields.io/badge/status-skeleton--complete-yellow" alt="status">
+  <img src="https://img.shields.io/badge/status-alpha-yellow" alt="status">
 </p>
 
 ## 目录
@@ -37,10 +37,15 @@ FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
 - 🪖 **职业系统** — 基于 Tag 的装备匹配，不写死武器类名
 - 🗺️ **标记系统** — 路点、敌人、目标点标记与同步
 - 📻 **语音通讯** — 频道制语音，支持干扰/距离衰减
+- ⏱️ **回合制引擎** — 状态机 + 目标接口（占区/摧毁/撤离/歼灭）+ 计分，支持多剧本切换
+- 🛰️ **战术地图** — M 键程序化"纸质图纸"地图，与标记系统联动
+- 🤖 **AI 队友** — NextBot 跟随/驻守/自主交战，响应路点指令与回合补位
+- 👻 **观察者模式** — 阵亡后旁观队友（第一/第三/自由视角），回合制联动
 - 🎨 **HUD 主题** — 可配置的界面风格（CRT / 纸质 / 现代）
 - 💥 **弹道模拟** — 子弹下坠、伤害衰减
 - 😰 **压制系统** — 屏幕模糊、准星扩散、视觉震动
 - 🔌 **适配器层** — 自动识别 ARC9 / TFA / LVS / Simfphys
+- 🧰 **运维工具** — F10 管理面板 + F9 可视化设定包编辑器
 
 > ⚠️ FIRETEAM 是**框架**，不是完整游戏模式。它提供战术小队的基础设施，
 > 具体的玩法循环（夺旗、攻防、合作 PvE）由上层逻辑或设定包定义。
@@ -63,6 +68,13 @@ FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
 | Class | `modules/class/` | 职业分配、属性应用、装备加载 |
 | Marker | `modules/marker/` | 标记放置/移除/过期、3D 渲染 |
 | Voice | `modules/voice/` | 频道切换、距离/权限拦截 |
+| Rounds | `modules/rounds/` | 回合状态机、目标类型（占区/摧毁/撤离/歼灭）、计分、多剧本解析 |
+| TacMap | `modules/tacmap/` | M 键战术地图、世界坐标投影、点击放置路点 |
+| Spectate | `modules/spectate/` | 阵亡旁观队友（第一/第三/自由视角）、回合联动 |
+| Seats | `modules/seats/` | 载具座位职业门槛、上车提示、车载电台 |
+| AI | `modules/ai/` | NextBot AI 队友：跟随/驻守/交战、回合补位 |
+| Admin | `modules/admin/` | F10 管理面板：配置 / 回合控制 / 玩家总览 / 设定包切换 |
+| PackEditor | `modules/packeditor/` | F9 设定包可视化编辑（schema 表单）、JSON 导出 |
 | HUD | `modules/hud/` | 准星、弹药、生命、指南针、特效 |
 | Ballistics | `modules/ballistics/` | 子弹下坠、伤害衰减 |
 | Suppression | `modules/suppression/` | 压制值累积/衰减、视觉效果 |
@@ -131,7 +143,7 @@ gmad create -name "FIRETEAM" -out "fireteam.gma"
 [FIRETEAM] ✓ Module loader ready
 [FIRETEAM] ✓ Setting loader ready
 [FIRETEAM] Discovered 8 module(s)
-[FIRETEAM] ✓ Setting pack active: Iron Curtain Edge (v1.0.0)
+[FIRETEAM] ✓ Setting pack active: Iron Curtain Germany (v1.2.0)
 [FIRETEAM] ✓ Bootstrap complete
 ```
 
@@ -145,14 +157,29 @@ ft_setting_pack coldwar
 
 # 开启调试日志（0=关 1=基础 2=详细）
 ft_debug 1
+
+# 回合控制（管理员）
+ft_round_next          # 进入下一阶段
+ft_round_end [阵营|draw]  # 结束回合，缺省按比分结算
+
+# 剧本切换（下一回合简报生效，不打断进行中的回合）
+ft_scenario            # 列出当前设定包的可用剧本
+ft_scenario berlin     # 切换到指定剧本（也可在 F10 配置页修改 rounds.scenario）
+
+# AI 队友
+ft_ai_add [数量]        # 部署 AI 队友（需在小队中）
+ft_ai_remove           # 回收全部 AI 队友
+ft_ai_stance follow|hold  # 切换跟随/驻守姿态
+ft_ai_fill [人数]       # （管理员）全体小队补位
 ```
 
 游戏内操作：
 
 1. 按 **F7** 打开小队面板 → 创建或加入小队
 2. 按 **F8** 选择职业 → 自动分配装备
-3. 按 **F6** 在准星位置放置标记
-4. 语音默认走小队频道，无需额外操作
+3. 按 **F6** 在准星位置放置标记（路点/集合点会指挥 AI 队友机动）
+4. 按 **M** 打开战术地图；按 **F10** 管理员面板；按 **F9** 设定包编辑器（管理员）
+5. 语音默认走小队频道，无需额外操作
 
 ## 设定包系统
 
@@ -176,8 +203,17 @@ setting_packs/your_pack/
 
 | ID | 名称 | 时代 | 通讯模型 |
 | --- | --- | --- | --- |
-| coldwar | Iron Curtain Edge | 1968–1985 | 模拟电台 |
+| coldwar | Iron Curtain Germany | 1968–1985 | 模拟电台 |
 | _template | 空白模板 | — | — |
+
+coldwar 包内置 8 个现实国家阵营：北约的美国/英国/西德/法国，华约的苏联/东德/波兰/捷克斯洛伐克。各国独立职业表（华约含政委）、武器与载具池、按语言区分的语音包和侧翼出生带，每国 `lore` 字段记录其在想定中的历史角色。
+
+内置两个可切换剧本（`ft_scenario <id>` 或 F10 管理面板切换，下一回合简报生效）：
+
+- **fulda_gap 富尔达缺口**（默认）——北约西翼防御带对华约东翼突击轴的全线会战。目标轮转：阿尔法点哨所占区 → 巴特黑斯费尔德中继站摧毁 → 金齐希河谷撤离 → 福格尔斯贝格背水一战。
+- **berlin 西柏林之战**——美英法三国守军紧凑中央防区，西德远郊解围，苏军/东德东弧主攻、波/捷第二梯队。城市攻坚节奏更快（简报 8s / 回合 7min）。目标轮转：查理检查站突破 → 瘫痪守军通讯 → 滕珀尔霍夫空运撤出 → 驻军最后抵抗。
+
+旧版平铺 `objectives`/`spawns` 结构仍受支持：不声明 `scenarios` 表时作为隐式单剧本照常运行。
 
 ### 自定义设定包
 
@@ -237,7 +273,9 @@ end)
 | F6 | 在准星位置放置标记 |
 | F7 | 打开小队管理面板 |
 | F8 | 打开职业选择面板 |
-| M | 打开战术地图（待实现） |
+| M | 打开战术地图 |
+| F9 | 设定包编辑器（管理员） |
+| F10 | 管理面板：配置 / 回合控制 / 玩家总览 / 设定包切换（管理员） |
 
 ## 配置项一览
 
@@ -253,6 +291,19 @@ end)
 | `marker.max_per_player` | number | `3` | 每人最大标记数 |
 | `squad.max_size` | number | `6` | 小队上限 |
 | `squad.friendly_fire` | boolean | `false` | 友军伤害 |
+| `rounds.enabled` | boolean | `true` | 回合系统总开关（仍需设定包提供任务数据） |
+| `rounds.scenario` | string | `""` | 剧本选择（空 = 按设定包 default_scenario；下一回合简报生效） |
+| `tacmap.enabled` | boolean | `true` | 战术地图（M 键） |
+| `tacmap.grid_step` | number | `1024` | 地图网格步长（世界单位） |
+| `tacmap.allow_click_place` | boolean | `true` | 点击地图放置路点 |
+| `seats.enabled` | boolean | `true` | 载具座位职业门槛与交互提示 |
+| `seats.prompt_distance` | number | `160` | 上车提示触发距离 |
+| `spectate.enabled` | boolean | `true` | 死亡后旁观队友 |
+| `ai.enabled` | boolean | `true` | AI 队友总开关 |
+| `ai.max_per_player` | number | `2` | 每名玩家 AI 队友上限 |
+| `ai.autofill_size` | number | `0` | 回合开始自动补位目标人数（0=关闭） |
+| `packeditor.enabled` | boolean | `true` | F9 设定包编辑器开关 |
+| `voice.ambience` | boolean | `true` | 电台氛围音（咔嗒/静噪） |
 
 ## 目录结构
 
@@ -277,6 +328,13 @@ gamemodes/fireteam/
 │   │   ├── class/                  # 职业
 │   │   ├── marker/                 # 标记
 │   │   ├── voice/                  # 语音
+│   │   ├── rounds/                 # 回合制（含多剧本）
+│   │   ├── tacmap/                 # 战术地图
+│   │   ├── spectate/               # 观察者模式
+│   │   ├── seats/                  # 载具座位
+│   │   ├── ai/                     # AI 队友
+│   │   ├── admin/                  # F10 管理面板
+│   │   ├── packeditor/             # F9 设定包编辑器
 │   │   ├── hud/                    # HUD
 │   │   ├── ballistics/             # 弹道
 │   │   ├── suppression/            # 压制
@@ -309,21 +367,21 @@ gamemodes/fireteam/
 - [x] 多语言（en / zh-CN）
 - [x] API 文档
 
-### 🔜 计划中 (v0.2.0)
+### ✅ 近期迭代 (v0.2.x)
 
-- [ ] 战术地图（M 键，标记同步到地图）
-- [ ] 回合制 / 任务生成框架
-- [ ] 胜负判定引擎
-- [ ] 观察者 / 旁观者模式
-- [ ] 语音实际音频播放（替代文字频道）
-- [ ] 载具座位交互
+- [x] 战术地图（M 键，标记同步到地图）
+- [x] 回合制 / 任务生成框架
+- [x] 胜负判定引擎
+- [x] 观察者模式（死亡旁观队友，第一/第三/自由视角，回合制联动）
+- [x] 语音电台氛围音（通话咔嗒 / 静噪底声 / 干扰衰减，原始语音流受引擎边界不可截获）
+- [x] 载具座位交互（E 键提示 / 职业门槛座位 / 车载电台）
+- [x] 管理面板（F10，配置 / 回合控制 / 玩家总览 / 设定包切换）
 - [ ] 设定包 Workshop 分发格式
-- [ ] 管理面板（F10）
 
 ### 💭 远期愿景 (v1.0)
 
-- [ ] 可视化设定包编辑器（浏览器面板）
-- [ ] AI 小队成员
+- [x] 可视化设定包编辑器（接口级：F9 面板，schema 表单编辑主题/回合参数，导出 JSON 设定包）
+- [x] AI 小队成员（接口级：NextBot 队友部署/跟随/驻守、路点指令挂接标记系统、回合补位框架）
 - [ ] 多小队联合作战（排级）
 - [ ] 回放 / 录像系统
 - [ ] 官方战役设定包（越战 / 海湾 / 现代）
