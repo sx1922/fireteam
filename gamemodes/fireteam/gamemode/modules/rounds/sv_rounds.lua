@@ -318,6 +318,19 @@ hook.Add("PlayerInitialSpawn", "Fireteam.Rounds.LateJoiner", function(ply)
 end)
 
 -- ═══════════════════════════════════════
+-- 外部模块查询接口（观察者模式等判断"阵亡待机"窗口）
+-- ═══════════════════════════════════════
+function Fireteam.Rounds.IsRespawnBlocked()
+    return machine.state == STATE.ACTIVE
+        or machine.state == STATE.BRIEFING
+        or machine.state == STATE.ENDED
+end
+
+function Fireteam.Rounds.GetState()
+    return machine.state
+end
+
+-- ═══════════════════════════════════════
 -- 设定包切换 / 开局启动
 -- ═══════════════════════════════════════
 hook.Add(Fireteam.HOOKS.SETTING_LOADED, "Fireteam.Rounds.PackReloaded", function()

@@ -95,5 +95,13 @@ return {
     seat_role_driver       = "Driver",
     seat_role_gunner       = "Gunner",
     seat_role_commander    = "Commander",
-    seat_role_passenger    = "Passenger"
+    seat_role_passenger    = "Passenger",
+
+    -- 观察者模式
+    spec_overlay           = "SPECTATING",
+    spec_target            = "Watching: %s",
+    spec_hint              = "LMB next · MMB prev · RMB cycle view",
+    spec_mode_eye          = "First person",
+    spec_mode_chase        = "Third person",
+    spec_mode_roam         = "Free look"
 }

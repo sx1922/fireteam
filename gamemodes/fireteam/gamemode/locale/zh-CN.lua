@@ -95,5 +95,13 @@ return {
     seat_role_driver       = "驾驶员",
     seat_role_gunner       = "炮手",
     seat_role_commander    = "车长",
-    seat_role_passenger    = "乘员"
+    seat_role_passenger    = "乘员",
+
+    -- 观察者模式
+    spec_overlay           = "观战中",
+    spec_target            = "正在观看: %s",
+    spec_hint              = "左键 下一位 · 中键 上一位 · 右键 切换视角",
+    spec_mode_eye          = "第一人称",
+    spec_mode_chase        = "第三人称追尾",
+    spec_mode_roam         = "自由视角"
 }

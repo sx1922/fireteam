@@ -140,7 +140,8 @@ Fireteam.NET = {
     SQUAD_JOIN           = "FT_SquadJoin",
     SQUAD_LEAVE          = "FT_SquadLeave",
     SQUAD_READY          = "FT_SquadReady",
-    VOICE_SWITCH_CHANNEL = "FT_VoiceSwitchChannel"
+    VOICE_SWITCH_CHANNEL = "FT_VoiceSwitchChannel",
+    SPECTATE_CONTROL     = "FT_SpecControl"
 }
 
 -- ═══════════════════════════════════════
