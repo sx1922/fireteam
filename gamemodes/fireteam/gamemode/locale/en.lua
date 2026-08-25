@@ -63,5 +63,21 @@ return {
     ui_hint_m_close        = "M to close",
     ui_hint_click_place    = "Left click: place waypoint",
     ui_tacmap_scale        = "%d m / grid",
-    marker_need_squad      = "Join a squad before placing map markers."
+    marker_need_squad      = "Join a squad before placing map markers.",
+
+    -- 回合系统
+    round_warmup           = "WARMUP",
+    round_briefing         = "BRIEFING",
+    round_active           = "MISSION ACTIVE",
+    round_ended            = "ROUND OVER",
+    round_intermission     = "INTERMISSION",
+    round_victory          = "VICTORY",
+    round_defeat           = "DEFEAT",
+    round_draw             = "STALEMATE",
+    round_next_in          = "Next round in %ds",
+    objective_hold_zone    = "HOLD THE ZONE",
+    objective_eliminate    = "ELIMINATE HOSTILE FORCES",
+    objective_destroy      = "DESTROY THE TARGET",
+    objective_extract      = "EXTRACT AT THE ZONE",
+    objective_unknown      = "UNKNOWN OBJECTIVE"
 }

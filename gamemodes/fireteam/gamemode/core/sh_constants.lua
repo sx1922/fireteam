@@ -127,6 +127,7 @@ Fireteam.NET = {
     HUD_THEME            = "FT_HUDTheme",
     SUPPRESSION_UPDATE   = "FT_SuppressionUpdate",
     MAP_INFO             = "FT_MapInfo",
+    ROUNDS_STATE         = "FT_RoundsState",
 
     -- 双向（同一字符串按 realm 各自收发）
     CLASS_ASSIGN         = "FT_ClassAssign",
@@ -154,7 +155,9 @@ Fireteam.HOOKS = {
     PLAYER_JOINED_SQUAD = "Fireteam.Squad.PlayerJoined",
     PLAYER_LEFT_SQUAD   = "Fireteam.Squad.PlayerLeft",
     CONFIG_CHANGED      = "Fireteam.Config.Changed",
-    CLASS_ASSIGNED      = "Fireteam.Class.Assigned"
+    CLASS_ASSIGNED      = "Fireteam.Class.Assigned",
+    ROUND_STATE_CHANGED = "Fireteam.Rounds.StateChanged",
+    ROUND_ENDED         = "Fireteam.Rounds.Ended"
 }
 
 Fireteam.Log.Info("常量", "✓ 常量已加载 (v" .. Fireteam.VERSION .. ")")

@@ -227,6 +227,33 @@ function Fireteam.TacMap.Open()
             end
         end
 
+        -- ── 回合目标区域（rounds 模块可选联动）──
+        if Fireteam.Rounds and Fireteam.Rounds.IsEnabled
+            and Fireteam.Rounds.Client and Fireteam.Rounds.Client.objective then
+            local obj = Fireteam.Rounds.Client.objective
+            local prm = obj.params
+            if istable(prm) and istable(prm.pos) and prm.pos.x then
+                local wx, wy = tf.ToScreen(Vector(tonumber(prm.pos.x), tonumber(prm.pos.y), tonumber(prm.pos.z) or 0))
+                local pr = (tonumber(prm.radius) or 120) * tf.scale
+                local col = kit.Color("marker_objective")
+                surface.SetDrawColor(col.r, col.g, col.b, 210)
+                local segs = 40
+                local px0, py0
+                for i = 0, segs do
+                    local a = i / segs * math.pi * 2
+                    local px, py = wx + math.cos(a) * pr, wy + math.sin(a) * pr
+                    if px0 then surface.DrawLine(px0, py0, px, py) end
+                    px0, py0 = px, py
+                end
+                draw.SimpleText("◎", kit.Font("body"), wx, wy - 1, col,
+                    TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+                if obj.name and obj.name ~= "" then
+                    draw.SimpleText(obj.name, kit.Font("small"),
+                        wx, wy + pr + 4, col, TEXT_ALIGN_CENTER, TEXT_ALIGN_TOP)
+                end
+            end
+        end
+
         -- ── 外框（双线）──
         surface.SetDrawColor(kit.ColorA("primary", 180))
         surface.DrawOutlinedRect(x0, y0, tf.w, tf.h, 1)

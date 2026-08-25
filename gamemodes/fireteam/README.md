@@ -253,6 +253,10 @@ end)
 | `marker.max_per_player` | number | `3` | 每人最大标记数 |
 | `squad.max_size` | number | `6` | 小队上限 |
 | `squad.friendly_fire` | boolean | `false` | 友军伤害 |
+| `rounds.enabled` | boolean | `true` | 回合系统总开关（仍需设定包提供任务数据） |
+| `tacmap.enabled` | boolean | `true` | 战术地图（M 键） |
+| `tacmap.grid_step` | number | `1024` | 地图网格步长（世界单位） |
+| `tacmap.allow_click_place` | boolean | `true` | 点击地图放置路点 |
 
 ## 目录结构
 
@@ -312,8 +316,8 @@ gamemodes/fireteam/
 ### 🔜 计划中 (v0.2.0)
 
 - [x] 战术地图（M 键，标记同步到地图）
-- [ ] 回合制 / 任务生成框架
-- [ ] 胜负判定引擎
+- [x] 回合制 / 任务生成框架
+- [x] 胜负判定引擎
 - [ ] 观察者 / 旁观者模式
 - [ ] 语音实际音频播放（替代文字频道）
 - [ ] 载具座位交互

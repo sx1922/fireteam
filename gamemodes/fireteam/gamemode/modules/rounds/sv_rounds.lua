@@ -1,0 +1,374 @@
+-- modules/rounds/sv_rounds.lua
+-- FIRETEAM Rounds Framework - Server
+-- 状态机驱动 + 计分引擎 + 快照广播。任务内容全部来自设定包 map_rules.rounds。
+
+local STATE = Fireteam.Rounds.STATE
+
+local machine = {
+    state           = STATE.IDLE,
+    stateUntil      = 0,
+    roundNumber     = 0,
+    scores          = {},     -- faction -> points（每回合清零）
+    objectiveCtx    = nil,    -- 目标实例上下文
+    winner          = nil,    -- 结算胜者 faction / nil=平局
+    reason          = "",     -- 结束原因（objective/timeout/score_limit/admin）
+    factionsAtStart = {},     -- 本回合参战阵营
+    lastBroadcast   = 0,
+}
+
+-- ═══════════════════════════════════════
+-- 快照广播
+-- ═══════════════════════════════════════
+local function BuildSnapshot()
+    local obj = nil
+    if machine.objectiveCtx then
+        local ctx = machine.objectiveCtx
+        obj = {
+            type     = ctx.template.type,
+            name     = ctx.template.name or "",
+            label    = ctx.def.label or "",
+            progress = math.Clamp(ctx.def.getProgress and ctx.def.getProgress(ctx) or 0, 0, 1),
+            params   = ctx.def.describe and ctx.def.describe(ctx) or nil,
+        }
+    end
+    return {
+        state    = machine.state,
+        endTime  = machine.stateUntil,
+        round    = machine.roundNumber,
+        scores   = machine.scores,
+        winner   = machine.winner,
+        reason   = machine.reason,
+        objective = obj,
+    }
+end
+
+local function BroadcastSnapshot()
+    net.Start(Fireteam.NET.ROUNDS_STATE)
+    net.WriteTable(BuildSnapshot())
+    net.Broadcast()
+    machine.lastBroadcast = CurTime()
+end
+
+-- ═══════════════════════════════════════
+-- 出生点与冻结
+-- ═══════════════════════════════════════
+local function GetFactionSpawns(factionId)
+    local cfg = Fireteam.Rounds.GetPackConfig() or {}
+    if not istable(cfg.spawns) then return {} end
+    local list = cfg.spawns[factionId]
+    return istable(list) and list or {}
+end
+
+--- 从上方找地面（锚点偏移量是示意值，不能假设正好落在地表）
+local function GroundPos(pos)
+    local t = util.TraceLine({
+        start  = pos + Vector(0, 0, 256),
+        endpos = pos - Vector(0, 0, 4096),
+        mask   = MASK_SOLID_BRUSHONLY,
+    })
+    if t.Hit then return t.HitPos + Vector(0, 0, 8) end
+    return pos
+end
+
+--- 把玩家传回阵营出生点（round-robin），无配置则原地不动
+local function TeleportToSpawn(ply)
+    if not IsValid(ply) or not ply:Alive() then return end
+    local faction = Fireteam.Rounds.GetPlayerFaction(ply)
+    if not faction then return end
+
+    local spawns = GetFactionSpawns(faction)
+    if #spawns == 0 then return end
+
+    ply.spawnCursor = ((ply.spawnCursor or 0) % #spawns) + 1
+    local spec = spawns[ply.spawnCursor]
+    local pos = Fireteam.Rounds.ResolvePos(spec.pos or spec)
+    if pos then ply:SetPos(GroundPos(pos)) end
+end
+
+local function SetAllFrozen(frozen)
+    for _, ply in ipairs(player.GetAll()) do
+        if IsValid(ply) then ply:Freeze(frozen) end
+    end
+end
+
+-- ═══════════════════════════════════════
+-- 状态切换
+-- ═══════════════════════════════════════
+local function SetState(newState, duration)
+    local old = machine.state
+    machine.state = newState
+    machine.stateUntil = CurTime() + (duration or 0)
+
+    hook.Run(Fireteam.HOOKS.ROUND_STATE_CHANGED, old, newState, machine.roundNumber)
+    Fireteam.Log.Info("回合", string.format("%s → %s（%.0fs）", tostring(old), tostring(newState), duration or 0))
+    BroadcastSnapshot()
+end
+
+local function PickObjectiveTemplate(roundNumber)
+    local templates = Fireteam.Rounds.GetObjectiveTemplates()
+    if #templates == 0 then return nil end
+    -- 轮转取模板；模板 type 未注册则顺延，全不可用返回 nil
+    for i = 0, #templates - 1 do
+        local t = templates[((roundNumber - 1 + i) % #templates) + 1]
+        if t and t.type and Fireteam.Rounds.Objectives[t.type] then
+            return t
+        end
+    end
+    return nil
+end
+
+local function EnterBriefing(nextRound)
+    if nextRound then machine.roundNumber = machine.roundNumber + 1 end
+
+    -- 复活全员并就位
+    for _, ply in ipairs(player.GetAll()) do
+        if IsValid(ply) then
+            ply:UnSpectate()
+            ply:Spawn()
+            timer.Simple(0.05, function()
+                if IsValid(ply) then TeleportToSpawn(ply) end
+            end)
+        end
+    end
+
+    -- 构建目标实例
+    machine.objectiveCtx = nil
+    local template = PickObjectiveTemplate(math.max(1, machine.roundNumber))
+    if template then
+        local ctx = Fireteam.Rounds.BuildObjectiveContext(template)
+        if ctx then
+            machine.objectiveCtx = ctx
+            if ctx.def.onStart then ctx.def.onStart(ctx) end
+            Fireteam.Log.Info("回合", string.format("第 %d 回合目标: %s", machine.roundNumber, template.type))
+        end
+    else
+        Fireteam.Log.Warn("回合", "设定包未提供可用目标模板，本回合仅计分")
+    end
+
+    SetState(STATE.BRIEFING, Fireteam.Rounds.GetTimings().briefing)
+    timer.Simple(0.1, function() if machine.state == STATE.BRIEFING then SetAllFrozen(true) end end)
+end
+
+local function EnterActive()
+    machine.factionsAtStart = Fireteam.Rounds.GetActiveFactions()
+    SetAllFrozen(false)
+    SetState(STATE.ACTIVE, Fireteam.Rounds.GetTimings().round_time)
+end
+
+--- 结算胜负：目标胜者优先，其次比分，最后平局
+local function EvaluateWinner(objWinner)
+    if objWinner then return objWinner end
+
+    local best, bestScore, tie = nil, -math.huge, false
+    for _, f in ipairs(machine.factionsAtStart) do
+        local s = machine.scores[f] or 0
+        if s > bestScore then
+            best, bestScore, tie = f, s, false
+        elseif s == bestScore then
+            tie = true
+        end
+    end
+    if tie then return nil end
+    return best
+end
+
+local function EndRound(winner, reason)
+    machine.winner = winner
+    machine.reason = reason or ""
+
+    SetAllFrozen(false)
+    hook.Run(Fireteam.HOOKS.ROUND_ENDED, winner, machine.reason, machine.scores)
+    SetState(STATE.ENDED, Fireteam.Rounds.GetTimings().ended)
+end
+
+local function EnterWarmup()
+    machine.roundNumber = 0
+    machine.scores = {}
+    machine.winner = nil
+    machine.reason = ""
+    machine.objectiveCtx = nil
+    SetState(STATE.WARMUP, Fireteam.Rounds.GetTimings().warmup)
+end
+
+local function EnterIdle()
+    machine.state = STATE.IDLE
+    machine.stateUntil = 0
+    machine.objectiveCtx = nil
+    SetAllFrozen(false)
+    BroadcastSnapshot()
+end
+
+-- ═══════════════════════════════════════
+-- 主循环
+-- ═══════════════════════════════════════
+hook.Add("Think", "Fireteam.Rounds.Machine", function()
+    if not Fireteam.Rounds.IsEnabled() then
+        if machine.state ~= STATE.IDLE then EnterIdle() end
+        return
+    elseif machine.state == STATE.IDLE then
+        EnterWarmup()
+        return
+    end
+
+    local now = CurTime()
+
+    -- ACTIVE 阶段推进目标逻辑
+    if machine.state == STATE.ACTIVE and machine.objectiveCtx then
+        local ctx = machine.objectiveCtx
+        ctx.def.think(ctx, FrameTime())
+
+        local done, objWinner = ctx.def.isComplete(ctx)
+        if done then
+            -- 目标完成方加分并直接结算
+            local cfg = Fireteam.Rounds.GetPackConfig() or {}
+            local points = tonumber(cfg.objective_points) or 3
+            if objWinner then
+                machine.scores[objWinner] = (machine.scores[objWinner] or 0) + points
+            end
+            EndRound(EvaluateWinner(objWinner), "objective")
+            return
+        end
+    end
+
+    -- 进度快照节流广播（ACTIVE 每秒一次，其余状态靠转换时广播）
+    if machine.state == STATE.ACTIVE and now - machine.lastBroadcast >= 1 then
+        BroadcastSnapshot()
+    end
+
+    -- 到点转移
+    if now < machine.stateUntil then return end
+
+    if machine.state == STATE.WARMUP then
+        EnterBriefing(true)
+    elseif machine.state == STATE.BRIEFING then
+        EnterActive()
+    elseif machine.state == STATE.ACTIVE then
+        EndRound(EvaluateWinner(nil), "timeout")
+    elseif machine.state == STATE.ENDED then
+        SetState(STATE.INTERMISSION, Fireteam.Rounds.GetTimings().intermission)
+    elseif machine.state == STATE.INTERMISSION then
+        machine.scores = {}
+        machine.winner = nil
+        machine.reason = ""
+        EnterBriefing(true)
+    end
+end)
+
+-- ═══════════════════════════════════════
+-- 计分：击杀（跨阵营）
+-- ═══════════════════════════════════════
+hook.Add("PlayerDeath", "Fireteam.Rounds.KillScore", function(victim, inflictor, attacker)
+    if machine.state ~= STATE.ACTIVE then return end
+    if not IsValid(attacker) or not attacker:IsPlayer() or attacker == victim then return end
+
+    local vf = Fireteam.Rounds.GetPlayerFaction(victim)
+    local af = Fireteam.Rounds.GetPlayerFaction(attacker)
+    if not vf or not af or vf == af then return end
+
+    local cfg = Fireteam.Rounds.GetPackConfig() or {}
+    local killPoints = tonumber(cfg.kill_points) or 1
+    machine.scores[af] = (machine.scores[af] or 0) + killPoints
+
+    -- 分数上限提前结算
+    local limit = tonumber(cfg.score_limit)
+    if limit and machine.scores[af] >= limit then
+        EndRound(EvaluateWinner(nil), "score_limit")
+    end
+end)
+
+-- ═══════════════════════════════════════
+-- 摧毁类目标的伤害归功
+-- ═══════════════════════════════════════
+hook.Add("EntityTakeDamage", "Fireteam.Rounds.DestroyCredit", function(ent, dmginfo)
+    if machine.state ~= STATE.ACTIVE or not machine.objectiveCtx then return end
+    local def = machine.objectiveCtx.def
+    if def.id ~= "destroy_entity" or not def.noteDamage then return end
+
+    local attacker = dmginfo:GetAttacker()
+    if IsValid(attacker) and attacker:IsPlayer() then
+        def.noteDamage(machine.objectiveCtx, ent, attacker)
+    end
+end)
+
+-- ═══════════════════════════════════════
+-- 阵亡管控：ACTIVE/BRIEFING/ENDED 期间禁止自行重生，等下回合
+-- ═══════════════════════════════════════
+hook.Add("PlayerDeathThink", "Fireteam.Rounds.BlockRespawn", function(ply)
+    if machine.state == STATE.ACTIVE
+        or machine.state == STATE.BRIEFING
+        or machine.state == STATE.ENDED then
+        return false
+    end
+end)
+
+-- 简报阶段加入的玩家同样冻结就位
+hook.Add("PlayerInitialSpawn", "Fireteam.Rounds.LateJoiner", function(ply)
+    timer.Simple(1, function()
+        if not IsValid(ply) then return end
+        if machine.state == STATE.BRIEFING then
+            ply:Spawn()
+            timer.Simple(0.05, function()
+                if IsValid(ply) then
+                    TeleportToSpawn(ply)
+                    ply:Freeze(true)
+                end
+            end)
+        end
+    end)
+end)
+
+-- ═══════════════════════════════════════
+-- 设定包切换 / 开局启动
+-- ═══════════════════════════════════════
+hook.Add(Fireteam.HOOKS.SETTING_LOADED, "Fireteam.Rounds.PackReloaded", function()
+    machine.roundNumber = 0
+    if Fireteam.Rounds.IsEnabled() then
+        EnterWarmup()
+    else
+        EnterIdle()
+    end
+end)
+
+hook.Add("InitPostEntity", "Fireteam.Rounds.Boot", function()
+    timer.Simple(5, function()
+        if Fireteam.Rounds.IsEnabled() then EnterWarmup() end
+    end)
+end)
+
+-- ═══════════════════════════════════════
+-- 管理指令（测试与 F10 面板前置）
+-- ═══════════════════════════════════════
+local function AdminAllowed(ply)
+    return not IsValid(ply) or ply:IsAdmin()
+end
+
+concommand.Add("ft_round_state", function(ply)
+    if not AdminAllowed(ply) then return end
+    local msg = string.format("state=%s round=%d until=%.0f scores=%s",
+        machine.state, machine.roundNumber, machine.stateUntil,
+        table.ToString(machine.scores, "scores", "|"))
+    if IsValid(ply) then ply:PrintMessage(HUD_PRINTCONSOLE, msg) else print("[FIRETEAM] " .. msg) end
+end)
+
+concommand.Add("ft_round_next", function(ply)
+    if not AdminAllowed(ply) then return end
+    machine.stateUntil = CurTime() - 1
+end)
+
+concommand.Add("ft_round_end", function(ply, cmd, args)
+    if not AdminAllowed(ply) then return end
+    if machine.state ~= STATE.ACTIVE then return end
+
+    local arg = args[1]
+    local winner
+    if arg == "draw" then
+        winner = nil                          -- 强制平局
+    elseif arg then
+        winner = arg                          -- 强制指定阵营胜
+    else
+        winner = EvaluateWinner(nil)          -- 无参：按当前比分结算
+    end
+    EndRound(winner, "admin")
+end)
+
+Fireteam.Log.Info("回合", "✓ 回合框架服务端已加载")

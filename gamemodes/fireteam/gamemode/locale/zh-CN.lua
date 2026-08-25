@@ -63,5 +63,21 @@ return {
     ui_hint_m_close        = "按 M 关闭地图",
     ui_hint_click_place    = "左键点击放置路点",
     ui_tacmap_scale        = "每格 %d 米",
-    marker_need_squad      = "加入小队后才能放置标记。"
+    marker_need_squad      = "加入小队后才能放置标记。",
+
+    -- 回合系统
+    round_warmup           = "热身阶段",
+    round_briefing         = "任务简报",
+    round_active           = "任务进行中",
+    round_ended            = "回合结束",
+    round_intermission     = "幕间休整",
+    round_victory          = "胜利",
+    round_defeat           = "失败",
+    round_draw             = "平局",
+    round_next_in          = "下一回合 %d 秒后开始",
+    objective_hold_zone    = "占领并守住区域",
+    objective_eliminate    = "歼灭敌方力量",
+    objective_destroy      = "摧毁目标",
+    objective_extract      = "前往区域撤离",
+    objective_unknown      = "未知目标"
 }
