@@ -131,7 +131,7 @@ gmad create -name "FIRETEAM" -out "fireteam.gma"
 [FIRETEAM] ✓ Module loader ready
 [FIRETEAM] ✓ Setting loader ready
 [FIRETEAM] Discovered 8 module(s)
-[FIRETEAM] ✓ Setting pack active: Iron Curtain Edge (v1.0.0)
+[FIRETEAM] ✓ Setting pack active: Iron Curtain: NATO vs Warsaw Pact (v1.1.0)
 [FIRETEAM] ✓ Bootstrap complete
 ```
 
@@ -187,8 +187,10 @@ setting_packs/your_pack/
 
 | ID | 名称 | 时代 | 通讯模型 |
 | --- | --- | --- | --- |
-| coldwar | Iron Curtain Edge | 1968–1985 | 模拟电台 |
+| coldwar | Iron Curtain: NATO vs Warsaw Pact | 1968–1985 | 模拟电台 |
 | _template | 空白模板 | — | — |
+
+coldwar 包内置 9 个现实国家阵营：北约的美国/英国/西德/法国，华约的苏联/东德/波兰/捷克斯洛伐克，以及中立联合国军事观察员。各国独立职业表（华约含政委）、武器与载具池、按语言区分的语音包和侧翼出生带。
 
 ### 自定义设定包
 

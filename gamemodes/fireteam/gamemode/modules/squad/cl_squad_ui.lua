@@ -185,7 +185,7 @@ function Fireteam.Squad.OpenPanel()
         createBtn.DoClick = function()
             net.Start(Fireteam.NET.SQUAD_CREATE)
                 net.WriteString(nameEntry:GetText() or "New Squad")
-                net.WriteString(selectedFaction or "western_alliance")
+                net.WriteString(selectedFaction or firstId or "")
             net.SendToServer()
             squadPanel:Remove()
         end

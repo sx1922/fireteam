@@ -1,12 +1,18 @@
 {
   "id": "coldwar",
-  "name": "Iron Curtain Edge",
-  "version": "1.0.0",
+  "name": "Iron Curtain: NATO vs Warsaw Pact",
+  "version": "1.1.0",
   "author": "FIRETEAM Team",
-  "description": "Default Cold War tactical setting, 1968-1985. NATO vs Warsaw Pact.",
+  "description": "Cold War tactical setting, 1968-1985. Nine playable factions: US, UK, West Germany, France vs USSR, East Germany, Poland, Czechoslovakia, plus UN military observers.",
   "icon": "materials/fireteam/packs/coldwar_icon.png",
 
   "era": { "start": 1968, "end": 1985 },
+
+  "factions": [
+    "usa", "uk", "west_germany", "france",
+    "ussr", "east_germany", "poland", "czechoslovakia",
+    "un_observers"
+  ],
 
   "recommended_addons": [
     { "workshop_id": "000000001", "name": "ARC9 Cold War Weapons", "type": "weapon" },

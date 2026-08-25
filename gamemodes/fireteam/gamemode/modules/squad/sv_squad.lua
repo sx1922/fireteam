@@ -14,10 +14,26 @@ local nextSquadId = 1
 --- @param name string      小队名
 --- @param faction string   阵营 ID
 --- @return table|nil       创建的小队或失败
+--- 默认阵营：当前设定包的第一个阵营（数据驱动，不硬编码）
+local function DefaultFaction()
+    local factions = Fireteam.Setting.GetData and Fireteam.Setting.GetData("factions") or nil
+    if istable(factions) then
+        local id = next(factions)
+        if id then return id end
+    end
+    return "unaffiliated"
+end
+
 function Fireteam.Squad.Create(ply, name, faction)
     if not IsValid(ply) then return nil end
     if Fireteam.Squad.GetPlayerSquad(ply) then
         ply:ChatPrint("[FIRETEAM] You are already in a squad. Leave first.")
+        return nil
+    end
+    -- 阵营必须存在于当前设定包（防伪造 net 消息创建幽灵阵营小队）
+    local packFactions = Fireteam.Setting.GetData and Fireteam.Setting.GetData("factions") or nil
+    if istable(packFactions) and faction and not packFactions[faction] then
+        ply:ChatPrint("[FIRETEAM] Unknown faction.")
         return nil
     end
     -- 用当前存活小队数判断（nextSquadId 只增不减，直接比较会永久锁死）
@@ -29,7 +45,7 @@ function Fireteam.Squad.Create(ply, name, faction)
     local squad = {
         id        = nextSquadId,
         name      = name or ("Squad " .. nextSquadId),
-        faction   = faction or "western_alliance",
+        faction   = faction or DefaultFaction(),
         leader    = ply,
         members   = {},
         state     = Fireteam.Squad.STATE.FORMING,
