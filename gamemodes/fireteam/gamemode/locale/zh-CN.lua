@@ -138,5 +138,20 @@ return {
     ai_filled              = "回合补位：已补充 %d 名 AI 队友。",
     stance_follow          = "跟随",
     stance_hold            = "驻守",
-    stance_goto            = "前往路点"
+    stance_goto            = "前往路点",
+
+    -- 设定包编辑器
+    ui_packeditor_title    = "FIRETEAM — 设定包编辑器",
+    ui_hint_f9_close       = "按 F9 关闭",
+    pe_load                = "载入",
+    pe_export              = "导出",
+    pe_need_admin          = "需要管理员权限。",
+    pe_no_pack             = "服务器未发现任何设定包。",
+    pe_pick_pack_hint      = "在顶栏选择设定包并点击「载入」开始编辑。",
+    pe_pick_color          = "选取颜色",
+    pe_export_ok           = "设定包 '%s' 已导出（%d 个文件）到 garrysmod/data/fireteam_packs/，复制到 setting_packs/ 后生效。",
+    pe_export_fail         = "导出失败：数据无效或写入被拒绝。",
+    pe_sec_meta            = "基础信息（pack.json）",
+    pe_sec_theme           = "HUD 主题（hud_theme.json）",
+    pe_sec_maprules        = "地图规则与回合参数（map_rules）"
 }

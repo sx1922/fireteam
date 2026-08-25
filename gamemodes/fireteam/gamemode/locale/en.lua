@@ -138,5 +138,20 @@ return {
     ai_filled              = "Round fill: %d AI teammate(s) added.",
     stance_follow          = "Follow",
     stance_hold            = "Hold",
-    stance_goto            = "Move to waypoint"
+    stance_goto            = "Move to waypoint",
+
+    -- 设定包编辑器
+    ui_packeditor_title    = "FIRETEAM — Setting Pack Editor",
+    ui_hint_f9_close       = "F9 to close",
+    pe_load                = "Load",
+    pe_export              = "Export",
+    pe_need_admin          = "Admin permission required.",
+    pe_no_pack             = "No setting packs discovered on the server.",
+    pe_pick_pack_hint      = "Pick a pack in the toolbar and press Load to start editing.",
+    pe_pick_color          = "Pick color",
+    pe_export_ok           = "Pack '%s' exported (%d files) to garrysmod/data/fireteam_packs/. Copy into setting_packs/ to activate.",
+    pe_export_fail         = "Export failed: invalid data or write denied.",
+    pe_sec_meta            = "Basics (pack.json)",
+    pe_sec_theme           = "HUD Theme (hud_theme.json)",
+    pe_sec_maprules        = "Map Rules & Round Params (map_rules)"
 }
