@@ -79,5 +79,10 @@ return {
     objective_eliminate    = "歼灭敌方力量",
     objective_destroy      = "摧毁目标",
     objective_extract      = "前往区域撤离",
-    objective_unknown      = "未知目标"
+    objective_unknown      = "未知目标",
+
+    -- 语音氛围
+    voice_status_idle      = "待机",
+    voice_status_tx        = "发送中",
+    voice_status_rx        = "接收中 ×%d"
 }

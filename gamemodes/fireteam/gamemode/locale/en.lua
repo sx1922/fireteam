@@ -79,5 +79,10 @@ return {
     objective_eliminate    = "ELIMINATE HOSTILE FORCES",
     objective_destroy      = "DESTROY THE TARGET",
     objective_extract      = "EXTRACT AT THE ZONE",
-    objective_unknown      = "UNKNOWN OBJECTIVE"
+    objective_unknown      = "UNKNOWN OBJECTIVE",
+
+    -- 语音氛围
+    voice_status_idle      = "STANDBY",
+    voice_status_tx        = "TRANSMITTING",
+    voice_status_rx        = "RECEIVING x%d"
 }

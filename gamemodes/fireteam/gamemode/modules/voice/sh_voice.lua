@@ -4,6 +4,12 @@
 if not Fireteam then Fireteam = {} end
 Fireteam.Voice = Fireteam.Voice or {}
 
+-- 电台氛围音总开关（咔嗒声/静噪底声；客户端渲染，服务端可统一关停）
+Fireteam.Config.Register("voice.ambience", true, {
+    type = "boolean",
+    desc = "Radio squelch clicks and static bed"
+})
+
 -- 频道状态
 Fireteam.Voice.STATE = {
     IDLE        = "idle",
