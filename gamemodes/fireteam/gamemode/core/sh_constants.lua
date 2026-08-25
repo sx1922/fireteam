@@ -126,6 +126,7 @@ Fireteam.NET = {
     VOICE_CHANNEL        = "FT_VoiceChannel",
     HUD_THEME            = "FT_HUDTheme",
     SUPPRESSION_UPDATE   = "FT_SuppressionUpdate",
+    MAP_INFO             = "FT_MapInfo",
 
     -- 双向（同一字符串按 realm 各自收发）
     CLASS_ASSIGN         = "FT_ClassAssign",

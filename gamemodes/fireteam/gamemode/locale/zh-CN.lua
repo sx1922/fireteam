@@ -56,5 +56,12 @@ return {
     ui_join_squad_first    = "请先加入小队再选择职业。",
     ui_abilities           = "能力: %s",
     ui_current             = "当前",
-    ui_hint_esc_close      = "按 ESC 关闭"
+    ui_hint_esc_close      = "按 ESC 关闭",
+
+    -- 战术地图
+    ui_tacmap_title        = "FIRETEAM — 战术地图",
+    ui_hint_m_close        = "按 M 关闭地图",
+    ui_hint_click_place    = "左键点击放置路点",
+    ui_tacmap_scale        = "每格 %d 米",
+    marker_need_squad      = "加入小队后才能放置标记。"
 }

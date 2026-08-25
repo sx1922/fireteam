@@ -56,5 +56,12 @@ return {
     ui_join_squad_first    = "Join a squad first to select a class.",
     ui_abilities           = "Abilities: %s",
     ui_current             = "CURRENT",
-    ui_hint_esc_close      = "ESC to close"
+    ui_hint_esc_close      = "ESC to close",
+
+    -- 战术地图
+    ui_tacmap_title        = "FIRETEAM — Tactical Map",
+    ui_hint_m_close        = "M to close",
+    ui_hint_click_place    = "Left click: place waypoint",
+    ui_tacmap_scale        = "%d m / grid",
+    marker_need_squad      = "Join a squad before placing map markers."
 }

@@ -14,6 +14,11 @@ net.Receive(Fireteam.NET.MARKER_ADD, function()
     cachedMarkers = net.ReadTable()
 end)
 
+--- 客户端标记缓存访问器（战术地图等模块复用）
+function Fireteam.Marker.GetClientMarkers()
+    return cachedMarkers
+end
+
 -- ═══════════════════════════════════════
 -- 3D 标记渲染
 -- ═══════════════════════════════════════
