@@ -176,7 +176,8 @@ Fireteam.HOOKS = {
     AI_DEPLOYED          = "Fireteam.AI.Deployed",
     BOT_KILLED           = "Fireteam.PvE.BotKilled", -- bot, attacker（PvE/队友通用阵亡归功）
     ITEM_USED            = "Fireteam.Inventory.ItemUsed", -- ply, itemId（消耗品成功使用后触发）
-    VITALS_STATE_CHANGED = "Fireteam.Vitals.StateChanged" -- ply, oldState, newState（normal/downed/dead）
+    VITALS_STATE_CHANGED = "Fireteam.Vitals.StateChanged", -- ply, oldState, newState（normal/downed/dead）
+    SCENARIO_CHANGED     = "Fireteam.Rounds.ScenarioChanged" -- newScenarioId（剧本切换确认，下一回合生效）
 }
 
 Fireteam.Log.Info("常量", "✓ 常量已加载 (v" .. Fireteam.VERSION .. ")")

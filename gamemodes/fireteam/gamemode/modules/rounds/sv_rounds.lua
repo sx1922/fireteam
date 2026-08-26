@@ -467,6 +467,7 @@ hook.Add(Fireteam.HOOKS.CONFIG_CHANGED, "Fireteam.Rounds.ScenarioChanged", funct
         Fireteam.Log.Info("回合", string.format("剧本切换: %s → %s（下一回合简报生效）",
             tostring(oldVal), scenario.id))
         BroadcastSnapshot()   -- 让面板/横幅立即反映即将使用的剧本
+        hook.Run(Fireteam.HOOKS.SCENARIO_CHANGED, scenario.id)   -- 第三方定制挂点
     end
 end)
 

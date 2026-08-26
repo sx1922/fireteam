@@ -86,54 +86,194 @@ function Fireteam.Rounds.IsEnabled()
 end
 
 -- ═══════════════════════════════════════
--- 剧本（scenarios）解析
+-- 剧本（scenarios）解析与运行时扩展 API
+-- 设定包数据保持只读：第三方用 RegisterScenario 注册全新剧本，
+-- 或经 Add*/Remove*/Set* 系列在「扩展层」定制既有剧本；
+-- 解析时按 基础(自定义>设定包>隐式单剧本) ← 扩展层 合成出新表，
+-- 重载设定包或调用 ClearScenarioExtensions 即全部还原。
 -- ═══════════════════════════════════════
---- 设定包声明的剧本表 { [id] = { name, name_zh, objectives, spawns, timings? } }
---- 未声明时返回 nil（旧结构走隐式单剧本）
-function Fireteam.Rounds.GetScenarioList()
-    local cfg = Fireteam.Rounds.GetPackConfig()
-    return cfg and istable(cfg.scenarios) and cfg.scenarios or nil
+
+Fireteam.Rounds.CustomScenarios = {}      -- [id] = 完整剧本表（RegisterScenario 写入）
+Fireteam.Rounds.ScenarioExtensions = {}   -- [id] = { objectives, removed, spawns, timings, vitals, pve }
+
+local function ExtFor(id)
+    local ext = Fireteam.Rounds.ScenarioExtensions[id]
+    if not ext then
+        ext = { objectives = {}, removed = {}, spawns = {}, timings = {}, vitals = {}, pve = {} }
+        Fireteam.Rounds.ScenarioExtensions[id] = ext
+    end
+    return ext
 end
 
---- 当前生效剧本：
---- config rounds.scenario 显式指定 > 包 default_scenario > 第一个剧本；
---- 无 scenarios 表时把旧平铺结构包成隐式单剧本（向后兼容，老包零破坏）
-function Fireteam.Rounds.ResolveScenario()
-    local cfg = Fireteam.Rounds.GetPackConfig()
-    if not cfg then return nil end
+--- 浅合并 a←b；两者皆空返回 nil
+local function MergeShallow(a, b)
+    if not istable(a) and not istable(b) then return nil end
+    local out = {}
+    if istable(a) then for k, v in pairs(a) do out[k] = v end end
+    if istable(b) then for k, v in pairs(b) do out[k] = v end end
+    return next(out) and out or nil
+end
 
-    local scenarios = istable(cfg.scenarios) and cfg.scenarios or nil
-    if not scenarios then
-        return {
-            id         = "default",
+--- 合成单个剧本（含扩展层叠加）。总是返回新表，绝不回改数据源。
+function Fireteam.Rounds.GetScenario(id)
+    local cfg = Fireteam.Rounds.GetPackConfig()
+
+    local base
+    if istable(Fireteam.Rounds.CustomScenarios[id]) then
+        base = Fireteam.Rounds.CustomScenarios[id]
+    elseif cfg and istable(cfg.scenarios) then
+        base = istable(cfg.scenarios[id]) and cfg.scenarios[id] or nil
+    elseif cfg and not istable(cfg.scenarios) and id == "default" then
+        -- 旧平铺结构的隐式单剧本（向后兼容，老包零破坏）
+        base = {
             name       = "Default",
             name_zh    = "默认",
             objectives = istable(cfg.objectives) and cfg.objectives or {},
             spawns     = istable(cfg.spawns) and cfg.spawns or {},
-            timings    = nil,
         }
     end
+    if not istable(base) then return nil end
 
-    local want = Fireteam.Config.Get("rounds.scenario")
-    if not (want and want ~= "" and scenarios[want]) then
-        want = nil
-        if cfg.default_scenario and scenarios[cfg.default_scenario] then
-            want = cfg.default_scenario
-        else
-            want = next(scenarios)   -- pairs 顺序不定，但仅作兜底
+    local ext = istable(Fireteam.Rounds.ScenarioExtensions[id])
+        and Fireteam.Rounds.ScenarioExtensions[id] or nil
+
+    -- 目标：base 浅拷贝 → 剔除 removed（按 objective.name 匹配）→ 追加扩展目标
+    local objectives = {}
+    for _, o in ipairs(istable(base.objectives) and base.objectives or {}) do
+        objectives[#objectives + 1] = o
+    end
+    if ext then
+        for i = #objectives, 1, -1 do
+            if ext.removed[objectives[i].name] then table.remove(objectives, i) end
+        end
+        for _, o in ipairs(ext.objectives) do objectives[#objectives + 1] = o end
+    end
+
+    -- 出生点：按阵营拼接数组
+    local spawns = {}
+    for faction, arr in pairs(istable(base.spawns) and base.spawns or {}) do
+        spawns[faction] = {}
+        for _, s in ipairs(arr) do spawns[faction][#spawns[faction] + 1] = s end
+    end
+    if ext then
+        for faction, arr in pairs(ext.spawns) do
+            spawns[faction] = spawns[faction] or {}
+            for _, s in ipairs(arr) do spawns[faction][#spawns[faction] + 1] = s end
         end
     end
 
-    local s = scenarios[want]
-    if not istable(s) then return nil end
     return {
-        id         = want,
-        name       = s.name or want,
-        name_zh    = s.name_zh or s.name or want,
-        objectives = istable(s.objectives) and s.objectives or {},
-        spawns     = istable(s.spawns) and s.spawns or {},
-        timings    = istable(s.timings) and s.timings or nil,
+        id         = id,
+        name       = base.name or id,
+        name_zh    = base.name_zh or base.name or id,
+        objectives = objectives,
+        spawns     = spawns,
+        timings    = MergeShallow(base.timings, ext and ext.timings),
+        vitals     = MergeShallow(base.vitals, ext and ext.vitals),
+        pve        = MergeShallow(base.pve, ext and ext.pve),
     }
+end
+
+--- 可选剧本总表：设定包 scenarios ∪ 自定义注册剧本（同 id 时自定义覆盖）
+--- 全空返回 nil（调用方据此走隐式单剧本）
+function Fireteam.Rounds.GetScenarioList()
+    local out = {}
+    local cfg = Fireteam.Rounds.GetPackConfig()
+    if cfg and istable(cfg.scenarios) then
+        for sid, data in pairs(cfg.scenarios) do out[sid] = data end
+    end
+    for sid, data in pairs(Fireteam.Rounds.CustomScenarios) do out[sid] = data end
+    return next(out) and out or nil
+end
+
+--- 当前生效剧本：config rounds.scenario 显式指定 > 包 default_scenario > 任一可用
+function Fireteam.Rounds.ResolveScenario()
+    local cfg = Fireteam.Rounds.GetPackConfig()
+    if not cfg then return nil end
+
+    local list = Fireteam.Rounds.GetScenarioList()
+    if not list then
+        return Fireteam.Rounds.GetScenario("default")   -- 隐式单剧本（可被扩展层定制）
+    end
+
+    local want = Fireteam.Config.Get("rounds.scenario")
+    if not (want and want ~= "" and list[want]) then
+        if cfg.default_scenario and list[cfg.default_scenario] then
+            want = cfg.default_scenario
+        else
+            want = next(list)   -- pairs 顺序不定，仅作兜底
+        end
+    end
+    return Fireteam.Rounds.GetScenario(want)
+end
+
+-- ─────────────────────────────────────
+-- 第三方扩展入口（用法见 README「剧本扩展 API」）
+-- ─────────────────────────────────────
+
+--- 注册/替换一个完整剧本；id 与内置冲突时覆盖内置。data 由框架引用，注册后勿再原地修改。
+function Fireteam.Rounds.RegisterScenario(id, data)
+    if not isstring(id) or not istable(data) then return false end
+    Fireteam.Rounds.CustomScenarios[id] = data
+    return true
+end
+
+function Fireteam.Rounds.UnregisterScenario(id)
+    local existed = Fireteam.Rounds.CustomScenarios[id] ~= nil
+    Fireteam.Rounds.CustomScenarios[id] = nil
+    return existed
+end
+
+--- 追加一个目标模板到剧本末尾（type 须为 RegisterObjective 已注册类型）
+function Fireteam.Rounds.AddScenarioObjective(scenarioId, objectiveDef)
+    if not istable(objectiveDef) then return false end
+    table.insert(ExtFor(tostring(scenarioId)).objectives, objectiveDef)
+    return true
+end
+
+--- 按 objective.name 从剧本剔除一个目标（不动设定包文件）
+function Fireteam.Rounds.RemoveScenarioObjective(scenarioId, objectiveName)
+    ExtFor(tostring(scenarioId)).removed[tostring(objectiveName)] = true
+    return true
+end
+
+--- 给某阵营追加出生点条目（结构同 map_rules.spawns：{ pos = {...} }）
+function Fireteam.Rounds.AddScenarioSpawn(scenarioId, factionId, spawnEntry)
+    if not istable(spawnEntry) then return false end
+    local ext = ExtFor(tostring(scenarioId))
+    ext.spawns[tostring(factionId)] = ext.spawns[tostring(factionId)] or {}
+    table.insert(ext.spawns[tostring(factionId)], spawnEntry)
+    return true
+end
+
+--- 覆盖节奏参数（warmup/briefing/round_time/ended/intermission，浅合并）
+function Fireteam.Rounds.SetScenarioTimings(scenarioId, timings)
+    if not istable(timings) then return false end
+    local ext = ExtFor(tostring(scenarioId))
+    for k, v in pairs(timings) do ext.timings[k] = v end
+    return true
+end
+
+--- 覆盖体征参数（vitals 三级解析的最上层，如 { bleedout_time = 30 }）
+function Fireteam.Rounds.OverrideScenarioVitals(scenarioId, params)
+    if not istable(params) then return false end
+    local ext = ExtFor(tostring(scenarioId))
+    for k, v in pairs(params) do ext.vitals[k] = v end
+    return true
+end
+
+--- 覆盖 PvE 战役配置（player_factions/ai_factions/ai_behavior/bots_per_faction）
+function Fireteam.Rounds.SetScenarioPvE(scenarioId, pve)
+    if not istable(pve) then return false end
+    local ext = ExtFor(tostring(scenarioId))
+    for k, v in pairs(pve) do ext.pve[k] = v end
+    return true
+end
+
+--- 清空全部自定义剧本与运行时扩展（恢复设定包原样）
+function Fireteam.Rounds.ClearScenarioExtensions()
+    Fireteam.Rounds.CustomScenarios = {}
+    Fireteam.Rounds.ScenarioExtensions = {}
 end
 
 --- 目标模板列表（当前剧本的）

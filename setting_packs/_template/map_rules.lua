@@ -60,6 +60,11 @@ return {
     -- 切换用控制台 ft_scenario <id> 或 F10 管理面板，下一回合简报生效。
     -- 不声明 scenarios 时，下方平铺的 objectives/spawns 作为隐式单剧本照常工作（向后兼容）。
     --
+    -- 运行时扩展（不改本文件）：第三方插件可用 Fireteam.Rounds.RegisterScenario 注册全新剧本，
+    -- 或 AddScenarioObjective / RemoveScenarioObjective / AddScenarioSpawn /
+    -- SetScenarioTimings / OverrideScenarioVitals / SetScenarioPvE 在扩展层定制任意剧本；
+    -- 解析按「基础 ← 扩展层」合成，重载设定包即还原。详见 README「剧本扩展 API」。
+    --
     -- PvE 战役（可选）：剧本内（或 rounds 平铺层）声明 pve 表即定义 AI 阵营，
     --   pve = {
     --       player_factions  = { "faction_a" },  -- 玩家方可选阵营；缺省视为全部阵营归玩家方

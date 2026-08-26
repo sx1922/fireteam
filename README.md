@@ -407,6 +407,37 @@ gamemodes/fireteam/
 - [ ] 回放 / 录像系统
 - [ ] 官方战役设定包（越战 / 海湾 / 现代）
 
+## 剧本扩展 API
+
+第三方插件（`lua/autorun` 脚本、其他 addon）可在**不改设定包文件**的前提下新增或定制剧本。全部为运行时叠加层：解析按「基础（自定义注册 > 设定包 > 隐式单剧本）← 扩展层」合成，重载设定包即还原。
+
+```lua
+-- 注册一个全新剧本（id 与内置冲突时覆盖内置），结构同 map_rules.scenarios 条目
+Fireteam.API.RegisterScenario("night_raid", {
+    name = "Night Raid", name_zh = "夜袭",
+    objectives = { { name = "Radar", name_zh = "摧毁雷达", type = "destroy_entity", ... } },
+    spawns = { usa = { { pos = { anchor = "map_center", offset = { x = -1200, y = 0, z = 0 } } } } },
+    timings = { round_time = 300 },
+    pve = { player_factions = { "usa" }, ai_factions = { "ussr" }, ai_behavior = "defend" },
+})
+
+-- 或在扩展层定制既有剧本（以富尔达缺口为例）
+Fireteam.API.AddScenarioObjective("fulda_gap", { name = "Depot", type = "hold_zone", ... })
+Fireteam.API.RemoveScenarioObjective("fulda_gap", "Kinzig Extraction")  -- 按 objective.name
+Fireteam.API.AddScenarioSpawn("fulda_gap", "usa", { pos = { anchor = "map_center", offset = { x = -1500, y = 200, z = 0 } } })
+Fireteam.API.SetScenarioTimings("fulda_gap", { briefing = 5 })
+Fireteam.API.OverrideScenarioVitals("fulda_gap", { bleedout_time = 30 })   -- vitals 三级解析最上层
+Fireteam.API.SetScenarioPvE("berlin", { ai_behavior = "advance" })
+
+-- 查询与还原
+Fireteam.Rounds.GetScenario("fulda_gap")     -- 合成结果（含扩展层）
+Fireteam.Rounds.ResolveScenario()            -- 当前生效剧本
+hook.Add("Fireteam.Rounds.ScenarioChanged", "myaddon", function(newId) end)
+Fireteam.API.ClearScenarioExtensions()       -- 清空全部运行时定制
+```
+
+切换仍走 `ft_scenario <id>` / F10 面板（自定义剧本会出现在列表中），改动在下一回合简报生效。
+
 ## 贡献指南
 
 1. Fork 本仓库

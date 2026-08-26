@@ -108,6 +108,56 @@ Fireteam.API.Register("Fireteam.API.GetActiveSetting", function()
 end, "Get currently active setting pack metadata",
     {}, { { type = "table|nil" } })
 
+-- 剧本扩展 API（运行时叠加层，不改设定包文件）
+local function R(fn) return Fireteam.Rounds and Fireteam.Rounds[fn] end
+
+Fireteam.API.Register("Fireteam.API.RegisterScenario", function(id, data)
+    return R("RegisterScenario") and Fireteam.Rounds.RegisterScenario(id, data)
+end, "Register a full custom scenario (overrides built-in on id collision)",
+    { { name = "id", type = "string" }, { name = "data", type = "table", desc = "Same shape as map_rules.scenarios entry" } },
+    { { type = "boolean", desc = "Success" } })
+
+Fireteam.API.Register("Fireteam.API.AddScenarioObjective", function(scenarioId, objectiveDef)
+    return R("AddScenarioObjective") and Fireteam.Rounds.AddScenarioObjective(scenarioId, objectiveDef)
+end, "Append an objective template to a scenario",
+    { { name = "scenarioId", type = "string" }, { name = "objectiveDef", type = "table" } },
+    { { type = "boolean" } })
+
+Fireteam.API.Register("Fireteam.API.RemoveScenarioObjective", function(scenarioId, objectiveName)
+    return R("RemoveScenarioObjective") and Fireteam.Rounds.RemoveScenarioObjective(scenarioId, objectiveName)
+end, "Remove an objective (by its name field) from a scenario",
+    { { name = "scenarioId", type = "string" }, { name = "objectiveName", type = "string" } },
+    { { type = "boolean" } })
+
+Fireteam.API.Register("Fireteam.API.AddScenarioSpawn", function(scenarioId, factionId, spawnEntry)
+    return R("AddScenarioSpawn") and Fireteam.Rounds.AddScenarioSpawn(scenarioId, factionId, spawnEntry)
+end, "Append a spawn point entry for a faction",
+    { { name = "scenarioId", type = "string" }, { name = "factionId", type = "string" }, { name = "spawnEntry", type = "table" } },
+    { { type = "boolean" } })
+
+Fireteam.API.Register("Fireteam.API.SetScenarioTimings", function(scenarioId, timings)
+    return R("SetScenarioTimings") and Fireteam.Rounds.SetScenarioTimings(scenarioId, timings)
+end, "Override scenario timing params (shallow merge)",
+    { { name = "scenarioId", type = "string" }, { name = "timings", type = "table" } },
+    { { type = "boolean" } })
+
+Fireteam.API.Register("Fireteam.API.OverrideScenarioVitals", function(scenarioId, params)
+    return R("OverrideScenarioVitals") and Fireteam.Rounds.OverrideScenarioVitals(scenarioId, params)
+end, "Override vitals params for a scenario (top tier of the 3-level resolution)",
+    { { name = "scenarioId", type = "string" }, { name = "params", type = "table" } },
+    { { type = "boolean" } })
+
+Fireteam.API.Register("Fireteam.API.SetScenarioPvE", function(scenarioId, pve)
+    return R("SetScenarioPvE") and Fireteam.Rounds.SetScenarioPvE(scenarioId, pve)
+end, "Override PvE campaign config for a scenario",
+    { { name = "scenarioId", type = "string" }, { name = "pve", type = "table" } },
+    { { type = "boolean" } })
+
+Fireteam.API.Register("Fireteam.API.ClearScenarioExtensions", function()
+    if R("ClearScenarioExtensions") then Fireteam.Rounds.ClearScenarioExtensions() end
+end, "Clear all custom scenarios and runtime extensions (restore pack as-is)",
+    {}, {})
+
 Fireteam.API.Register("Fireteam.API.GetSettingData", function(fileName)
     return Fireteam.Setting.GetData(fileName)
 end, "Get data file from active setting pack",
