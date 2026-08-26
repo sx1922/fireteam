@@ -173,5 +173,12 @@ return {
     vitals_stabilizing     = "Stabilizing %s...",
     vitals_teammate_downed = "%s is down!",
     vitals_teammate_downed_hud = "%s DOWN (%dm)",
-    vitals_revived_chat    = "%s revived %s"
+    vitals_revived_chat    = "%s revived %s",
+
+    -- 弹药 / 补给
+    resupply_loot_ammo     = "Salvaged +%d rounds from the body",
+    resupply_loot_item     = "Salvaged +%d x %s",
+    resupply_reserve_full  = "Reserves already full",
+    resupply_crate_take    = "Reserves replenished (%d uses left)",
+    resupply_crate_spent   = "Ammo crate depleted"
 }

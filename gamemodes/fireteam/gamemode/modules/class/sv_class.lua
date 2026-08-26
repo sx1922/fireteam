@@ -103,6 +103,11 @@ function Fireteam.Class.ApplyLoadout(ply, classData)
             end
         end
     end
+
+    -- 备弹池补满（resupply 模块扩展点，缺模块时静默）
+    if Fireteam.Resupply and Fireteam.Resupply.OnLoadout then
+        Fireteam.Resupply.OnLoadout(ply)
+    end
 end
 
 -- ═══════════════════════════════════════

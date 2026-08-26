@@ -82,6 +82,7 @@ FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
 | Inventory | `modules/inventory/` | 消耗品栏：物品定义数据驱动、职业槽位统一解析（武器优先→物品回落）、手雷投掷物、HUD 芯片栏 |
 | Vitals | `modules/vitals/` | 健康与医疗：部位倍率伤害、出血累积、倒地濒死（稳定/复活/补刀）、体征 HUD |
 | Stamina | `modules/stamina/` | 体力：职业上限冲刺消耗/滞回力竭、移速惩罚、低体力开火抖动 |
+| Resupply | `modules/resupply/` | 弹药与补给：备弹池补满、可放置弹药盒（N 次使用）、尸体搜刮 |
 | Adapters | `modules/adapters/` | ARC9 / TFA / LVS / Simfphys 桥接 |
 
 ## 架构总览
@@ -395,6 +396,7 @@ gamemodes/fireteam/
 - [x] 背包/消耗品系统（P5a：设定包 items.lua 数据驱动、grenade/medical/ammo_belt 槽位真实化、手雷投掷实体、ft_item_<id> 快捷键、主题化消耗品栏）
 - [x] 健康与医疗系统（P5b：头/胸/腹/四肢部位倍率、命中出血累积、Squad 式倒地濒死——队友按 E 稳定、医疗兵持医疗包读条复活、足量补刀终结，真死才计分；参数进 map_rules.vitals 三级解析）
 - [x] 体力系统（P5c：职业 stats.stamina 上限、冲刺消耗/滞回力竭、力竭禁冲刺+移速惩罚+开火视角抖动，数值并入体征快照）
+- [x] 弹药与补给（P5d：loadout 备弹池补满、弹药盒可放置实体（N 次补给后消失）、尸体按 E 搜刮部分备弹/消耗品）
 - [ ] 设定包 Workshop 分发格式
 
 ### 💭 远期愿景 (v1.0)

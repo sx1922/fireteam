@@ -173,5 +173,12 @@ return {
     vitals_stabilizing     = "正在稳定 %s 的伤势……",
     vitals_teammate_downed = "%s 倒地了！",
     vitals_teammate_downed_hud = "%s 倒地（%d 米）",
-    vitals_revived_chat    = "%s 救起了 %s"
+    vitals_revived_chat    = "%s 救起了 %s",
+
+    -- 弹药 / 补给
+    resupply_loot_ammo     = "从遗体搜刮了 +%d 发备弹",
+    resupply_loot_item     = "从遗体搜刮了 +%d 个%s",
+    resupply_reserve_full  = "备弹已满",
+    resupply_crate_take    = "备弹已补满（剩余 %d 次补给）",
+    resupply_crate_spent   = "弹药盒已耗尽"
 }
