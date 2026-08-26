@@ -172,6 +172,10 @@ end
 --- 使用入口（net 与控制台命令共用）
 function Fireteam.Inventory.TryUse(ply, itemId)
     if not IsValid(ply) or not ply:Alive() then return false end
+    -- 倒地状态禁止使用物品（体征系统接管时）
+    if Fireteam.Vitals and Fireteam.Vitals.IsDowned and Fireteam.Vitals.IsDowned(ply) then
+        return false
+    end
     if IsBusy(ply) then return false end
 
     local def = Fireteam.Inventory.GetItemDef(itemId)

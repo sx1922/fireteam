@@ -27,6 +27,25 @@ return {
         }
     },
 
+    -- ══ 健康与医疗参数（可选，vitals 模块消费）══
+    -- 不声明本块时全部走 config 兜底；声明后按 剧本内 vitals > 此处 > config 解析。
+    -- enabled=false 可整体关闭倒地/出血系统（恢复原版即死）。
+    vitals = {
+        enabled           = true,
+        head_mult         = 2.5,    -- 爆头倍率
+        chest_mult        = 1.0,
+        stomach_mult      = 0.85,
+        limb_mult         = 0.6,    -- 四肢减伤
+        max_bleed_stacks  = 5,      -- 出血层数上限
+        bleed_dps_per_stack = 1.2,  -- 每层每秒掉血
+        bleedout_time     = 60,     -- 倒地失血时限（秒）
+        stabilize_time    = 3.5,    -- 队友按 E 稳定读条（秒）
+        revive_time       = 7,      -- 医疗兵持医疗包复活读条（秒，需背包有 medkit）
+        revive_health_frac = 0.4,   -- 复活后回复 HP 比例
+        downed_speed      = 40,     -- 倒地匍匐速度
+        finish_damage     = 25      -- 补刀倒地单位所需单次伤害
+    },
+
     -- ══ 回合制任务数据（rounds 模块消费）══
     -- 位置写法两种：{ x=,y=,z= } 绝对坐标，或
     -- { anchor="map_center"|"nav_random", offset={x=,y=,z=} } 地图相对锚点。

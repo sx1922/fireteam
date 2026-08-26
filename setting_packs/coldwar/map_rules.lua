@@ -84,6 +84,27 @@ return {
         }
     },
 
+    -- ══ 健康与医疗参数（vitals 模块消费）══
+    -- 解析优先级：剧本内 vitals > 本块 > config 兜底。
+    -- 部位倍率作用于受击伤害；出血层数随命中累积，每秒掉血 = 层数 × dps；
+    -- HP 归零转倒地濒死（缴械匍匐），bleedout_time 秒内可被队友稳定/复活，
+    -- 超时或被 ≥finish_damage 的单次伤害补刀才真死。enabled=false 关闭整套系统。
+    vitals = {
+        enabled           = true,
+        head_mult         = 2.5,    -- 爆头倍率
+        chest_mult        = 1.0,
+        stomach_mult      = 0.85,
+        limb_mult         = 0.6,    -- 四肢减伤
+        max_bleed_stacks  = 5,      -- 出血层数上限
+        bleed_dps_per_stack = 1.2,  -- 每层每秒掉血
+        bleedout_time     = 60,     -- 倒地失血时限（秒）
+        stabilize_time    = 3.5,    -- 队友按 E 稳定读条（秒）
+        revive_time       = 7,      -- 医疗兵持医疗包复活读条（秒）
+        revive_health_frac = 0.4,   -- 复活后回复 HP 比例
+        downed_speed      = 40,     -- 倒地匍匐速度
+        finish_damage     = 25      -- 补刀倒地单位所需单次伤害
+    },
+
     -- ══ 回合制任务数据 ══
     -- 目标锚点基于地图中心，与具体国家无关；
     -- 多国会战时按各阵营分别计分与判定。
@@ -202,7 +223,10 @@ return {
                     ai_behavior     = "defend"
                 },
 
-                spawns = spawns_berlin
+                spawns = spawns_berlin,
+
+                -- 剧本级覆盖示例：城市攻坚节奏更快，倒地时限缩短
+                vitals = { bleedout_time = 45 }
             }
         }
     }

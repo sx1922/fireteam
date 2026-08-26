@@ -161,5 +161,17 @@ return {
     item_not_found         = "未知物品",
     item_none_left         = "该物品已用完",
     item_no_effect         = "此物品当前没有可用效果",
-    inventory_bind_hint    = "绑定按键：ft_item_<物品ID>"
+    inventory_bind_hint    = "绑定按键：ft_item_<物品ID>",
+
+    -- 体征 / 倒地救援
+    vitals_downed_self     = "你已倒地",
+    vitals_bleeding        = "出血 x%d —— 需要绷带",
+    vitals_stabilized_tag  = "伤势已稳定 —— 等待医疗兵",
+    vitals_stabilized_self = "你的伤势已被稳定",
+    vitals_being_revived   = "正在被救援……",
+    vitals_reviving        = "正在救援 %s……",
+    vitals_stabilizing     = "正在稳定 %s 的伤势……",
+    vitals_teammate_downed = "%s 倒地了！",
+    vitals_teammate_downed_hud = "%s 倒地（%d 米）",
+    vitals_revived_chat    = "%s 救起了 %s"
 }

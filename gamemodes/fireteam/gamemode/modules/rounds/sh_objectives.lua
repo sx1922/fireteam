@@ -106,6 +106,10 @@ local function AliveCombatants()
     local out = {}
     for _, ply in ipairs(player.GetAll()) do
         if IsValid(ply) and ply:Alive() then
+            -- 倒地单位不计入占区/歼灭判定（仍可被补刀终结）
+            if Fireteam.Vitals and Fireteam.Vitals.IsDowned and Fireteam.Vitals.IsDowned(ply) then
+                continue
+            end
             local f = Fireteam.Rounds.GetPlayerFaction(ply)
             if f then out[#out + 1] = { faction = f, pos = ply:GetPos(), ent = ply } end
         end

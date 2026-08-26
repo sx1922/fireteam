@@ -161,5 +161,17 @@ return {
     item_not_found         = "Unknown item",
     item_none_left         = "None of that item left",
     item_no_effect         = "This item has no use here yet",
-    inventory_bind_hint    = "bind a key: ft_item_<id>"
+    inventory_bind_hint    = "bind a key: ft_item_<id>",
+
+    -- 体征 / 倒地救援
+    vitals_downed_self     = "YOU ARE DOWN",
+    vitals_bleeding        = "BLEEDING x%d - bandage required",
+    vitals_stabilized_tag  = "Stabilized - waiting for a medic",
+    vitals_stabilized_self = "Your wounds have been stabilized",
+    vitals_being_revived   = "Being revived...",
+    vitals_reviving        = "Reviving %s...",
+    vitals_stabilizing     = "Stabilizing %s...",
+    vitals_teammate_downed = "%s is down!",
+    vitals_teammate_downed_hud = "%s DOWN (%dm)",
+    vitals_revived_chat    = "%s revived %s"
 }

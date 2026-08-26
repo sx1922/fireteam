@@ -80,6 +80,7 @@ FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
 | Ballistics | `modules/ballistics/` | 子弹下坠、伤害衰减 |
 | Suppression | `modules/suppression/` | 压制值累积/衰减、视觉效果 |
 | Inventory | `modules/inventory/` | 消耗品栏：物品定义数据驱动、职业槽位统一解析（武器优先→物品回落）、手雷投掷物、HUD 芯片栏 |
+| Vitals | `modules/vitals/` | 健康与医疗：部位倍率伤害、出血累积、倒地濒死（稳定/复活/补刀）、体征 HUD |
 | Adapters | `modules/adapters/` | ARC9 / TFA / LVS / Simfphys 桥接 |
 
 ## 架构总览
@@ -391,6 +392,7 @@ gamemodes/fireteam/
 - [x] 多剧本支持（scenarios 声明式切换，coldwar 内置富尔达缺口 / 西柏林双剧本）
 - [x] PvE 战役模式（管理员 PVP/PVE 切换、AI 敌军阵营推进/驻防、逐关战役进度）
 - [x] 背包/消耗品系统（P5a：设定包 items.lua 数据驱动、grenade/medical/ammo_belt 槽位真实化、手雷投掷实体、ft_item_<id> 快捷键、主题化消耗品栏）
+- [x] 健康与医疗系统（P5b：头/胸/腹/四肢部位倍率、命中出血累积、Squad 式倒地濒死——队友按 E 稳定、医疗兵持医疗包读条复活、足量补刀终结，真死才计分；参数进 map_rules.vitals 三级解析）
 - [ ] 设定包 Workshop 分发格式
 
 ### 💭 远期愿景 (v1.0)
