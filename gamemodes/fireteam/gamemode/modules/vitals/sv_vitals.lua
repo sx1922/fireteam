@@ -18,12 +18,24 @@ local CHANNEL_MOVE  = 60       -- 读条期间允许的最大位移
 -- ─────────────────────────────────────
 
 local function EnsureState(ply)
-    ply.FT_Vitals = ply.FT_Vitals or {
-        state = Fireteam.Vitals.STATE.NORMAL,
-        bleed = 0,
-        stabilized = false,
-    }
-    return ply.FT_Vitals
+    local st = ply.FT_Vitals
+    if not istable(st) then
+        st = {
+            state = Fireteam.Vitals.STATE.NORMAL,
+            bleed = 0,
+            stabilized = false,
+        }
+        ply.FT_Vitals = st
+    end
+    -- 分部位模型字段（旧存档/热升级兼容补齐）
+    if not istable(st.limbs) then st.limbs = Fireteam.Vitals.DefaultLimbs() end
+    if not istable(st.fractures) then st.fractures = {} end
+    st.painkillerUntil = st.painkillerUntil or 0
+    return st
+end
+
+local function LimbsEnabled()
+    return Fireteam.Vitals.GetParam("limbs_enabled") ~= false
 end
 
 function Fireteam.Vitals.GetState(ply)
@@ -50,6 +62,13 @@ local function BroadcastAll()
             }
             if st.state == Fireteam.Vitals.STATE.DOWNED and st.bleedoutEnds then
                 entry.remain = math.max(st.bleedoutEnds - now, 0)
+            end
+            if istable(st.limbs) then
+                entry.limbs = {}
+                for part, hp in pairs(st.limbs) do entry.limbs[part] = hp end
+                entry.fractures = {}
+                for part in pairs(st.fractures or {}) do entry.fractures[part] = true end
+                entry.pain = (st.painkillerUntil or 0) > now
             end
             if Fireteam.Stamina and Fireteam.Stamina.SnapshotEntry then
                 local stam = Fireteam.Stamina.SnapshotEntry(p)
@@ -108,6 +127,46 @@ local function ClassSpeedMult(ply)
     return 1
 end
 
+--- 统一移速结算：倒地 > 力竭 > 腿伤 > 职业倍率。
+--- class.ApplyStats / stamina.ApplySpeedState / 本模块全部收口至此，杜绝互相覆盖。
+function Fireteam.Vitals.RecalcSpeed(ply)
+    if not IsValid(ply) or not ply:Alive() then return end
+    local st = ply.FT_Vitals
+    local mult = ClassSpeedMult(ply)
+
+    if istable(st) and st.state == Fireteam.Vitals.STATE.DOWNED then
+        local spd = tonumber(Fireteam.Vitals.GetParam("downed_speed")) or 40
+        ply:SetWalkSpeed(spd)
+        ply:SetRunSpeed(spd)
+        return
+    end
+
+    -- 腿伤减速（止痛药作用期内屏蔽）
+    local legMult = 1
+    if istable(st) and istable(st.limbs) and LimbsEnabled()
+        and not (st.painkillerUntil and st.painkillerUntil > CurTime()) then
+        local fr = st.fractures or {}
+        local lBad = (st.limbs.l_leg or 1) <= 0 or fr.l_leg == true
+        local rBad = (st.limbs.r_leg or 1) <= 0 or fr.r_leg == true
+        if lBad and rBad then
+            legMult = tonumber(Fireteam.Vitals.GetParam("both_legs_speed_mult")) or 0.35
+        elseif lBad or rBad then
+            legMult = tonumber(Fireteam.Vitals.GetParam("leg_speed_mult")) or 0.55
+        end
+    end
+
+    local walk = BASE_WALK * mult * legMult
+    local run = BASE_RUN * mult * legMult
+
+    -- 力竭：跑=走（等效禁冲刺），与 stamina 滞回规则一致
+    local exhausted = Fireteam.Stamina
+        and Fireteam.Stamina.IsExhausted and Fireteam.Stamina.IsExhausted(ply) or false
+    if exhausted then run = walk end
+
+    ply:SetWalkSpeed(walk)
+    ply:SetRunSpeed(run)
+end
+
 local function EnterDowned(ply, attacker)
     local st = EnsureState(ply)
     if st.state ~= Fireteam.Vitals.STATE.NORMAL then return end
@@ -123,11 +182,9 @@ local function EnterDowned(ply, attacker)
     end
     ply:StripWeapons()
 
-    -- 匍匐机动：压到爬行档（跳力先存待还原；速度基准由职业数据推导）
+    -- 匍匐机动：压到爬行档（跳力先存待还原；速度走统一收口）
     ply.FT_SpeedSave = { jump = ply:GetJumpPower(), mult = ClassSpeedMult(ply) }
-    local spd = tonumber(Fireteam.Vitals.GetParam("downed_speed")) or 40
-    ply:SetWalkSpeed(spd)
-    ply:SetRunSpeed(spd)
+    Fireteam.Vitals.RecalcSpeed(ply)
     ply:SetJumpPower(0)
 
     local vName = ply:Nick()
@@ -167,14 +224,20 @@ local function RevivePlayer(target, healer)
     local frac = tonumber(Fireteam.Vitals.GetParam("revive_health_frac")) or 0.4
     target:SetHealth(math.max(math.floor(maxHp * frac), 1))
 
-    -- 恢复机动力（按职业推导的基准）与武器
+    -- 部位表同步恢复（与复活血量比例一致；骨折清空）
+    if istable(st.limbs) then
+        for part, partMax in pairs(Fireteam.Vitals.LIMBS) do
+            st.limbs[part] = math.max(st.limbs[part] or 0, math.floor(partMax * frac))
+        end
+        st.fractures = {}
+    end
+
+    -- 恢复机动力（统一收口）与武器
     local saved = target.FT_SpeedSave
-    local mult = (istable(saved) and tonumber(saved.mult)) or ClassSpeedMult(target)
-    target:SetWalkSpeed(BASE_WALK * mult)
-    target:SetRunSpeed(BASE_RUN * mult)
     if istable(saved) and tonumber(saved.jump) then
         target:SetJumpPower(tonumber(saved.jump))
     end
+    Fireteam.Vitals.RecalcSpeed(target)
     target.FT_SpeedSave = nil
     if istable(target.FT_DownedWeapons) then
         for _, cls in ipairs(target.FT_DownedWeapons) do
@@ -201,7 +264,7 @@ end
 -- 伤害管线
 -- ─────────────────────────────────────
 
--- 部位倍率 + 出血累积
+-- 部位倍率 + 部位入账 + 出血累积
 hook.Add("ScalePlayerDamage", "Fireteam.Vitals.ScaleDamage", function(ply, hitgroup, dmginfo)
     if not Fireteam.Vitals.IsEnabled() then return end
     local st = EnsureState(ply)   -- 首次受击惰性建档（出生复位后为 nil）
@@ -215,13 +278,33 @@ hook.Add("ScalePlayerDamage", "Fireteam.Vitals.ScaleDamage", function(ply, hitgr
     }
     dmginfo:SetDamage(Fireteam.Vitals.ScaleHitgroupDamage(dmginfo:GetDamage(), hitgroup, mults))
 
+    -- 塔科夫式部位入账：黑部位伤害转移胸腔；头/胸黑 = 部位致死
+    if LimbsEnabled() then
+        local part = Fireteam.Vitals.HitgroupToPart(hitgroup)
+        local died = Fireteam.Vitals.ApplyPartDamage(st.limbs, part, dmginfo:GetDamage())
+        if died then st.bypassDowned = true end
+
+        -- 腿部受击概率骨折；部位打黑强制骨折
+        if part == "l_leg" or part == "r_leg" then
+            local chance = tonumber(Fireteam.Vitals.GetParam("fracture_chance")) or 0
+            if (st.limbs[part] or 0) <= 0 or math.Rand() < chance then
+                st.fractures[part] = true
+            end
+        end
+
+        -- 胃部打黑：出血拉满（持续掉血）
+        if part == "stomach" and (st.limbs.stomach or 0) <= 0 then
+            st.bleed = tonumber(Fireteam.Vitals.GetParam("max_bleed_stacks")) or 5
+        end
+    end
+
     if not dmginfo:IsDamageType(DMG_FALL) and not dmginfo:IsDamageType(DMG_DROWN) then
         st.bleed = Fireteam.Vitals.AddBleedStack(st.bleed, 1,
             tonumber(Fireteam.Vitals.GetParam("max_bleed_stacks")) or 5)
     end
 end)
 
--- 致命伤害拦截：normal→截断留 1 点转倒地；downed→小伤无效，足量补刀放行给引擎
+-- 致命伤害拦截：normal→截断留 1 点转倒地；部位致死→放行；downed→小伤无效，足量补刀放行
 hook.Add("EntityTakeDamage", "Fireteam.Vitals.LethalIntercept", function(ent, dmginfo)
     if not Fireteam.Vitals.IsEnabled() then return end
     if not IsValid(ent) or not ent:IsPlayer() then return end
@@ -230,7 +313,12 @@ hook.Add("EntityTakeDamage", "Fireteam.Vitals.LethalIntercept", function(ent, dm
     local attacker = dmginfo:GetAttacker()
 
     if st.state == Fireteam.Vitals.STATE.NORMAL then
-        if ent:Alive() and ent:Health() - dmginfo:GetDamage() <= 0 then
+        if st.bypassDowned then
+            -- 头/胸部位打黑：跳过倒地，放行致死伤害走引擎击杀
+            st.bypassDowned = nil
+            st.state = Fireteam.Vitals.STATE.DEAD
+            BroadcastAll()
+        elseif ent:Alive() and ent:Health() - dmginfo:GetDamage() <= 0 then
             -- 截断到 1 点血，本帧末转入倒地
             dmginfo:SetDamage(math.max(ent:Health() - 1, 0))
             timer.Simple(0, function()
@@ -400,5 +488,80 @@ end)
 hook.Add("PlayerDisconnected", "Fireteam.Vitals.Cleanup", function(ply)
     ply.FT_Vitals = nil
 end)
+
+-- ─────────────────────────────────────
+-- 医疗品效果（consumable 大类 handler）
+-- bandage 止血 / splint 修骨折黑腿 / analgesic 止痛 / medkit 治部位清出血
+-- ─────────────────────────────────────
+local function RefreshSnapshot()
+    BroadcastAll()
+end
+
+local MEDICAL_ACTIONS = {
+    bandage = function(ply, st)
+        if (st.bleed or 0) <= 0 then
+            ply:ChatPrint("[FIRETEAM] " .. Fireteam.Locale.Get("vitals_no_bleeding"))
+            return false
+        end
+        st.bleed = math.max((st.bleed or 0) - 2, 0)
+        ply:ChatPrint("[FIRETEAM] " .. Fireteam.Locale.Get("vitals_bleed_treated"))
+        RefreshSnapshot()
+        return true
+    end,
+
+    splint = function(ply, st)
+        local fixed = false
+        for part in pairs(st.fractures or {}) do
+            st.fractures[part] = nil
+            fixed = true
+        end
+        for _, part in ipairs({ "l_leg", "r_leg" }) do
+            if istable(st.limbs) and (st.limbs[part] or 0) <= 0 then
+                st.limbs[part] = math.floor((Fireteam.Vitals.LIMBS[part] or 60) * 0.3)
+                fixed = true
+            end
+        end
+        if not fixed then
+            ply:ChatPrint("[FIRETEAM] " .. Fireteam.Locale.Get("vitals_no_fracture"))
+            return false
+        end
+        Fireteam.Vitals.RecalcSpeed(ply)
+        ply:ChatPrint("[FIRETEAM] " .. Fireteam.Locale.Get("vitals_fracture_splinted"))
+        RefreshSnapshot()
+        return true
+    end,
+
+    analgesic = function(ply, st)
+        st.painkillerUntil = CurTime()
+            + (tonumber(Fireteam.Vitals.GetParam("painkiller_time")) or 60)
+        Fireteam.Vitals.RecalcSpeed(ply)
+        ply:ChatPrint("[FIRETEAM] " .. Fireteam.Locale.Get("vitals_painkiller_taken"))
+        RefreshSnapshot()
+        return true
+    end,
+
+    medkit = function(ply, st)
+        local frac = tonumber(Fireteam.Vitals.GetParam("medkit_heal_frac")) or 0.5
+        if istable(st.limbs) then
+            for part, partMax in pairs(Fireteam.Vitals.LIMBS) do
+                st.limbs[part] = math.max(st.limbs[part] or 0, math.floor(partMax * frac))
+            end
+        end
+        st.bleed = 0
+        Fireteam.Vitals.RecalcSpeed(ply)
+        ply:ChatPrint("[FIRETEAM] " .. Fireteam.Locale.Get("vitals_medkit_used"))
+        RefreshSnapshot()
+        return true
+    end,
+}
+
+Fireteam.Inventory.RegisterUseHandler(Fireteam.INVENTORY_CATEGORY.CONSUMABLE,
+    function(ply, itemId)
+        if not Fireteam.Vitals.IsEnabled() then return false end
+        local fn = MEDICAL_ACTIONS[itemId]
+        if not fn then return false end   -- 非医疗消耗品：交回通用无效果提示
+        local st = EnsureState(ply)
+        return fn(ply, st) and true or false
+    end)
 
 Fireteam.Log.Info("体征", "✓ 健康/倒地系统服务端已加载")

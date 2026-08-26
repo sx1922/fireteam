@@ -67,6 +67,30 @@ Fireteam.Config.Register("vitals.finish_damage", 25, {
     type = "number", min = 1, max = 200,
     desc = "Single hit damage that finishes a downed player"
 })
+Fireteam.Config.Register("vitals.limbs_enabled", true, {
+    type = "boolean",
+    desc = "Tarkov-style per-limb HP model (black-limb debuffs / overflow to thorax)"
+})
+Fireteam.Config.Register("vitals.fracture_chance", 0.25, {
+    type = "number", min = 0, max = 1,
+    desc = "Chance of leg fracture when hit (black leg always fractures)"
+})
+Fireteam.Config.Register("vitals.painkiller_time", 60, {
+    type = "number", min = 0, max = 300,
+    desc = "Painkiller duration (seconds) — masks limp and arm sway"
+})
+Fireteam.Config.Register("vitals.leg_speed_mult", 0.55, {
+    type = "number", min = 0.1, max = 1,
+    desc = "Move speed multiplier with one leg black/fractured"
+})
+Fireteam.Config.Register("vitals.both_legs_speed_mult", 0.35, {
+    type = "number", min = 0.1, max = 1,
+    desc = "Move speed multiplier with both legs black/fractured"
+})
+Fireteam.Config.Register("vitals.medkit_heal_frac", 0.5, {
+    type = "number", min = 0.1, max = 1,
+    desc = "Fraction of max limb HP restored by a medkit"
+})
 
 --- 参数解析：剧本 vitals 块 > 包级 vitals 块 > config
 function Fireteam.Vitals.GetParam(name)
@@ -124,6 +148,52 @@ function Fireteam.Vitals.ResolveRescueKind(hasMedkit, targetState, targetStabili
     if hasMedkit then return "revive" end
     if not targetStabilized then return "stabilize" end
     return nil
+end
+
+-- ═══════════════════════════════════════
+-- 塔科夫式七部位模型（部位基础血量；黑部位 debuff，头/胸黑 = 死亡）
+-- ═══════════════════════════════════════
+Fireteam.Vitals.LIMBS = {
+    head    = 35,
+    thorax  = 85,
+    stomach = 70,
+    l_arm   = 60,
+    r_arm   = 60,
+    l_leg   = 65,
+    r_leg   = 65,
+}
+Fireteam.Vitals.LIMB_ORDER = { "head", "thorax", "stomach", "l_arm", "r_arm", "l_leg", "r_leg" }
+
+--- 全新部位血量表（出生/重置用）
+function Fireteam.Vitals.DefaultLimbs()
+    local t = {}
+    for part, hp in pairs(Fireteam.Vitals.LIMBS) do t[part] = hp end
+    return t
+end
+
+--- HITGROUP → 部位 id（CHEST/GENERIC 兜底 thorax）
+function Fireteam.Vitals.HitgroupToPart(hitgroup)
+    if hitgroup == HITGROUP_HEAD then return "head" end
+    if hitgroup == HITGROUP_STOMACH then return "stomach" end
+    if hitgroup == HITGROUP_LEFTARM then return "l_arm" end
+    if hitgroup == HITGROUP_RIGHTARM then return "r_arm" end
+    if hitgroup == HITGROUP_LEFTLEG then return "l_leg" end
+    if hitgroup == HITGROUP_RIGHTLEG then return "r_leg" end
+    return "thorax"
+end
+
+--- 部位伤害入账（就地修改 limbs 表）：
+--- 已黑部位的伤害整笔转移 thorax（塔科夫规则）；
+--- head 或 thorax 归零返回 true（部位致死，跳过倒地）。
+function Fireteam.Vitals.ApplyPartDamage(limbs, part, dmg)
+    dmg = tonumber(dmg) or 0
+    if part ~= "thorax" and (limbs[part] or 0) <= 0 then
+        part = "thorax"
+    end
+    local hp = (limbs[part] or 0) - dmg
+    if hp < 0 then hp = 0 end
+    limbs[part] = hp
+    return (limbs.head or 1) <= 0 or (limbs.thorax or 1) <= 0
 end
 
 print("[FIRETEAM:Vitals] ✓ Shared definitions loaded")

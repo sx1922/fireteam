@@ -72,6 +72,42 @@ hook.Add("HUDPaint", "Fireteam.Vitals.HUD", function()
             TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     end
 
+    -- ═══ 部位状态指示（塔科夫式：黑肢/骨折时显示；elements.limbs 锚点）═══
+    if IsValid(lp) and lp:Alive() and self_ and istable(self_.limbs)
+        and self_.state == "normal" then
+        local L = Fireteam.Locale.Get
+        local badParts = {}
+        for _, part in ipairs(Fireteam.Vitals.LIMB_ORDER or {}) do
+            local hp = tonumber(self_.limbs[part]) or 0
+            local fractured = istable(self_.fractures) and self_.fractures[part] == true
+            if hp <= 0 and part ~= "thorax" and part ~= "head" then
+                badParts[#badParts + 1] = L("vitals_limb_" .. part) .. " "
+                    .. L(fractured and "vitals_limb_black_fractured" or "vitals_limb_black")
+            elseif fractured then
+                badParts[#badParts + 1] = L("vitals_limb_" .. part) .. " "
+                    .. L("vitals_limb_fractured")
+            end
+        end
+
+        if #badParts > 0 then
+            local elem = kit.GetElement("limbs")
+            local lx, ly = kit.ResolveAnchor(elem.position or "left",
+                160, #badParts * 20 + 24)
+            local painMasked = self_.pain and true or false
+            for i, text in ipairs(badParts) do
+                draw.SimpleText(text, kit.Font("small"), lx, ly + (i - 1) * 20,
+                    kit.ColorA("danger", (painMasked and 100 or 230) * kit.EffectsAlpha()),
+                    TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            end
+            if painMasked then
+                draw.SimpleText(Fireteam.Locale.Get("vitals_painkiller_active"),
+                    kit.Font("small"), lx, ly + #badParts * 20,
+                    kit.ColorA("success", 200 * kit.EffectsAlpha()),
+                    TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            end
+        end
+    end
+
     -- ═══ 救援读条（施救者视角）═══
     if IsValid(lp) and lp:Alive() then
         for _, entry in pairs(Fireteam.Vitals.Client) do

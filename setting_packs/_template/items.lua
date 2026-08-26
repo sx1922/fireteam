@@ -23,6 +23,26 @@ return {
             use_time = 2.5
         },
 
+        splint = {
+            name = "Splint",        name_zh = "夹板",
+            category = "consumable",
+            tags = { "medical", "splint" },
+            slots = { "medical" },
+            max_carry = 3,
+            amount_per_slot = 1,
+            use_time = 3.0
+        },
+
+        analgesic = {
+            name = "Painkillers",   name_zh = "止痛药",
+            category = "consumable",
+            tags = { "medical", "painkiller" },
+            slots = { "medical" },
+            max_carry = 3,
+            amount_per_slot = 2,
+            use_time = 1.5
+        },
+
         frag_grenade = {
             name = "Frag Grenade",  name_zh = "破片手雷",
             category = "throwable",

@@ -33,6 +33,12 @@ function Fireteam.Stamina.SnapshotEntry(ply)
     }
 end
 
+--- 力竭查询（vitals.RecalcSpeed 统一速度收口消费）
+function Fireteam.Stamina.IsExhausted(ply)
+    local st = ply.FT_Stamina
+    return istable(st) and st.exhausted == true or false
+end
+
 function Fireteam.Stamina.Reset(ply)
     ply.FT_Stamina = nil
 end
@@ -42,14 +48,19 @@ end
 -- ─────────────────────────────────────
 
 local function ApplySpeedState(ply, st)
-    local mult = Fireteam.Stamina.ClassSpeedMult(ply)
-    if st.exhausted then
-        local low = Fireteam.Stamina.ExhaustSpeedMult()
-        ply:SetWalkSpeed(BASE_WALK * mult * low)
-        ply:SetRunSpeed(BASE_WALK * mult)   -- 跑=走 → 等效禁冲刺
+    -- 速度统一收口到 vitals.RecalcSpeed（叠加腿伤/倒地）；vitals 不可用时回退本模块规则
+    if Fireteam.Vitals and Fireteam.Vitals.RecalcSpeed then
+        Fireteam.Vitals.RecalcSpeed(ply)
     else
-        ply:SetWalkSpeed(BASE_WALK * mult)
-        ply:SetRunSpeed(400 * mult)
+        local mult = Fireteam.Stamina.ClassSpeedMult(ply)
+        if st.exhausted then
+            local low = Fireteam.Stamina.ExhaustSpeedMult()
+            ply:SetWalkSpeed(BASE_WALK * mult * low)
+            ply:SetRunSpeed(BASE_WALK * mult)   -- 跑=走 → 等效禁冲刺
+        else
+            ply:SetWalkSpeed(BASE_WALK * mult)
+            ply:SetRunSpeed(400 * mult)
+        end
     end
     st.applied = st.exhausted
 end

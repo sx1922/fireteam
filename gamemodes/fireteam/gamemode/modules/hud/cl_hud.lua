@@ -64,10 +64,17 @@ end)
 -- ═══════════════════════════════════════
 function Fireteam.HUD.DrawCrosshair(ply, color)
     local cx, cy = ScrW() / 2, ScrH() / 2
-    -- 扩散源：基础 + 移动（蹲姿收敛）+ 压制
+    -- 扩散源：基础 + 移动（蹲姿收敛）+ 压制 + 臂部损伤（塔科夫式，止痛药屏蔽）
     local speed = ply:GetVelocity():Length2D()
     local moveSpread = math.min(speed / 400 * 12, 14)
     if ply:Crouching() then moveSpread = moveSpread * 0.4 end
+    local vt = Fireteam.Vitals and Fireteam.Vitals.Client
+        and Fireteam.Vitals.Client[ply:EntIndex()] or nil
+    if istable(vt) and not vt.pain and istable(vt.limbs) then
+        if (vt.limbs.l_arm or 1) <= 0 or (vt.limbs.r_arm or 1) <= 0 then
+            moveSpread = moveSpread + 10
+        end
+    end
     local gap = 6 + moveSpread + (Fireteam.HUD.SuppressionSpread or 0)
     local len = 8
 

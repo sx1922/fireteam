@@ -50,10 +50,14 @@ function Fireteam.Class.ApplyStats(ply, classData)
 
     local stats = classData.stats
 
-    -- 速度
+    -- 速度（统一经 vitals.RecalcSpeed 收口，叠加力竭/腿伤/倒地状态）
     if stats.speed_mult then
-        ply:SetRunSpeed(400 * stats.speed_mult)
-        ply:SetWalkSpeed(200 * stats.speed_mult)
+        if Fireteam.Vitals and Fireteam.Vitals.RecalcSpeed then
+            Fireteam.Vitals.RecalcSpeed(ply)
+        else
+            ply:SetRunSpeed(400 * stats.speed_mult)
+            ply:SetWalkSpeed(200 * stats.speed_mult)
+        end
     end
 
     -- 护甲
