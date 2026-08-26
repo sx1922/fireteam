@@ -52,32 +52,41 @@ function Fireteam.Voice.GetPlayerChannel(ply)
 end
 
 -- ═══════════════════════════════════════
--- 语音拦截（距离/干扰）
+-- 语音拦截（按说话者频道 kind 分流）
 -- ═══════════════════════════════════════
 hook.Add("PlayerCanHearPlayersVoice", "Fireteam.Voice.DistanceCheck", function(listener, talker)
-    if listener == talker then return true end
+    if listener == talker then return end
 
-    -- 同小队不受距离限制（无线电，受频道范围约束）
-    if Fireteam.Squad.AreInSameSquad(listener, talker) then
-        local channel = Fireteam.Voice.GetPlayerChannel(talker)
-        local channelDef = Fireteam.Voice.GetChannel(channel)
-        local maxRange = channelDef and channelDef.range or 500
-
-        local dist = listener:GetPos():Distance(talker:GetPos())
-        if dist > maxRange then
-            return false, false
-        end
-        return true, false  -- 听到但不 3D
-    end
-
-    -- 非同小队：仅近距离直接通话
-    local directRange = 300
+    local channelId = Fireteam.Voice.GetPlayerChannel(talker)
+    local channelDef = Fireteam.Voice.GetChannel(channelId)
+    local kind = Fireteam.Voice.GetChannelKind(channelId)
     local dist = listener:GetPos():Distance(talker:GetPos())
-    if dist > directRange then
-        return false, false
+
+    -- 地区频道：距离内全员可听，3D 人声
+    if kind == "local" then
+        local maxRange = channelDef and tonumber(channelDef.range)
+            or Fireteam.Config.Get("voice.distance_max") or 800
+        if dist > maxRange then return false, false end
+        return true, true
     end
 
-    return true, true  -- 3D 语音
+    -- 无线电类频道：先按语义筛收听者
+    if kind == "squad" then
+        -- 小队网：仅本小队成员
+        if not Fireteam.Squad.AreInSameSquad(listener, talker) then return false, false end
+    elseif kind == "command" then
+        -- 指挥网：同阵营（发言权限已由 SetChannel 把关）
+        local lf = Fireteam.Rounds.GetPlayerFaction(listener)
+        local tf = Fireteam.Rounds.GetPlayerFaction(talker)
+        if not lf or lf ~= tf then return false, false end
+    end
+    -- kind == "all"（emergency）：全服可收
+
+    local maxRange = channelDef and tonumber(channelDef.range) or 500
+    if maxRange <= 0 then maxRange = math.huge end
+    if dist > maxRange then return false, false end
+
+    return true, false  -- 电台声不做 3D
 end)
 
 -- ═══════════════════════════════════════

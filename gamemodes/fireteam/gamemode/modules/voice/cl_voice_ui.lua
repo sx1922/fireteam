@@ -132,18 +132,19 @@ end)
 -- 通话事件 → 咔嗒声 + 收听名单
 -- ═══════════════════════════════════════
 hook.Add("PlayerStartedVoice", "Fireteam.Voice.TxStart", function(ply)
-    if not AmbienceOn() then return end
     if not IsValid(ply) then return end
 
     if ply == LocalPlayer() then
         selfTalking = true
-        LocalPlayer():EmitSound("Fireteam.Voice.SquelchOn")
+        Fireteam.Voice.Speakers[ply:EntIndex()] = CurTime() + 3600
+        if AmbienceOn() then LocalPlayer():EmitSound("Fireteam.Voice.SquelchOn") end
         return
     end
 
     if IsAudible(ply) then
         transmitters[ply:EntIndex()] = ply
-        LocalPlayer():EmitSound("Fireteam.Voice.SquelchOn")
+        Fireteam.Voice.Speakers[ply:EntIndex()] = CurTime() + 3600
+        if AmbienceOn() then LocalPlayer():EmitSound("Fireteam.Voice.SquelchOn") end
     end
 end)
 
@@ -152,18 +153,60 @@ hook.Add("PlayerEndedVoice", "Fireteam.Voice.TxEnd", function(ply)
 
     if ply == LocalPlayer() then
         selfTalking = false
+        Fireteam.Voice.Speakers[ply:EntIndex()] = CurTime() + 2
         if AmbienceOn() then LocalPlayer():EmitSound("Fireteam.Voice.SquelchOff") end
         return
     end
 
     if transmitters[ply:EntIndex()] then
         transmitters[ply:EntIndex()] = nil
+        Fireteam.Voice.Speakers[ply:EntIndex()] = CurTime() + 2
         if AmbienceOn() then LocalPlayer():EmitSound("Fireteam.Voice.SquelchOff") end
     end
 end)
 
 hook.Add("PlayerDisconnected", "Fireteam.Voice.RxCleanup", function(ply)
     transmitters[ply:EntIndex()] = nil
+    Fireteam.Voice.Speakers[ply:EntIndex()] = nil
+end)
+
+-- ═══════════════════════════════════════
+-- 说话者名牌（屏幕左侧中部：频道色喇叭 + 名字，结束后 2s 淡出）
+-- ═══════════════════════════════════════
+local KIND_COLOR = {
+    ["local"]   = "text",
+    squad       = "primary",
+    command     = "warning",
+    all         = "danger",
+}
+
+hook.Add("HUDPaint", "Fireteam.Voice.SpeakerTags", function()
+    if not Fireteam.Voice.Speakers then return end
+
+    local scale = ScrH() / 1080
+    local lineH = math.Round(24 * scale)
+    local x = kit.MARGIN + math.Round(8 * scale)
+    local y = math.Round(ScrH() * 0.55)
+    local fx = kit.EffectsAlpha()
+
+    for idx, _ in pairs(Fireteam.Voice.Speakers) do
+        local alpha = Fireteam.Voice.GetSpeakerAlpha(idx)
+        local p = alpha > 0 and Entity(idx) or nil
+        if p and IsValid(p) and p:IsPlayer() then
+            local channelId = Fireteam.Voice.GetSpeakerChannel(idx)
+            local kind = Fireteam.Voice.GetChannelKind(channelId)
+            local col = kit.Color(KIND_COLOR[kind] or "primary")
+            local a = math.Round(235 * alpha * fx)
+
+            draw.SimpleText("🔊", kit.Font("small"), x, y,
+                Color(col.r, col.g, col.b, a), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            draw.SimpleText(p:Nick(), kit.Font("small"), x + math.Round(22 * scale), y,
+                Color(col.r, col.g, col.b, a), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            y = y + lineH
+        else
+            Fireteam.Voice.Speakers[idx] = nil
+        end
+    end
 end)
 
 -- ═══════════════════════════════════════
@@ -193,7 +236,12 @@ hook.Add("HUDPaint", "Fireteam.Voice.RadioIndicator", function()
 
     local channelId = Fireteam.Voice.GetClientChannel(me)
     local chDef = Fireteam.Voice.GetChannel(channelId)
-    local label = chDef and chDef.name or channelId
+    local label
+    if chDef then
+        local cv = GetConVar("gmod_language")
+        label = (cv and cv:GetString():sub(1, 2) == "zh" and chDef.name_zh) and chDef.name_zh or chDef.name
+    end
+    label = label or channelId
 
     -- 行 1：频道名 + 伪频率
     draw.SimpleText(label, kit.Font("small"), x + 10 * scale, y + 14 * scale,

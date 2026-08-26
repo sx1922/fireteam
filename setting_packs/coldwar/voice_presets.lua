@@ -22,14 +22,26 @@ return {
     model = "analog_radio",
 
     channels = {
+        ["local"] = {
+            name = "Local",
+            name_zh = "地区频道",
+            kind = "local",
+            range = 800,
+            interference = false,
+            access = "all"
+        },
         squad = {
             name = "Squad Net",
+            name_zh = "小队频道",
+            kind = "squad",
             range = 500,
             interference = true,
             encryption = false
         },
         command = {
             name = "Command Net",
+            name_zh = "指挥频道",
+            kind = "command",
             range = 2000,
             interference = true,
             encryption = true,
@@ -37,6 +49,8 @@ return {
         },
         emergency = {
             name = "Emergency",
+            name_zh = "应急频道",
+            kind = "all",
             range = 1000,
             interference = false,
             access = "all"

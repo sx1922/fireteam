@@ -285,9 +285,20 @@ end)
 | F7 | 打开小队管理面板 |
 | F8 | 打开职业选择面板 |
 | H | 显示/隐藏左下角小队栏（仅影响自己） |
+| V / B / G | 切换语音频道：地区（近距人声）/ 小队 / 指挥 |
 | M | 打开战术地图 |
 | F9 | 设定包编辑器（管理员） |
 | F10 | 管理面板：配置 / 回合控制 / 玩家总览 / 设定包切换（管理员） |
+
+## 语音频道（战术小队式三频道）
+
+| 频道 | 切换键 | 收听范围 |
+| --- | --- | --- |
+| 地区 Local | V | 距离内所有人（3D 人声，`voice.distance_max`） |
+| 小队 Squad | B | 仅本小队成员，频道 range 内 |
+| 指挥 Command | G | 同阵营全部成员（需职业权限：队长/通讯员/政委） |
+
+说话者名牌显示在屏幕左侧（喇叭图标按频道着色：地区白 / 小队绿 / 指挥黄），结束后 2 秒淡出；左下电台指示器显示当前频道名。频道结构由设定包 `voice_presets.lua` 的 `channels` 声明（`kind = local|squad|command|all`），切换键经 `voice.key_local / voice.key_squad / voice.key_command` 配置改绑——若与引擎默认语音键（设置 → 键盘 → 语音）冲突，改绑其一即可。
 
 ## 配置项一览
 
@@ -321,6 +332,9 @@ end)
 | `hud.squad_panel` | boolean | `true` | 左下小队栏总开关（玩家还可用 H 键本地切换） |
 | `hud.show_fps` | boolean | `false` | 左上角 FPS 计数 |
 | `voice.ambience` | boolean | `true` | 电台氛围音（咔嗒/静噪） |
+| `voice.key_local` | string | `V` | 地区频道切换键 |
+| `voice.key_squad` | string | `B` | 小队频道切换键 |
+| `voice.key_command` | string | `G` | 指挥频道切换键 |
 
 ## HUD 布局（战术小队风格）
 
@@ -427,6 +441,7 @@ gamemodes/fireteam/
 - [x] 弹药与补给（P5d：loadout 备弹池补满、弹药盒可放置实体（N 次补给后消失）、尸体按 E 搜刮部分备弹/消耗品）
 - [x] 战术小队风格 HUD 布局（bearing tape 罗盘 / 左下小队栏 / 左上战局块，锚点数据驱动，H 键开关）
 - [x] 中文输入适配（面板热键焦点守卫 + 统一主题输入框）
+- [x] 语音三频道（战术小队式：地区近距人声 / 小队网 / 指挥网，V/B/G 切换、频道色说话者名牌）
 - [ ] 设定包 Workshop 分发格式
 
 ### 💭 远期愿景 (v1.0)
