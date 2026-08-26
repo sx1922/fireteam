@@ -83,6 +83,7 @@ FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
 | Vitals | `modules/vitals/` | 健康与医疗：部位倍率伤害、出血累积、倒地濒死（稳定/复活/补刀）、体征 HUD |
 | Stamina | `modules/stamina/` | 体力：职业上限冲刺消耗/滞回力竭、移速惩罚、低体力开火抖动 |
 | Resupply | `modules/resupply/` | 弹药与补给：备弹池补满、可放置弹药盒（N 次使用）、尸体搜刮 |
+| MainMenu | `modules/mainmenu/` | ESC 主菜单：引擎菜单接管、战局状态、各面板聚合入口 |
 | Adapters | `modules/adapters/` | ARC9 / TFA / LVS / Simfphys 桥接 |
 
 ## 架构总览
@@ -348,6 +349,10 @@ end)
 | `vitals.fracture_chance` | number | `0.25` | 腿部受击骨折概率（打黑必骨折） |
 | `vitals.painkiller_time` | number | `60` | 止痛药持续秒数（屏蔽腿瘸/臂晃） |
 | `vitals.medkit_heal_frac` | number | `0.5` | 医疗包恢复部位血量比例 |
+| `vitals.enabled` | boolean | `true` | 倒地/出血系统总开关（false = 原版即死） |
+| `vitals.bleedout_time` | number | `60` | 倒地失血时限（秒） |
+| `vitals.revive_time` | number | `7` | 医疗兵复活读条（消耗 medkit） |
+| `vitals.finish_damage` | number | `25` | 补刀倒地单位所需单次伤害 |
 
 ## HUD 布局（战术小队风格）
 
@@ -422,6 +427,11 @@ gamemodes/fireteam/
 │   │   ├── seats/                  # 载具座位
 │   │   ├── ai/                     # AI 队友
 │   │   ├── pve/                    # PvE 战役模式
+│   │   ├── inventory/              # 物品 / 网格背包 / 快捷栏
+│   │   ├── vitals/                 # 分部位健康 / 倒地复活
+│   │   ├── stamina/                # 体力
+│   │   ├── resupply/               # 弹药与补给
+│   │   ├── mainmenu/               # ESC 主菜单
 │   │   ├── admin/                  # F10 管理面板
 │   │   ├── packeditor/             # F9 设定包编辑器
 │   │   ├── hud/                    # HUD

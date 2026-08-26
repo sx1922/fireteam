@@ -43,7 +43,17 @@ return {
         revive_time       = 7,      -- 医疗兵持医疗包复活读条（秒，需背包有 medkit）
         revive_health_frac = 0.4,   -- 复活后回复 HP 比例
         downed_speed      = 40,     -- 倒地匍匐速度
-        finish_damage     = 25      -- 补刀倒地单位所需单次伤害
+        finish_damage     = 25,     -- 补刀倒地单位所需单次伤害
+
+        -- ── 塔科夫式七部位模型（P6a）──
+        -- head 35 / thorax 85 / stomach 70 / 双臂 60 / 双腿 65（基础血量，config 可调）。
+        -- 黑部位伤害整笔转移胸腔；头/胸黑=立即死亡（不走倒地）；胃黑=出血拉满；
+        -- 腿黑/骨折=减速；臂黑=开火扩散；医疗品（绷带/夹板/止痛药/医疗包）真实生效。
+        limbs_enabled     = true,
+        fracture_chance   = 0.25,   -- 腿部受击骨折概率（打黑必骨折）
+        painkiller_time   = 60,     -- 止痛药持续秒数（屏蔽腿瘸/臂晃）
+        leg_speed_mult    = 0.55,   -- 单腿黑/骨折移速倍率（双腿 0.35 另有键）
+        medkit_heal_frac  = 0.5     -- 医疗包恢复部位血量比例
     },
 
     -- ══ 回合制任务数据（rounds 模块消费）══
