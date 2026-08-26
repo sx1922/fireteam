@@ -65,7 +65,7 @@ end)
 -- ═══════════════════════════════════════
 hook.Add("PlayerButtonDown", "Fireteam.Marker.PlaceKey", function(ply, button)
     if ply ~= LocalPlayer() then return end
-    if button == KEY_F6 then
+    if button == KEY_F6 and kit.CanTogglePanel() then
         -- 射线检测准星指向位置
         local tr = LocalPlayer():GetEyeTrace()
         local pos = tr.HitPos + tr.HitNormal * 5

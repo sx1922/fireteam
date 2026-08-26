@@ -31,48 +31,67 @@ local function FormatTime(secs)
 end
 
 -- ═══════════════════════════════════════
--- 绘制：顶部横幅
+-- 绘制：左上战局状态块（Squad 式：剧本·状态 / 倒计时 + 比分色点）
+-- 位置由 elements.round_info 决定（默认 top_left）
 -- ═══════════════════════════════════════
 local function DrawBanner(c)
     local scale = ScrH() / 1080
-    local w = math.Round(420 * scale)
-    local x = math.Round(ScrW() / 2 - w / 2)
-    local y = math.Round(8 * scale)
+    local w = math.Round(300 * scale)
 
     local stateKey = STATE_LABEL[c.state]
     if not stateKey then return end
 
-    -- 底板高度按内容动态：状态行 + 计时行 (+ 目标两行)
-    local h = math.Round(58 * scale)
-    local obj = c.objective
-    if c.state == "active" and obj then h = math.Round(92 * scale) end
+    local h = math.Round(56 * scale)
+    if c.state == "active" and c.objective then h = math.Round(88 * scale) end
 
-    Fireteam.UI.DrawPanel(x, y, w, h, { fillAlpha = 180 })
+    local kit = Fireteam.UI
+    local elem = kit.GetElement("round_info")
+    local x, y = kit.ResolveAnchor(elem.position or "top_left", w, h)
 
-    local cx = x + w / 2
-    local cy = y + math.Round(16 * scale)
+    kit.DrawPanel(x, y, w, h, { fillAlpha = 180 })
 
-    -- 状态名 + 剧本名 + 回合号
+    -- 行 1：剧本名 · 状态 · #回合
     local title = L(stateKey)
     local scn = Fireteam.Rounds.GetScenarioName()
     if scn then title = scn .. " · " .. title end
     if c.round > 0 then
         title = string.format("%s · #%d", title, c.round)
     end
-    draw.SimpleText(title, Fireteam.UI.Font("medium"), cx, cy,
-        Fireteam.UI.Color("text"), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-    cy = cy + math.Round(24 * scale)
+    draw.SimpleText(title, kit.Font("medium"),
+        x + math.Round(12 * scale), y + math.Round(14 * scale),
+        kit.Color("text"), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
-    -- 倒计时（等宽字体）
+    -- 行 2：倒计时（左）+ 阵营比分色点（右）
+    local row2Y = y + math.Round(38 * scale)
     local remain = FormatTime(math.max(0, c.endTime - CurTime()))
     local timeColor = "text"
     if c.state == "active" then
         timeColor = (c.endTime - CurTime() < 30) and "danger" or "primary"
     end
-    draw.SimpleText(remain, Fireteam.UI.Font("num"), cx, cy,
-        Fireteam.UI.Color(timeColor), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    draw.SimpleText(remain, kit.Font("num"),
+        x + math.Round(12 * scale), row2Y,
+        kit.Color(timeColor), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
 
-    -- 目标行 + 进度条（仅 ACTIVE）
+    local sorted = {}
+    for fid, sc in pairs(c.scores or {}) do sorted[#sorted + 1] = { id = fid, score = sc } end
+    table.sort(sorted, function(a, b) return a.score > b.score end)
+    local dotX = x + w - math.Round(12 * scale)
+    for _, entry in ipairs(sorted) do
+        local scText = tostring(entry.score)
+        draw.SimpleText(scText, kit.Font("small"), dotX, row2Y,
+            kit.Color("text"), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+        -- 阵营色块
+        local facs = Fireteam.Setting and Fireteam.Setting.GetData("factions") or {}
+        local fdef = facs[entry.id]
+        local fcol = istable(fdef) and istable(fdef.color) and fdef.color or kit.Color("text_muted")
+        local dotW = math.Round(8 * scale)
+        draw.RoundedBox(1, dotX - dotW - 4, row2Y - dotW / 2, dotW, dotW,
+            Color(fcol.r, fcol.g, fcol.b, 235))
+        dotX = dotX - dotW - 4 - math.Round(26 * scale)
+    end
+
+    -- 行 3（仅 ACTIVE）：目标标签 + 进度条
+    local obj = c.objective
     if c.state == "active" and obj then
         local label = L(obj.label ~= "" and obj.label or "objective_unknown")
         local objName = obj.name
@@ -81,11 +100,12 @@ local function DrawBanner(c)
             objName = obj.name_zh
         end
         if objName and objName ~= "" then label = label .. " — " .. objName end
-        draw.SimpleText(label, Fireteam.UI.Font("small"), cx, y + h - math.Round(30 * scale),
-            Fireteam.UI.Color("warning"), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-        Fireteam.UI.DrawProgressBar(
-            x + math.Round(20 * scale), y + h - math.Round(16 * scale),
-            w - math.Round(40 * scale), math.Round(7 * scale),
+        draw.SimpleText(label, kit.Font("small"),
+            x + math.Round(12 * scale), y + h - math.Round(28 * scale),
+            kit.Color("warning"), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+        kit.DrawProgressBar(
+            x + math.Round(12 * scale), y + h - math.Round(14 * scale),
+            w - math.Round(24 * scale), math.Round(7 * scale),
             tonumber(obj.progress) or 0, "marker_objective")
     end
 end

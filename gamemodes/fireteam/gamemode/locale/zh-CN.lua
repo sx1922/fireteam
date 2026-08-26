@@ -118,6 +118,8 @@ return {
     admin_round_state      = "回合状态: %s",
     admin_round_mode       = "模式: %s",
     admin_round_campaign   = "战役进度 第%d/%d关",
+    hud_squad_panel_shown  = "小队栏已显示（按 H 切换）",
+    hud_squad_panel_hidden = "小队栏已隐藏（按 H 切换）",
     admin_round_advance    = "进入下一阶段",
     admin_round_end_score  = "结束回合（按比分结算）",
     admin_round_end_draw   = "强制平局",

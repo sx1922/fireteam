@@ -69,7 +69,7 @@ local function BuildValueRow(scroll, tbl, path, meta)
     local cur = PE.PathGet(tbl, path)
     local row = Row(scroll, path)
 
-    local entry = vgui.Create("DTextEntry", row)
+    local entry = kit.CreateEntry(row)
     entry:Dock(FILL)
     entry:DockMargin(6, 3, 6, 3)
     entry:SetValue(cur ~= nil and tostring(cur) or "")
@@ -173,7 +173,7 @@ local function BuildElementMap(scroll, themeTbl)
         for _, prop in ipairs({ "style", "position", "open_key" }) do
             if el[prop] ~= nil then
                 local row = Row(scroll, prop)
-                local entry = vgui.Create("DTextEntry", row)
+                local entry = kit.CreateEntry(row)
                 entry:Dock(FILL)
                 entry:DockMargin(6, 3, 6, 3)
                 entry:SetValue(tostring(el[prop]))
@@ -302,6 +302,7 @@ end
 hook.Add("PlayerButtonDown", "Fireteam.PackEditor.Toggle", function(ply, btn)
     if ply ~= LocalPlayer() then return end
     if btn ~= KEY_F9 then return end
+    if not kit.CanTogglePanel() then return end
     if not Fireteam.Config.Get("packeditor.enabled") then return end
 
     if IsValid(panel) then

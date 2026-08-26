@@ -39,10 +39,11 @@
   },
 
   "elements": {
-    "compass": { "style": "analog_tape", "position": "top_center" },
+    "compass": { "style": "analog_tape", "position": "bottom_center" },
+    "round_info": { "style": "info_panel", "position": "top_left" },
     "ammo": { "style": "text_block", "position": "bottom_right" },
     "health": { "style": "text_block", "position": "bottom_left" },
-    "squad_status": { "style": "sidebar_list", "position": "left" },
+    "squad_status": { "style": "sidebar_list", "position": "bottom_left" },
     "consumables": { "style": "chip_row", "position": "bottom_center" },
     "stamina": { "style": "bar", "position": "bottom_center" },
     "map": { "style": "paper_fold", "open_key": "M" },

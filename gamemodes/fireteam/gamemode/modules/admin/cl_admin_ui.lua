@@ -87,10 +87,10 @@ local function BuildConfigRow(parent, key, meta)
             Act({ type = "set_config", key = key, value = val })
         end
     elseif meta.type == "number" then
-        editor = vgui.Create("DTextEntry", row)
+        editor = kit.CreateEntry(row)
         editor:SetValue(tostring(meta.value))
     else
-        editor = vgui.Create("DTextEntry", row)
+        editor = kit.CreateEntry(row)
         editor:SetValue(tostring(meta.value))
     end
 
@@ -343,5 +343,6 @@ end
 hook.Add("PlayerButtonDown", "Fireteam.Admin.Toggle", function(ply, button)
     if ply ~= LocalPlayer() then return end
     if button ~= KEY_F10 then return end
+    if not kit.CanTogglePanel() then return end
     Fireteam.Admin.Open()
 end)

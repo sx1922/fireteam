@@ -82,7 +82,7 @@ end
 -- F8 打开职业选择
 hook.Add("PlayerButtonDown", "Fireteam.Class.OpenKey", function(ply, button)
     if ply ~= LocalPlayer() then return end
-    if button == KEY_F8 then
+    if button == KEY_F8 and Fireteam.UI.CanTogglePanel() then
         Fireteam.Class.OpenSelectPanel()
     end
 end)

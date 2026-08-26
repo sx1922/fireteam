@@ -315,7 +315,7 @@ end
 
 hook.Add("PlayerButtonDown", "Fireteam.TacMap.OpenKey", function(ply, button)
     if ply ~= LocalPlayer() then return end
-    if button == GetOpenKey() then
+    if button == GetOpenKey() and Fireteam.UI.CanTogglePanel() then
         Fireteam.TacMap.Toggle()
     end
 end)

@@ -65,6 +65,7 @@ end)
 hook.Add("PlayerButtonDown", "Fireteam.Spectate.Input", function(ply, button)
     if ply ~= LocalPlayer() then return end
     if not Fireteam.Config.Get("spectate.enabled") then return end
+    if not Fireteam.UI.CanTogglePanel() then return end
     if ply:Alive() or ply:GetObserverMode() == OBS_MODE_NONE then return end
 
     if button == MOUSE_LEFT then

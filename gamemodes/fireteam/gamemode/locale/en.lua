@@ -118,6 +118,8 @@ return {
     admin_round_state      = "Round state: %s",
     admin_round_mode       = "Mode: %s",
     admin_round_campaign   = "Campaign stage %d/%d",
+    hud_squad_panel_shown  = "Squad panel shown (H to toggle)",
+    hud_squad_panel_hidden = "Squad panel hidden (H to toggle)",
     admin_round_advance    = "Advance to next phase",
     admin_round_end_score  = "End round (by score)",
     admin_round_end_draw   = "Force draw",

@@ -263,6 +263,34 @@ if CLIENT then
         return label
     end
 
+    --- 键盘焦点守卫：输入框（含中文输入法组合窗口）持有焦点时禁止面板开关热键
+    function kit.CanTogglePanel()
+        return vgui.GetKeyboardFocus() == nil
+    end
+
+    --- 主题化 DTextEntry 工厂：统一字体/配色/聚焦描边（中文输入请走系统输入法）
+    --- @param parent Panel 容器
+    --- @param opts { tall=number, font="body" }
+    function kit.CreateEntry(parent, opts)
+        opts = opts or {}
+        local entry = vgui.Create("DTextEntry", parent)
+        entry:SetTall(opts.tall or 30)
+        entry:SetFont(kit.Font(opts.font or "body"))
+        entry.Paint = function(s, w, h)
+            draw.RoundedBox(4, 0, 0, w, h, kit.ColorA("background", 220))
+            local border = s.HasFocus and "primary" or "border"
+            surface.SetDrawColor(kit.ColorA(border, s.HasFocus and 220 or 170))
+            surface.DrawOutlinedRect(0, 0, w, h, 1)
+            local ph = s.GetPlaceholderText and s:GetPlaceholderText() or nil
+            if ph and ph ~= "" and s:GetText() == "" then
+                draw.SimpleText(ph, kit.Font(opts.font or "body"), 8, h / 2,
+                    kit.ColorA("text_muted", 150), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            end
+            s:DrawTextEntryText(kit.Color("text"), kit.ColorA("primary", 120), kit.Color("primary"))
+        end
+        return entry
+    end
+
     --- 进度条（0~1）
     function kit.DrawProgressBar(x, y, w, h, frac, colorName)
         frac = math.Clamp(frac or 0, 0, 1)

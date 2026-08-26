@@ -7,6 +7,16 @@ Fireteam.HUD = Fireteam.HUD or {}
 -- 当前主题缓存
 Fireteam.HUD.CurrentTheme = nil
 
+-- HUD 显示开关
+Fireteam.Config.Register("hud.squad_panel", true, {
+    type = "boolean",
+    desc = "Squad panel HUD visibility (players can toggle locally with H)"
+})
+Fireteam.Config.Register("hud.show_fps", false, {
+    type = "boolean",
+    desc = "Show FPS counter at top-left corner"
+})
+
 -- 颜色缓存（需在下方闭包之前声明）
 local colorCache = {}
 

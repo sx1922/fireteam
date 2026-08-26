@@ -253,7 +253,9 @@ function Fireteam.Squad.SyncToAll()
                     role  = info.role,
                     class = info.class,
                     ready = info.ready,
-                    alive = ply:Alive()
+                    alive = ply:Alive(),
+                    hp    = ply:Alive() and ply:Health() or 0,
+                    maxhp = math.max(ply:GetMaxHealth(), 1)
                 })
             end
         end

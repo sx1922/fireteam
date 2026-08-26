@@ -46,44 +46,103 @@ function Fireteam.Squad.IsMySquadLeader(squad)
 end
 
 -- ═══════════════════════════════════════
--- HUD 小队状态栏（位置由 elements.squad_status 决定）
+-- HUD 小队状态栏（Squad 风格：编号徽章 + 存活点 + 队长菱形 + 血量条）
+-- 位置由 elements.squad_status 决定；bottom_left 时自动堆叠在血量块上方
 -- ═══════════════════════════════════════
+local squadHUDVisible = true   -- 玩家本地开关（H 键切换）
+
 local function DrawSquadHUD()
+    if not squadHUDVisible then return end
+    if Fireteam.Config.Get("hud.squad_panel") == false then return end
+
     local mySquad = Fireteam.Squad.GetMySquad()
     if not mySquad then return end
 
+    local scale = ScrW() / 1920
     local members = mySquad.members or {}
-    local lineHeight = 24
-    local panelW = math.Round(230 * (ScrW() / 1920))
-    local panelH = lineHeight * (#members + 1) + 20
+    local rowH = math.Round(26 * scale)
+    local panelW = math.Round(252 * scale)
+    local panelH = rowH * #members + math.Round(34 * scale)
+
     local elem = kit.GetElement("squad_status")
-    local x, y = kit.ResolveAnchor(elem.position or "left", panelW, panelH)
+    local posName = elem.position or "bottom_left"
+    local x, y = kit.ResolveAnchor(posName, panelW, panelH)
+    if posName:find("^bottom") then
+        -- 贴底锚点：向上让出自身血量块（78 高）与间距
+        y = y - panelH - math.Round(78 * (ScrH() / 1080)) - math.Round(8 * scale)
+    end
 
-    kit.DrawPanel(x, y, panelW, panelH, { fillAlpha = 180 })
+    kit.DrawPanel(x, y, panelW, panelH, { fillAlpha = 165, borderColor = false })
 
-    -- 小队名
+    -- 标题行：绿色圆形小队编号徽章 + 队名
+    local badgeR = math.Round(10 * scale)
+    local badgeX, badgeY = x + 12 + badgeR, y + math.Round(17 * scale)
+    draw.NoTexture()
+    surface.DrawCircle(badgeX, badgeY, badgeR, kit.Color("success"))
+    draw.SimpleText(tostring(mySquad.id or "?"), kit.Font("small"),
+        badgeX, badgeY, kit.Color("background"), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     draw.SimpleText(mySquad.name or "Squad", kit.Font("medium"),
-        x + 10, y + 10, kit.Color("primary"), TEXT_ALIGN_LEFT)
-    kit.DrawDivider(x + 8, y + 34, panelW - 16)
+        badgeX + badgeR + 8, badgeY, kit.Color("primary"), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+    kit.DrawDivider(x + 8, y + math.Round(30 * scale), panelW - 16)
 
-    -- 成员列表
-    local rowY = y + 42
-    for _, info in ipairs(members) do
-        local colorName = "squad_ally"
-        if info.idx == mySquad.leaderIdx then
-            colorName = "squad_leader"
-        elseif not info.alive then
-            colorName = "danger"
+    -- 成员行
+    local fx = kit.EffectsAlpha()
+    local barW = math.Round(56 * scale)
+    for i, info in ipairs(members) do
+        local rowY = y + math.Round(36 * scale) + (i - 1) * rowH + rowH / 2
+        local isLeader = info.idx == mySquad.leaderIdx
+
+        -- 存活状态圆点（死亡灰暗）
+        draw.NoTexture()
+        surface.DrawCircle(x + 16, rowY, math.Round(4 * scale),
+            info.alive and kit.Color("squad_ally") or kit.Color("text_muted"))
+
+        -- 队长菱形 / 普通成员留空
+        local nameX = x + 26
+        if isLeader then
+            draw.SimpleText("◆", kit.Font("small"), nameX, rowY,
+                kit.ColorA("squad_leader", 240 * fx), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            nameX = nameX + 14
         end
 
-        local prefix = info.idx == mySquad.leaderIdx and "★ " or "   "
-        draw.SimpleText(prefix .. info.name, kit.Font("small"),
-            x + 10, rowY, kit.Color(colorName), TEXT_ALIGN_LEFT)
-        rowY = rowY + lineHeight
+        -- 名字（死亡划暗）
+        local nameCol = isLeader and "squad_leader" or (info.alive and "squad_ally" or "danger")
+        local nameAlpha = info.alive and 235 or 120
+        draw.SimpleText(info.name, kit.Font("small"), nameX, rowY,
+            kit.ColorA(nameCol, nameAlpha * fx), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+        -- 说话喇叭（P5 语音频道接入；当前仅安全探测）
+        local speaking = Fireteam.Voice
+            and Fireteam.Voice.GetSpeakerChannel
+            and Fireteam.Voice.GetSpeakerChannel(info.idx) or nil
+        if speaking then
+            draw.SimpleText("🔊", kit.Font("small"), x + panelW - barW - 22, rowY,
+                kit.ColorA("primary", 240 * fx), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        end
+
+        -- 血量迷你条（右侧）
+        local hpMax = math.max(info.maxhp or 100, 1)
+        local frac = info.alive and math.Clamp((info.hp or 0) / hpMax, 0, 1) or 0
+        local barColor = "squad_ally"
+        if not info.alive then barColor = "text_muted"
+        elseif frac <= 0.3 then barColor = "danger"
+        elseif frac <= 0.6 then barColor = "warning" end
+        kit.DrawProgressBar(x + panelW - 10 - barW, rowY - 3, barW, 6, frac, barColor)
     end
 end
 
 hook.Add("HUDPaint", "Fireteam.Squad.DrawHUD", DrawSquadHUD)
+
+-- H 键：本地开/关小队栏（输入框聚焦时不触发）
+hook.Add("PlayerButtonDown", "Fireteam.Squad.HUDToggle", function(ply, button)
+    if ply ~= LocalPlayer() then return end
+    if button ~= KEY_H then return end
+    if not kit.CanTogglePanel() then return end
+    squadHUDVisible = not squadHUDVisible
+    chat.AddText(kit.Color("primary"), "[FIRETEAM] ",
+        kit.Color("text"),
+        L(squadHUDVisible and "hud_squad_panel_shown" or "hud_squad_panel_hidden"))
+end)
 
 -- ═══════════════════════════════════════
 -- 小队管理面板（按 F7 打开）
@@ -140,7 +199,7 @@ function Fireteam.Squad.OpenPanel()
         nameLabel:Dock(TOP)
         nameLabel:SizeToContentsY()
 
-        local nameEntry = scroll:Add("DTextEntry")
+        local nameEntry = kit.CreateEntry(scroll)
         nameEntry:SetTall(32)
         nameEntry:Dock(TOP)
         nameEntry:SetPlaceholderText(L("ui_squad_name_placeholder"))
@@ -223,10 +282,10 @@ function Fireteam.Squad.OpenPanel()
     end
 end
 
--- F7 打开小队面板
+-- F7 打开小队面板（输入框聚焦时不触发，防中文输入误关）
 hook.Add("PlayerButtonDown", "Fireteam.Squad.OpenKey", function(ply, button)
     if ply ~= LocalPlayer() then return end
-    if button == KEY_F7 then
+    if button == KEY_F7 and kit.CanTogglePanel() then
         Fireteam.Squad.OpenPanel()
     end
 end)
