@@ -40,6 +40,16 @@ return {
     -- 每个剧本可带 timings 短键覆盖（warmup/briefing/round_time/ended/intermission）。
     -- 切换用控制台 ft_scenario <id> 或 F10 管理面板，下一回合简报生效。
     -- 不声明 scenarios 时，下方平铺的 objectives/spawns 作为隐式单剧本照常工作（向后兼容）。
+    --
+    -- PvE 战役（可选）：剧本内（或 rounds 平铺层）声明 pve 表即定义 AI 阵营，
+    --   pve = {
+    --       player_factions  = { "faction_a" },  -- 玩家方可选阵营；缺省视为全部阵营归玩家方
+    --       ai_factions      = { "faction_b" },  -- 简报期生成 AI NextBot 的阵营
+    --       bots_per_faction = 4,                -- 每 AI 阵营 bot 数（缺省读 config pve.bots_per_faction）
+    --       ai_behavior      = "advance",        -- advance 向当前目标推进 | defend 原地驻防
+    --   }
+    -- 管理员用 F10 面板或 ft_mode pvp|pve 切换；PvE 下目标按表顺序逐关推进：
+    -- 过关进入下一关，失败重试本关，通关后回到第 1 关；切换 mode/剧本会重置进度。
     rounds = {
         enabled = false,             -- 模板包默认关闭；启用请改 true 并配置 objectives
         warmup_time = 30,            -- 热身秒数

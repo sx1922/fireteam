@@ -168,7 +168,8 @@ Fireteam.HOOKS = {
     PLAYER_ENTER_VEHICLE = "Fireteam.Seats.Entered",
     PLAYER_EXIT_VEHICLE  = "Fireteam.Seats.Left",
     MARKER_ADDED         = "Fireteam.Marker.Added",
-    AI_DEPLOYED          = "Fireteam.AI.Deployed"
+    AI_DEPLOYED          = "Fireteam.AI.Deployed",
+    BOT_KILLED           = "Fireteam.PvE.BotKilled"  -- bot, attacker（PvE/队友通用阵亡归功）
 }
 
 Fireteam.Log.Info("常量", "✓ 常量已加载 (v" .. Fireteam.VERSION .. ")")

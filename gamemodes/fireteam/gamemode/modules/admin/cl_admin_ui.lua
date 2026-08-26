@@ -149,7 +149,7 @@ local function BuildRoundsTab(content)
     local rs = (state and state.rounds) or {}
     local wrap = vgui.Create("DPanel", content)
     wrap:Dock(TOP)
-    wrap:SetTall(120)
+    wrap:SetTall(150)
     wrap.Paint = nil
 
     local info = vgui.Create("DLabel", wrap)
@@ -158,6 +158,18 @@ local function BuildRoundsTab(content)
     info:DockMargin(8, 6, 8, 10)
     kit.StyleLabel(info, { font = "medium" })
     info:SetText(L("admin_round_state", tostring(rs.state or "-")))
+
+    -- 模式与战役进度（PvE 时附第 X/Y 关）
+    local modeLine = vgui.Create("DLabel", wrap)
+    modeLine:SetText("")
+    modeLine:Dock(TOP)
+    modeLine:DockMargin(8, 0, 8, 6)
+    kit.StyleLabel(modeLine, { font = "small", color = "text_muted" })
+    local modeText = string.upper(tostring(rs.mode or "pvp"))
+    if istable(rs.campaign) and rs.campaign.total then
+        modeText = modeText .. " · " .. L("admin_round_campaign", rs.campaign.stage or 1, rs.campaign.total)
+    end
+    modeLine:SetText(L("admin_round_mode", modeText))
 
     local btnNext = vgui.Create("DButton", wrap)
     btnNext:SetText("")

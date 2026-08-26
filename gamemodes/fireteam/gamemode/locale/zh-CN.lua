@@ -116,6 +116,8 @@ return {
     admin_apply            = "应用",
     admin_reset            = "重置为默认值",
     admin_round_state      = "回合状态: %s",
+    admin_round_mode       = "模式: %s",
+    admin_round_campaign   = "战役进度 第%d/%d关",
     admin_round_advance    = "进入下一阶段",
     admin_round_end_score  = "结束回合（按比分结算）",
     admin_round_end_draw   = "强制平局",

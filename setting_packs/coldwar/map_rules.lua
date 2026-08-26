@@ -142,6 +142,13 @@ return {
                     }
                 },
 
+                -- PvE 战役：玩家执北约守方，华约四国由 AI 沿走廊推进（管理员 ft_mode pve 启用）
+                pve = {
+                    player_factions = { "usa", "uk", "west_germany", "france" },
+                    ai_factions     = { "ussr", "east_germany", "poland", "czechoslovakia" },
+                    ai_behavior     = "advance"
+                },
+
                 spawns = spawns_fulda
             },
 
@@ -186,6 +193,13 @@ return {
                         name_zh = "驻军最后抵抗",
                         type = "eliminate"
                     }
+                },
+
+                -- PvE 战役：玩家执华约攻方，三国守军由 AI 固守中央防区
+                pve = {
+                    player_factions = { "ussr", "east_germany" },
+                    ai_factions     = { "usa", "uk", "france" },
+                    ai_behavior     = "defend"
                 },
 
                 spawns = spawns_berlin

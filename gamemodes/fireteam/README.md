@@ -73,6 +73,7 @@ FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
 | Spectate | `modules/spectate/` | 阵亡旁观队友（第一/第三/自由视角）、回合联动 |
 | Seats | `modules/seats/` | 载具座位职业门槛、上车提示、车载电台 |
 | AI | `modules/ai/` | NextBot AI 队友：跟随/驻守/交战、回合补位 |
+| PvE | `modules/pve/` | PvE 战役模式：AI 敌军阵营生成、推进/驻防行为、战役关卡机 |
 | Admin | `modules/admin/` | F10 管理面板：配置 / 回合控制 / 玩家总览 / 设定包切换 |
 | PackEditor | `modules/packeditor/` | F9 设定包可视化编辑（schema 表单）、JSON 导出 |
 | HUD | `modules/hud/` | 准星、弹药、生命、指南针、特效 |
@@ -166,6 +167,10 @@ ft_round_end [阵营|draw]  # 结束回合，缺省按比分结算
 ft_scenario            # 列出当前设定包的可用剧本
 ft_scenario berlin     # 切换到指定剧本（也可在 F10 配置页修改 rounds.scenario）
 
+# 模式切换（PvP 对战 / PvE 战役，下一回合生效）
+ft_mode                # 查看当前模式与用法
+ft_mode pve            # 切到 PvE 战役；ft_mode pvp 切回 PvP
+
 # AI 队友
 ft_ai_add [数量]        # 部署 AI 队友（需在小队中）
 ft_ai_remove           # 回收全部 AI 队友
@@ -212,6 +217,8 @@ coldwar 包内置 8 个现实国家阵营：北约的美国/英国/西德/法国
 
 - **fulda_gap 富尔达缺口**（默认）——北约西翼防御带对华约东翼突击轴的全线会战。目标轮转：阿尔法点哨所占区 → 巴特黑斯费尔德中继站摧毁 → 金齐希河谷撤离 → 福格尔斯贝格背水一战。
 - **berlin 西柏林之战**——美英法三国守军紧凑中央防区，西德远郊解围，苏军/东德东弧主攻、波/捷第二梯队。城市攻坚节奏更快（简报 8s / 回合 7min）。目标轮转：查理检查站突破 → 瘫痪守军通讯 → 滕珀尔霍夫空运撤出 → 驻军最后抵抗。
+
+两个剧本均内置 PvE 战役配置（剧本内 `pve` 表）：管理员 `ft_mode pve` 切换后，玩家方执攻/守一侧，其余阵营由 AI NextBot 驱动——富尔达缺口为北约守方对抗华约四国推进，西柏林为苏/东德攻方对抗三国驻军固防。PvE 下目标按表顺序逐关推进（过关进下一关、失败重试本关、通关后回到第 1 关），进度显示在 F10 回合页。
 
 旧版平铺 `objectives`/`spawns` 结构仍受支持：不声明 `scenarios` 表时作为隐式单剧本照常运行。
 
@@ -293,6 +300,9 @@ end)
 | `squad.friendly_fire` | boolean | `false` | 友军伤害 |
 | `rounds.enabled` | boolean | `true` | 回合系统总开关（仍需设定包提供任务数据） |
 | `rounds.scenario` | string | `""` | 剧本选择（空 = 按设定包 default_scenario；下一回合简报生效） |
+| `rounds.mode` | string | `pvp` | 对战模式：`pvp` 玩家对战 / `pve` PvE 战役（F10 下拉或 ft_mode） |
+| `pve.bots_per_faction` | number | `4` | PvE 每 AI 阵营 bot 数 |
+| `pve.max_bots` | number | `24` | PvE 场上 AI bot 总数上限 |
 | `tacmap.enabled` | boolean | `true` | 战术地图（M 键） |
 | `tacmap.grid_step` | number | `1024` | 地图网格步长（世界单位） |
 | `tacmap.allow_click_place` | boolean | `true` | 点击地图放置路点 |
@@ -333,6 +343,7 @@ gamemodes/fireteam/
 │   │   ├── spectate/               # 观察者模式
 │   │   ├── seats/                  # 载具座位
 │   │   ├── ai/                     # AI 队友
+│   │   ├── pve/                    # PvE 战役模式
 │   │   ├── admin/                  # F10 管理面板
 │   │   ├── packeditor/             # F9 设定包编辑器
 │   │   ├── hud/                    # HUD
@@ -376,6 +387,8 @@ gamemodes/fireteam/
 - [x] 语音电台氛围音（通话咔嗒 / 静噪底声 / 干扰衰减，原始语音流受引擎边界不可截获）
 - [x] 载具座位交互（E 键提示 / 职业门槛座位 / 车载电台）
 - [x] 管理面板（F10，配置 / 回合控制 / 玩家总览 / 设定包切换）
+- [x] 多剧本支持（scenarios 声明式切换，coldwar 内置富尔达缺口 / 西柏林双剧本）
+- [x] PvE 战役模式（管理员 PVP/PVE 切换、AI 敌军阵营推进/驻防、逐关战役进度）
 - [ ] 设定包 Workshop 分发格式
 
 ### 💭 远期愿景 (v1.0)

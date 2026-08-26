@@ -39,6 +39,14 @@ Fireteam.Config.Register("rounds.scenario", "", {
     desc = "Scenario override (empty = pack default)"
 })
 
+-- 对战模式：pvp 全员玩家对峙；pve 由设定包 pve 配置生成 AI 阵营
+-- options 枚举使 F10 配置页自动渲染下拉框
+Fireteam.Config.Register("rounds.mode", "pvp", {
+    type    = "string",
+    options = { "pvp", "pve" },
+    desc    = "PvP or PvE campaign mode"
+})
+
 -- ═══════════════════════════════════════
 -- 设定包读取
 -- ═══════════════════════════════════════
@@ -145,17 +153,39 @@ function Fireteam.Rounds.GetPlayerFaction(ply)
     return squad and squad.faction or nil
 end
 
---- 本局参战阵营列表（有存活/在场玩家的 factions）
+--- 本局参战阵营列表（有存活/在场玩家的 factions + PvE AI 阵营）
 function Fireteam.Rounds.GetActiveFactions()
     local set = {}
     for _, ply in ipairs(player.GetAll()) do
         local f = Fireteam.Rounds.GetPlayerFaction(ply)
         if f then set[f] = true end
     end
+    -- PvE AI 阵营即使没有人类玩家也计入参战方
+    if SERVER and Fireteam.PvE then
+        for _, f in ipairs(Fireteam.PvE.GetAIFactions()) do
+            set[f] = true
+        end
+    end
     local out = {}
     for f in pairs(set) do out[#out + 1] = f end
     table.sort(out)
     return out
+end
+
+--- 实体阵营：玩家走小队；ft_bot_teammate 走显式/主人阵营。非战斗单位返回 nil
+function Fireteam.Rounds.GetEntityFaction(ent)
+    if not IsValid(ent) then return nil end
+    if ent:IsPlayer() then return Fireteam.Rounds.GetPlayerFaction(ent) end
+    if ent.GetFaction then return ent:GetFaction() end
+    return nil
+end
+
+--- 当前剧本下某阵营的出生点列表（供 PvE 生成等复用）
+function Fireteam.Rounds.GetScenarioSpawns(factionId)
+    local scenario = Fireteam.Rounds.ResolveScenario()
+    if not scenario or not istable(scenario.spawns) then return {} end
+    local list = scenario.spawns[factionId]
+    return istable(list) and list or {}
 end
 
 print("[FIRETEAM:Rounds] ✓ Shared definitions loaded")

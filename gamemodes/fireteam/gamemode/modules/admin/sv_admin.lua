@@ -36,11 +36,20 @@ local function BuildState()
         roundState = Fireteam.Rounds.GetState()
     end
 
+    local modeInfo = {}
+    if Fireteam.Rounds and Fireteam.Rounds.GetModeInfo then
+        modeInfo = Fireteam.Rounds.GetModeInfo()
+    end
+
     return {
         configs    = Fireteam.Config.DescribeAll(),
         packs      = packs,
         activePack = Fireteam.Setting.GetActiveId(),
-        rounds     = { state = roundState },
+        rounds     = {
+            state    = roundState,
+            mode     = modeInfo.mode or "pvp",
+            campaign = modeInfo.campaign,
+        },
         players    = players,
     }
 end

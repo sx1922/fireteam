@@ -32,6 +32,9 @@ function ENT:Initialize()
     self.loco:SetDeceleration(600)
 
     self.FT_Owner        = nil
+    self.FT_Faction      = nil    -- 显式阵营（PvE 自主单位）；nil 时跟随主人小队
+    self.FT_HoldFire     = false  -- true 时禁止索敌（简报冻结期）
+    self.FT_Dying        = false
     self.FT_Stance       = "follow"
     self.FT_PrevStance   = "follow"
     self.FT_HoldPos      = nil
@@ -48,6 +51,11 @@ end
 --- 绑定主人（sv_ai 在 Spawn 后调用）
 function ENT:Bind(ply)
     self.FT_Owner = ply
+end
+
+--- 设定显式阵营（PvE 自主单位）；设定后不再跟随任何主人
+function ENT:SetCombatFaction(factionId)
+    self.FT_Faction = factionId
 end
 
 function ENT:GetStance()
@@ -85,10 +93,11 @@ end
 -- 阵营 / 索敌
 -- ═══════════════════════════════════════
 function ENT:GetFaction()
+    if self.FT_Faction then return self.FT_Faction end
     return Fireteam.AI.GetPlayerFaction(self.FT_Owner)
 end
 
---- 视线可达（忽略自身；目标恒为玩家）
+--- 视线可达（忽略自身）
 function ENT:HasLOS(target)
     local tr = util.TraceLine({
         start  = self:EyePos(),
@@ -99,8 +108,15 @@ function ENT:HasLOS(target)
     return not tr.Hit or tr.Entity == target
 end
 
---- 最近的可交战敌方玩家；无阵营定义（无小队/回合）时永不索敌
+--- 目标是否已丧失战斗力（玩家死亡 / bot 阵亡标记）
+local function IsCombatDead(ent)
+    if ent:IsPlayer() then return not ent:Alive() end
+    return ent.FT_Dying == true
+end
+
+--- 最近的可交战敌方单位（玩家与同类 bot 均在候选内）；无阵营定义时永不索敌
 function ENT:FindEnemy()
+    if self.FT_HoldFire then return nil end
     if CurTime() < self.FT_NextScan then
         return IsValid(self.FT_Target) and self.FT_Target or nil
     end
@@ -111,17 +127,28 @@ function ENT:FindEnemy()
 
     local range = Fireteam.Config.Get("ai.acquire_range") or 1200
     local best, bestDist = nil, range * range
-    for _, p in ipairs(player.GetAll()) do
-        if p:IsPlayer() and p:Alive() and p:GetObserverMode() == OBS_MODE_NONE then
-            local f = Fireteam.AI.GetPlayerFaction(p)
-            if f and f ~= myFaction then
-                local d = self:GetPos():DistToSqr(p:GetPos())
-                if d < bestDist and self:HasLOS(p) then
-                    best, bestDist = p, d
-                end
-            end
+    local myPos = self:GetPos()
+
+    local function consider(ent, faction)
+        if not faction or faction == myFaction then return end
+        if IsCombatDead(ent) then return end
+        local d = myPos:DistToSqr(ent:GetPos())
+        if d < bestDist and self:HasLOS(ent) then
+            best, bestDist = ent, d
         end
     end
+
+    for _, p in ipairs(player.GetAll()) do
+        if p:Alive() and p:GetObserverMode() == OBS_MODE_NONE then
+            consider(p, Fireteam.AI.GetPlayerFaction(p))
+        end
+    end
+    for _, b in ipairs(ents.FindByClass("ft_bot_teammate")) do
+        if b ~= self and IsValid(b) and not b.FT_Dying then
+            consider(b, b:GetFaction())
+        end
+    end
+
     self.FT_Target = best
     if best then self.FT_LastSeen = CurTime() end
     return best
@@ -157,7 +184,7 @@ function ENT:Engage(enemy)
     self:StartActivity(ACT_IDLE)
 
     while true do
-        if not IsValid(enemy) or not enemy:Alive() then return end
+        if not IsValid(enemy) or IsCombatDead(enemy) then return end
         if CurTime() - self.FT_LastSeen > 4 then return end
 
         local range = (Fireteam.Config.Get("ai.acquire_range") or 1200) * 1.25
@@ -246,17 +273,27 @@ end
 -- ═══════════════════════════════════════
 function ENT:OnTakeDamage(dmginfo)
     local attacker = dmginfo:GetAttacker()
-    -- 友军伤害遵循 squad.friendly_fire 开关
-    if attacker:IsPlayer() and attacker ~= self.FT_Owner then
-        local myF = self:GetFaction()
-        local atkF = Fireteam.AI.GetPlayerFaction(attacker)
-        if myF and atkF == myF and not (Fireteam.Config.Get("squad.friendly_fire")) then
-            dmginfo:SetDamage(0)
-            return
+
+    -- 攻击方阵营（玩家走小队；同类 bot 走自身阵营）
+    local atkF = nil
+    if IsValid(attacker) then
+        if attacker:IsPlayer() then
+            atkF = Fireteam.AI.GetPlayerFaction(attacker)
+        elseif attacker.GetFaction then
+            atkF = attacker:GetFaction()
         end
     end
+
+    -- 友军伤害遵循 squad.friendly_fire 开关（主人除外）
+    local myF = self:GetFaction()
+    if myF and atkF == myF and attacker ~= self.FT_Owner
+        and not Fireteam.Config.Get("squad.friendly_fire") then
+        dmginfo:SetDamage(0)
+        return
+    end
+
     -- 受击立即转向还击（下个 think 生效）
-    if attacker:IsPlayer() and dmginfo:GetDamage() > 0 then
+    if atkF and dmginfo:GetDamage() > 0 and not self.FT_HoldFire then
         self.FT_Target   = attacker
         self.FT_LastSeen = CurTime()
         self.FT_NextScan = CurTime() + 0.5
@@ -264,6 +301,9 @@ function ENT:OnTakeDamage(dmginfo)
 end
 
 function ENT:OnKilled(dmginfo)
+    self.FT_Dying = true
+    local attacker = IsValid(dmginfo) and dmginfo:GetAttacker() or nil
+    hook.Run(Fireteam.HOOKS.BOT_KILLED, self, attacker)
     self:BecomeRagdoll(dmginfo)
 end
 

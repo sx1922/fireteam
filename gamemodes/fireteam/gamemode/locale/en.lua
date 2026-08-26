@@ -116,6 +116,8 @@ return {
     admin_apply            = "Apply",
     admin_reset            = "Reset to default",
     admin_round_state      = "Round state: %s",
+    admin_round_mode       = "Mode: %s",
+    admin_round_campaign   = "Campaign stage %d/%d",
     admin_round_advance    = "Advance to next phase",
     admin_round_end_score  = "End round (by score)",
     admin_round_end_draw   = "Force draw",

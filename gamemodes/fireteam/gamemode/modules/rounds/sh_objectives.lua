@@ -99,17 +99,34 @@ function Fireteam.Rounds.ResolvePos(spec)
 end
 
 -- ═══════════════════════════════════════
--- 内部工具：统计区域内各阵营人数
+-- 内部工具：存活战斗单位（玩家 + ft_bot 系列 NextBot）
+-- 目标判定与占区计数对两者一视同仁——PvE 的 AI 阵营由此进入目标逻辑
 -- ═══════════════════════════════════════
-local function CountFactionInZone(zonePos, radius)
-    local byFaction = {}
-    local r2 = radius * radius
+local function AliveCombatants()
+    local out = {}
     for _, ply in ipairs(player.GetAll()) do
         if IsValid(ply) and ply:Alive() then
             local f = Fireteam.Rounds.GetPlayerFaction(ply)
-            if f and zonePos:DistToSqr(ply:GetPos()) <= r2 then
-                byFaction[f] = (byFaction[f] or 0) + 1
+            if f then out[#out + 1] = { faction = f, pos = ply:GetPos(), ent = ply } end
+        end
+    end
+    if SERVER then
+        for _, b in ipairs(ents.FindByClass("ft_bot_teammate")) do
+            if IsValid(b) and not b.FT_Dying and b.GetFaction then
+                local f = b:GetFaction()
+                if f then out[#out + 1] = { faction = f, pos = b:GetPos(), ent = b } end
             end
+        end
+    end
+    return out
+end
+
+local function CountFactionInZone(zonePos, radius)
+    local byFaction = {}
+    local r2 = radius * radius
+    for _, c in ipairs(AliveCombatants()) do
+        if zonePos:DistToSqr(c.pos) <= r2 then
+            byFaction[c.faction] = (byFaction[c.faction] or 0) + 1
         end
     end
     return byFaction
@@ -197,11 +214,8 @@ Fireteam.Rounds.RegisterObjective("eliminate", {
     isComplete = function(ctx)
         local startList = ctx.data.factionsAtStart or {}
         local alive = {}
-        for _, ply in ipairs(player.GetAll()) do
-            if IsValid(ply) and ply:Alive() then
-                local f = Fireteam.Rounds.GetPlayerFaction(ply)
-                if f then alive[f] = true end
-            end
+        for _, c in ipairs(AliveCombatants()) do
+            alive[c.faction] = true
         end
         local standing, lastFaction = 0, nil
         for _, f in ipairs(startList) do
@@ -216,16 +230,18 @@ Fireteam.Rounds.RegisterObjective("eliminate", {
     end,
 
     getProgress = function(ctx)
-        -- 存活比例近似歼灭进度
-        local total, aliveN = 0, 0
-        for _, ply in ipairs(player.GetAll()) do
-            if Fireteam.Rounds.GetPlayerFaction(ply) then
-                total = total + 1
-                if IsValid(ply) and ply:Alive() then aliveN = aliveN + 1 end
-            end
+        -- 歼灭进度 ≈ 已失去战斗力的参战方占比（与 isComplete 同一口径）
+        local startList = ctx.data.factionsAtStart or {}
+        if #startList == 0 then return 0 end
+        local alive = {}
+        for _, c in ipairs(AliveCombatants()) do
+            alive[c.faction] = true
         end
-        if total == 0 then return 0 end
-        return 1 - aliveN / total
+        local standing = 0
+        for _, f in ipairs(startList) do
+            if alive[f] then standing = standing + 1 end
+        end
+        return 1 - standing / #startList
     end,
 })
 
@@ -275,13 +291,15 @@ Fireteam.Rounds.RegisterObjective("destroy_entity", {
         end
     end,
 
-    --- 由服务端伤害事件调用：记录对目标的最后伤害方
+    --- 由服务端伤害事件调用：记录对目标的最后伤害方（玩家或 bot）
     noteDamage = function(ctx, ent, attacker)
         if not ctx.data.targets or #ctx.data.targets == 0 then return end
+        local f = Fireteam.Rounds.GetEntityFaction(attacker)
+        if not f then return end
         for _, tgt in ipairs(ctx.data.targets) do
-            if tgt == ent and attacker then
-                local f = Fireteam.Rounds.GetPlayerFaction(attacker)
-                if f then ctx.data.lastAttacker = f end
+            if tgt == ent then
+                ctx.data.lastAttacker = f
+                return
             end
         end
     end,

@@ -46,6 +46,8 @@ local function BuildSnapshot()
             name    = scenario.name,
             name_zh = scenario.name_zh,
         } or nil,
+        mode     = Fireteam.Config.Get("rounds.mode") or "pvp",
+        campaign = Fireteam.PvE and Fireteam.PvE.GetCampaignInfo() or nil,
     }
 end
 
@@ -101,6 +103,9 @@ end
 -- ═══════════════════════════════════════
 -- 状态切换
 -- ═══════════════════════════════════════
+-- 前置声明：击杀归功在其定义之前即需引用
+local EndRound, EvaluateWinner
+
 local function SetState(newState, duration)
     local old = machine.state
     machine.state = newState
@@ -111,9 +116,33 @@ local function SetState(newState, duration)
     BroadcastSnapshot()
 end
 
+--- 击杀归功：af 阵营 +kill_points，达分数上限提前结算
+local function AddKillPoints(af)
+    local cfg = Fireteam.Rounds.GetPackConfig() or {}
+    local killPoints = tonumber(cfg.kill_points) or 1
+    machine.scores[af] = (machine.scores[af] or 0) + killPoints
+
+    local limit = tonumber(cfg.score_limit)
+    if limit and machine.scores[af] >= limit then
+        EndRound(EvaluateWinner(nil), "score_limit")
+    end
+end
+
 local function PickObjectiveTemplate(roundNumber)
     local templates = Fireteam.Rounds.GetObjectiveTemplates()
     if #templates == 0 then return nil end
+
+    -- PvE 战役：按关卡顺序取目标（关卡推进由 pve 模块在回合结算时管理）
+    if (Fireteam.Config.Get("rounds.mode") or "pvp") == "pve"
+        and Fireteam.PvE and Fireteam.PvE.GetCurrentStageIndex then
+        local idx = math.Clamp(Fireteam.PvE.GetCurrentStageIndex(), 1, #templates)
+        local t = templates[idx]
+        if t and t.type and Fireteam.Rounds.Objectives[t.type] then
+            return t
+        end
+        return nil
+    end
+
     -- 轮转取模板；模板 type 未注册则顺延，全不可用返回 nil
     for i = 0, #templates - 1 do
         local t = templates[((roundNumber - 1 + i) % #templates) + 1]
@@ -126,6 +155,9 @@ end
 
 local function EnterBriefing(nextRound)
     if nextRound then machine.roundNumber = machine.roundNumber + 1 end
+
+    -- PvE：先布设 AI 单位再构建目标——eliminate 的参战方快照必须包含 AI 阵营
+    if Fireteam.PvE then Fireteam.PvE.OnEnterBriefing() end
 
     -- 复活全员并就位
     for _, ply in ipairs(player.GetAll()) do
@@ -158,12 +190,13 @@ end
 
 local function EnterActive()
     machine.factionsAtStart = Fireteam.Rounds.GetActiveFactions()
+    if Fireteam.PvE then Fireteam.PvE.OnEnterActive() end
     SetAllFrozen(false)
     SetState(STATE.ACTIVE, Fireteam.Rounds.GetTimings().round_time)
 end
 
 --- 结算胜负：目标胜者优先，其次比分，最后平局
-local function EvaluateWinner(objWinner)
+function EvaluateWinner(objWinner)
     if objWinner then return objWinner end
 
     local best, bestScore, tie = nil, -math.huge, false
@@ -179,9 +212,12 @@ local function EvaluateWinner(objWinner)
     return best
 end
 
-local function EndRound(winner, reason)
+function EndRound(winner, reason)
     machine.winner = winner
     machine.reason = reason or ""
+
+    -- PvE：战役关卡推进/重试与 AI 单位清理由 pve 模块接管
+    if Fireteam.PvE then Fireteam.PvE.OnRoundEnded(winner, reason) end
 
     SetAllFrozen(false)
     hook.Run(Fireteam.HOOKS.ROUND_ENDED, winner, machine.reason, machine.scores)
@@ -201,6 +237,7 @@ local function EnterIdle()
     machine.state = STATE.IDLE
     machine.stateUntil = 0
     machine.objectiveCtx = nil
+    if Fireteam.PvE then Fireteam.PvE.OnRoundEnded(nil, "idle") end
     SetAllFrozen(false)
     BroadcastSnapshot()
 end
@@ -262,29 +299,32 @@ hook.Add("Think", "Fireteam.Rounds.Machine", function()
 end)
 
 -- ═══════════════════════════════════════
--- 计分：击杀（跨阵营）
+-- 计分：击杀（跨阵营；攻击方为玩家或 AI bot 均可归功）
 -- ═══════════════════════════════════════
 hook.Add("PlayerDeath", "Fireteam.Rounds.KillScore", function(victim, inflictor, attacker)
     if machine.state ~= STATE.ACTIVE then return end
-    if not IsValid(attacker) or not attacker:IsPlayer() or attacker == victim then return end
+    if not IsValid(attacker) or attacker == victim then return end
 
     local vf = Fireteam.Rounds.GetPlayerFaction(victim)
-    local af = Fireteam.Rounds.GetPlayerFaction(attacker)
+    local af = Fireteam.Rounds.GetEntityFaction(attacker)
     if not vf or not af or vf == af then return end
 
-    local cfg = Fireteam.Rounds.GetPackConfig() or {}
-    local killPoints = tonumber(cfg.kill_points) or 1
-    machine.scores[af] = (machine.scores[af] or 0) + killPoints
+    AddKillPoints(af)
+end)
 
-    -- 分数上限提前结算
-    local limit = tonumber(cfg.score_limit)
-    if limit and machine.scores[af] >= limit then
-        EndRound(EvaluateWinner(nil), "score_limit")
-    end
+hook.Add(Fireteam.HOOKS.BOT_KILLED, "Fireteam.Rounds.BotKilledScore", function(bot, attacker)
+    if machine.state ~= STATE.ACTIVE then return end
+    if not IsValid(attacker) or attacker == bot then return end
+
+    local vf = Fireteam.Rounds.GetEntityFaction(bot)
+    local af = Fireteam.Rounds.GetEntityFaction(attacker)
+    if not vf or not af or vf == af then return end
+
+    AddKillPoints(af)
 end)
 
 -- ═══════════════════════════════════════
--- 摧毁类目标的伤害归功
+-- 摧毁类目标的伤害归功（玩家与 AI bot 均可记功）
 -- ═══════════════════════════════════════
 hook.Add("EntityTakeDamage", "Fireteam.Rounds.DestroyCredit", function(ent, dmginfo)
     if machine.state ~= STATE.ACTIVE or not machine.objectiveCtx then return end
@@ -292,7 +332,7 @@ hook.Add("EntityTakeDamage", "Fireteam.Rounds.DestroyCredit", function(ent, dmgi
     if def.id ~= "destroy_entity" or not def.noteDamage then return end
 
     local attacker = dmginfo:GetAttacker()
-    if IsValid(attacker) and attacker:IsPlayer() then
+    if IsValid(attacker) and Fireteam.Rounds.GetEntityFaction(attacker) then
         def.noteDamage(machine.objectiveCtx, ent, attacker)
     end
 end)
@@ -337,6 +377,25 @@ function Fireteam.Rounds.GetState()
     return machine.state
 end
 
+--- 模式信息（管理面板 / 调试）：当前模式 + 战役进度
+function Fireteam.Rounds.GetModeInfo()
+    return {
+        mode     = Fireteam.Config.Get("rounds.mode") or "pvp",
+        campaign = Fireteam.PvE and Fireteam.PvE.GetCampaignInfo() or nil,
+    }
+end
+
+--- 当前目标的锚点位置（PvE advance 行为的推进目的地）；无目标或无位置返回 nil
+function Fireteam.Rounds.GetObjectivePos()
+    local ctx = machine.objectiveCtx
+    if not ctx or not ctx.def.describe then return nil end
+    local params = ctx.def.describe(ctx)
+    if istable(params) and istable(params.pos) and params.pos.x and params.pos.y then
+        return Vector(tonumber(params.pos.x), tonumber(params.pos.y), tonumber(params.pos.z) or 0)
+    end
+    return nil
+end
+
 --- 管理接口：立即触发到点转移（供 F10 面板复用）
 function Fireteam.Rounds.AdminAdvance()
     machine.stateUntil = CurTime() - 1
@@ -362,6 +421,7 @@ end
 -- ═══════════════════════════════════════
 hook.Add(Fireteam.HOOKS.SETTING_LOADED, "Fireteam.Rounds.PackReloaded", function()
     machine.roundNumber = 0
+    if Fireteam.PvE then Fireteam.PvE.OnPackChanged() end
     if Fireteam.Rounds.IsEnabled() then
         EnterWarmup()
     else
@@ -444,6 +504,21 @@ end)
 concommand.Add("ft_round_end", function(ply, cmd, args)
     if not AdminAllowed(ply) then return end
     Fireteam.Rounds.AdminEnd(args[1])
+end)
+
+concommand.Add("ft_mode", function(ply, cmd, args)
+    if not AdminAllowed(ply) then return end
+
+    local want = args[1]
+    if not want then
+        local msg = string.format("mode=%s（用法: ft_mode pvp|pve）",
+            tostring(Fireteam.Config.Get("rounds.mode")))
+        if IsValid(ply) then ply:PrintMessage(HUD_PRINTCONSOLE, msg) else print("[FIRETEAM] " .. msg) end
+        return
+    end
+
+    if want ~= "pvp" and want ~= "pve" then return end
+    Fireteam.Config.Set("rounds.mode", want)
 end)
 
 Fireteam.Log.Info("回合", "✓ 回合框架服务端已加载")
