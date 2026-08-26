@@ -22,6 +22,7 @@ Fireteam.SETTING_DATA_FILES = {
     "factions",
     "classes",
     "weapons",
+    "items",
     "vehicles",
     "voice_presets",
     "map_rules"
@@ -131,6 +132,8 @@ Fireteam.NET = {
     SEAT_UPDATE          = "FT_SeatUpdate",
     ADMIN_STATE          = "FT_AdminState",
     PACK_EDITOR_DATA     = "FT_PackEditorData",
+    INVENTORY_SYNC       = "FT_InventorySync",
+    VITALS_UPDATE        = "FT_VitalsUpdate",
 
     -- 双向（同一字符串按 realm 各自收发）
     CLASS_ASSIGN         = "FT_ClassAssign",
@@ -146,7 +149,9 @@ Fireteam.NET = {
     SPECTATE_CONTROL     = "FT_SpecControl",
     ADMIN_ACTION         = "FT_AdminAction",
     PACK_EDITOR_PULL     = "FT_PackEditorPull",
-    PACK_EDITOR_EXPORT   = "FT_PackEditorExport"
+    PACK_EDITOR_EXPORT   = "FT_PackEditorExport",
+    ITEM_USE             = "FT_ItemUse",
+    REVIVE_ACTION        = "FT_ReviveAction"
 }
 
 -- ═══════════════════════════════════════
@@ -169,7 +174,9 @@ Fireteam.HOOKS = {
     PLAYER_EXIT_VEHICLE  = "Fireteam.Seats.Left",
     MARKER_ADDED         = "Fireteam.Marker.Added",
     AI_DEPLOYED          = "Fireteam.AI.Deployed",
-    BOT_KILLED           = "Fireteam.PvE.BotKilled"  -- bot, attacker（PvE/队友通用阵亡归功）
+    BOT_KILLED           = "Fireteam.PvE.BotKilled", -- bot, attacker（PvE/队友通用阵亡归功）
+    ITEM_USED            = "Fireteam.Inventory.ItemUsed", -- ply, itemId（消耗品成功使用后触发）
+    VITALS_STATE_CHANGED = "Fireteam.Vitals.StateChanged" -- ply, oldState, newState（normal/downed/dead）
 }
 
 Fireteam.Log.Info("常量", "✓ 常量已加载 (v" .. Fireteam.VERSION .. ")")

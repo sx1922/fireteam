@@ -95,6 +95,17 @@ end
 local function ValidateAssets(meta, data)
     local warnings = {}
 
+    -- 物品可服务的槽位集合（grenade/medical/ammo_belt 等非武器槽不算缺口）
+    local itemSlots = {}
+    local itemDefs = istable(data.items) and data.items or nil
+    if istable(itemDefs) then
+        for _, def in pairs(itemDefs) do
+            if istable(def.slots) then
+                for _, slotName in ipairs(def.slots) do itemSlots[slotName] = true end
+            end
+        end
+    end
+
     -- 检查武器 Tag 是否有匹配
     if data.weapons and data.classes then
         local allWeapons = Fireteam.WeaponInterface.GetAll and Fireteam.WeaponInterface.GetAll() or {}
@@ -112,7 +123,7 @@ local function ValidateAssets(meta, data)
                             end
                             if hasAll then matchCount = matchCount + 1 end
                         end
-                        if matchCount == 0 then
+                        if matchCount == 0 and not itemSlots[slotName] then
                             table.insert(warnings,
                                 string.format("Class '%s' slot '%s': no weapons match tags [%s]",
                                     classId, slotName, table.concat(slotDef.tags, ", ")))

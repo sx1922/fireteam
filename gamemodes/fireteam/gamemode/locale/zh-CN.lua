@@ -155,5 +155,11 @@ return {
     pe_export_fail         = "导出失败：数据无效或写入被拒绝。",
     pe_sec_meta            = "基础信息（pack.json）",
     pe_sec_theme           = "HUD 主题（hud_theme.json）",
-    pe_sec_maprules        = "地图规则与回合参数（map_rules）"
+    pe_sec_maprules        = "地图规则与回合参数（map_rules）",
+
+    -- 背包 / 消耗品
+    item_not_found         = "未知物品",
+    item_none_left         = "该物品已用完",
+    item_no_effect         = "此物品当前没有可用效果",
+    inventory_bind_hint    = "绑定按键：ft_item_<物品ID>"
 }

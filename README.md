@@ -79,6 +79,7 @@ FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
 | HUD | `modules/hud/` | 准星、弹药、生命、指南针、特效 |
 | Ballistics | `modules/ballistics/` | 子弹下坠、伤害衰减 |
 | Suppression | `modules/suppression/` | 压制值累积/衰减、视觉效果 |
+| Inventory | `modules/inventory/` | 消耗品栏：物品定义数据驱动、职业槽位统一解析（武器优先→物品回落）、手雷投掷物、HUD 芯片栏 |
 | Adapters | `modules/adapters/` | ARC9 / TFA / LVS / Simfphys 桥接 |
 
 ## 架构总览
@@ -389,6 +390,7 @@ gamemodes/fireteam/
 - [x] 管理面板（F10，配置 / 回合控制 / 玩家总览 / 设定包切换）
 - [x] 多剧本支持（scenarios 声明式切换，coldwar 内置富尔达缺口 / 西柏林双剧本）
 - [x] PvE 战役模式（管理员 PVP/PVE 切换、AI 敌军阵营推进/驻防、逐关战役进度）
+- [x] 背包/消耗品系统（P5a：设定包 items.lua 数据驱动、grenade/medical/ammo_belt 槽位真实化、手雷投掷实体、ft_item_<id> 快捷键、主题化消耗品栏）
 - [ ] 设定包 Workshop 分发格式
 
 ### 💭 远期愿景 (v1.0)

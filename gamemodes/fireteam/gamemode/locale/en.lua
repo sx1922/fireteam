@@ -155,5 +155,11 @@ return {
     pe_export_fail         = "Export failed: invalid data or write denied.",
     pe_sec_meta            = "Basics (pack.json)",
     pe_sec_theme           = "HUD Theme (hud_theme.json)",
-    pe_sec_maprules        = "Map Rules & Round Params (map_rules)"
+    pe_sec_maprules        = "Map Rules & Round Params (map_rules)",
+
+    -- 背包 / 消耗品
+    item_not_found         = "Unknown item",
+    item_none_left         = "None of that item left",
+    item_no_effect         = "This item has no use here yet",
+    inventory_bind_hint    = "bind a key: ft_item_<id>"
 }

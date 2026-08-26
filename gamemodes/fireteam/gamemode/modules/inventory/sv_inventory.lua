@@ -1,0 +1,219 @@
+-- modules/inventory/sv_inventory.lua
+-- FIRETEAM Consumable/Inventory System - Server Logic
+
+if not Fireteam then Fireteam = {} end
+Fireteam.Inventory = Fireteam.Inventory or {}
+
+local THROW_COOLDOWN = 1.0   -- 投掷物最短间隔（秒）
+
+local SendSnapshot   -- 前向声明：Reset/Set/Add 在定义之前就会调用
+
+-- ─────────────────────────────────────
+-- 玩家物品状态
+-- 状态本体挂在玩家实体上（ply.FT_Items），
+-- 与回合/重生生命周期对齐：每次 ApplyLoadout 前重置。
+-- ─────────────────────────────────────
+
+function Fireteam.Inventory.Reset(ply)
+    ply.FT_Items = {}
+    SendSnapshot(ply)
+end
+
+function Fireteam.Inventory.Get(ply, itemId)
+    return (istable(ply.FT_Items) and ply.FT_Items[itemId]) or 0
+end
+
+--- 全量快照副本
+function Fireteam.Inventory.GetAll(ply)
+    local out = {}
+    if istable(ply.FT_Items) then
+        for id, count in pairs(ply.FT_Items) do out[id] = count end
+    end
+    return out
+end
+
+--- 设置数量（截断到 max_carry），返回实际写入值
+function Fireteam.Inventory.Set(ply, itemId, count)
+    local def = Fireteam.Inventory.GetItemDef(itemId)
+    if not def then return 0 end
+    local value = math.Clamp(math.floor(tonumber(count) or 0), 0, def.max_carry)
+    ply.FT_Items = ply.FT_Items or {}
+    ply.FT_Items[itemId] = value
+    SendSnapshot(ply)
+    return value
+end
+
+--- 增减数量，返回实际增量（受 0..max_carry 截断）
+function Fireteam.Inventory.Add(ply, itemId, delta)
+    local def = Fireteam.Inventory.GetItemDef(itemId)
+    if not def then return 0 end
+    local current = Fireteam.Inventory.Get(ply, itemId)
+    local newValue, applied = Fireteam.Inventory.ApplyDelta(current, delta, def.max_carry)
+    ply.FT_Items = ply.FT_Items or {}
+    ply.FT_Items[itemId] = newValue
+    if applied ~= 0 then SendSnapshot(ply) end
+    return applied
+end
+
+--- 消耗一件；不足返回 false
+function Fireteam.Inventory.Consume(ply, itemId)
+    if Fireteam.Inventory.Get(ply, itemId) <= 0 then return false end
+    Fireteam.Inventory.Add(ply, itemId, -1)
+    return true
+end
+
+-- ─────────────────────────────────────
+-- 职业槽位发放（sv_class.ApplyLoadout 调用）
+-- ─────────────────────────────────────
+
+--- 按槽位名 + 阵营发放物品。返回是否发放了任何东西。
+function Fireteam.Inventory.GrantForSlot(ply, slotName, factionId)
+    local itemDefs = Fireteam.Setting.GetData and Fireteam.Setting.GetData("items") or nil
+    itemDefs = istable(itemDefs) and itemDefs.items or itemDefs
+    if not istable(itemDefs) then return false end
+
+    local matches = Fireteam.Inventory.ResolveSlotItems(itemDefs, slotName, factionId)
+    local granted = false
+    for _, itemId in ipairs(matches) do
+        local def = itemDefs[itemId]
+        -- 同步进注册表（保证热切换后注册表与包数据一致）
+        Fireteam.Inventory.RegisterItem(itemId, def)
+        local amount = math.min(tonumber(def.amount_per_slot) or def.max_carry, def.max_carry)
+        if amount > 0 then
+            Fireteam.Inventory.Add(ply, itemId, amount)
+            granted = true
+        end
+    end
+    return granted
+end
+
+-- ─────────────────────────────────────
+-- 设定包接入：items.lua 导入注册表并下发客户端
+-- ─────────────────────────────────────
+
+local function ImportPackItems()
+    Fireteam.Inventory.ClearItems()
+    local data = Fireteam.Setting.GetData and Fireteam.Setting.GetData("items") or nil
+    local itemDefs = istable(data) and (istable(data.items) and data.items or data) or nil
+    if not istable(itemDefs) then return end
+
+    for itemId, def in pairs(itemDefs) do
+        Fireteam.Inventory.RegisterItem(itemId, def)
+    end
+    Fireteam.Log.Info("背包", "✓ 物品导入完成: " .. table.Count(itemDefs) .. " 种")
+end
+
+local function BuildClientDefs()
+    local out = {}
+    for itemId, def in pairs(Fireteam.Inventory.GetAllItemDefs()) do
+        out[itemId] = {
+            name      = def.name or itemId,
+            name_zh   = def.name_zh or def.name or itemId,
+            category  = def.category,
+            use_time  = def.use_time,
+            max_carry = def.max_carry
+        }
+    end
+    return out
+end
+
+SendSnapshot = function(ply)
+    Fireteam.Net.SendToPlayer(ply, Fireteam.NET.INVENTORY_SYNC,
+        BuildClientDefs(), Fireteam.Inventory.GetAll(ply))
+end
+
+hook.Add(Fireteam.HOOKS.SETTING_LOADED, "Fireteam.Inventory.PackImport", function()
+    ImportPackItems()
+    -- 包切换后向所有玩家重发定义与空计数
+    for _, ply in ipairs(player.GetAll()) do
+        Fireteam.Inventory.Reset(ply)
+    end
+end)
+
+hook.Add("PlayerInitialSpawn", "Fireteam.Inventory.Init", function(ply)
+    ply.FT_Items = {}
+    timer.Simple(2, function()
+        if IsValid(ply) then SendSnapshot(ply) end
+    end)
+end)
+
+-- ─────────────────────────────────────
+-- 使用流程
+-- ─────────────────────────────────────
+
+local function IsBusy(ply)
+    return ply.FT_ItemBusyUntil and ply.FT_ItemBusyUntil > CurTime() or false
+end
+
+local function ThrowProjectile(ply, def)
+    local throw = def.throw or {}
+    local ent = ents.Create("ft_grenade_proj")
+    if not IsValid(ent) then return false end
+
+    local src = ply:GetShootPos() + ply:GetAimVector() * 16
+    ent:SetPos(src)
+    ent:SetAngles(ply:GetAngles())
+    ent:SetModel(throw.model or "models/weapons/w_grenade.mdl")
+    ent:SetFuse(tonumber(throw.fuse) or 3.0)
+    ent:SetBlastRadius(tonumber(throw.radius) or 350)
+    ent:SetBlastDamage(tonumber(throw.damage) or 90)
+    ent.Owner_ = ply
+    ent:Spawn()
+
+    local phys = ent:GetPhysicsObject()
+    if IsValid(phys) then
+        local vel = ply:GetAimVector() * (tonumber(throw.throw_speed) or 900)
+        vel = vel + Vector(0, 0, 120)   -- 上抛补偿，手感接近徒手投掷
+        phys:ApplyForceCenter(vel * phys:GetMass())
+    end
+    return true
+end
+
+--- 使用入口（net 与控制台命令共用）
+function Fireteam.Inventory.TryUse(ply, itemId)
+    if not IsValid(ply) or not ply:Alive() then return false end
+    if IsBusy(ply) then return false end
+
+    local def = Fireteam.Inventory.GetItemDef(itemId)
+    if not def then
+        ply:ChatPrint("[FIRETEAM] " .. Fireteam.Locale.Get("item_not_found"))
+        return false
+    end
+    if Fireteam.Inventory.Get(ply, itemId) <= 0 then
+        ply:ChatPrint("[FIRETEAM] " .. Fireteam.Locale.Get("item_none_left"))
+        return false
+    end
+
+    local ok = false
+    local busyTime = def.use_time
+
+    if def.category == Fireteam.INVENTORY_CATEGORY.THROWABLE then
+        ok = ThrowProjectile(ply, def)
+        busyTime = math.max(busyTime, THROW_COOLDOWN)
+    else
+        local handler = Fireteam.Inventory.GetUseHandler(def.category)
+        if handler then
+            ok = handler(ply, itemId, def) and true or false
+        else
+            ply:ChatPrint("[FIRETEAM] " .. Fireteam.Locale.Get("item_no_effect"))
+            return false
+        end
+    end
+
+    if not ok then return false end
+
+    Fireteam.Inventory.Consume(ply, itemId)
+    ply.FT_ItemBusyUntil = CurTime() + busyTime
+    hook.Run(Fireteam.HOOKS.ITEM_USED, ply, itemId)
+    return true
+end
+
+-- 其他模块按大类插拔使用效果：
+--   Fireteam.Inventory.RegisterUseHandler(Fireteam.INVENTORY_CATEGORY.CONSUMABLE, fn)
+-- P5b 医疗 / P5d 补给各自接管绷带、医疗包、弹药盒。
+
+net.Receive(Fireteam.NET.ITEM_USE, function(_, ply)
+    Fireteam.Inventory.TryUse(ply, net.ReadString())
+end)
+
+print("[FIRETEAM:Inventory] ✓ Server logic loaded")

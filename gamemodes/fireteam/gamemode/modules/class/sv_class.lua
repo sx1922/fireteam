@@ -67,20 +67,25 @@ function Fireteam.Class.ApplyStats(ply, classData)
 end
 
 -- ═══════════════════════════════════════
--- 加载装备（通过 Tag 匹配武器）
+-- 加载装备（槽位统一解析：武器 Tag 匹配优先，
+-- 无命中则回落消耗品槽位（grenade/medical/ammo_belt 等，
+-- 由设定包 items.lua 声明物品可服务的槽位）
 -- ═══════════════════════════════════════
 function Fireteam.Class.ApplyLoadout(ply, classData)
     if not classData.loadout then return end
 
-    -- 清空现有武器
+    -- 清空现有武器与上一轮消耗品
     ply:StripWeapons()
     ply:StripAmmo()
+    if Fireteam.Inventory and Fireteam.Inventory.Reset then
+        Fireteam.Inventory.Reset(ply)
+    end
 
     for slotName, slotDef in pairs(classData.loadout) do
-        if not slotDef.tags then continue end
-
-        -- 从武器接口中按 Tag 查找
-        local candidates = Fireteam.WeaponInterface.FilterByTags(slotDef.tags, nil)
+        local candidates = {}
+        if slotDef.tags then
+            candidates = Fireteam.WeaponInterface.FilterByTags(slotDef.tags, nil)
+        end
 
         if #candidates > 0 then
             -- 随机取一个匹配的（后续可加选择逻辑）
@@ -88,6 +93,9 @@ function Fireteam.Class.ApplyLoadout(ply, classData)
             if chosen and chosen.base then
                 ply:Give(chosen.base)
             end
+        elseif Fireteam.Inventory and Fireteam.Inventory.GrantForSlot
+            and Fireteam.Inventory.GrantForSlot(ply, slotName, classData.faction) then
+            -- 消耗品已发放，静默成功
         else
             -- 无匹配时提示（可选槽位静默跳过）
             if not slotDef.optional then
