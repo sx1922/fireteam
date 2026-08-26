@@ -24,8 +24,8 @@ net.Receive(Fireteam.NET.MAP_INFO, function()
     end
 end)
 
---- 解析最终可用边界（三级回退）
-local function ResolveBounds()
+--- 解析最终可用边界（三级回退；指挥视图等外部消费方复用）
+function Fireteam.TacMap.ResolveBounds()
     if serverBounds then return serverBounds.vmin, serverBounds.vmax end
 
     -- navmesh 自动推算（有导航网格的地图精度不错）
@@ -51,7 +51,8 @@ end
 -- ═══════════════════════════════════════
 -- 世界 ↔ 图纸 线性投影
 -- ═══════════════════════════════════════
-local function BuildTransform(vmin, vmax, px, py, pw, ph)
+--- 世界 ↔ 图纸 线性投影（指挥视图等外部消费方复用）
+function Fireteam.TacMap.BuildTransform(vmin, vmax, px, py, pw, ph)
     local worldW = math.max(vmax.x - vmin.x, 1)
     local worldH = math.max(vmax.y - vmin.y, 1)
     local scale = math.min(pw / worldW, ph / worldH) * 0.94
@@ -117,8 +118,8 @@ function Fireteam.TacMap.Open()
     local mySquadAtBuild = Fireteam.Squad.GetMySquad()
 
     canvas.Paint = function(s, pw, ph)
-        local vmin, vmax = ResolveBounds()
-        local tf = BuildTransform(vmin, vmax, 0, 0, pw, ph)
+        local vmin, vmax = Fireteam.TacMap.ResolveBounds()
+        local tf = Fireteam.TacMap.BuildTransform(vmin, vmax, 0, 0, pw, ph)
         s.ftTransform = tf
 
         local x0, y0 = tf.offX, tf.offY
@@ -317,6 +318,238 @@ hook.Add("PlayerButtonDown", "Fireteam.TacMap.OpenKey", function(ply, button)
     if ply ~= LocalPlayer() then return end
     if button == GetOpenKey() and Fireteam.UI.CanTogglePanel() then
         Fireteam.TacMap.Toggle()
+    end
+end)
+
+-- ═══════════════════════════════════════
+-- CapsLock 全屏指挥视图（模仿 Squad 队伍界面）：
+-- 左 = 大地图（复用 tacmap 投影/成员/标记/目标渲染，可点击放路点）
+-- 右 = 队伍情况栏（成员存活/血量/职业/倒地高亮）
+-- ═══════════════════════════════════════
+local commandPanel = nil
+
+local function CloseCommandView()
+    if IsValid(commandPanel) then
+        commandPanel:Remove()
+    end
+end
+
+function Fireteam.TacMap.OpenCommandView()
+    if IsValid(commandPanel) then return end
+    if not Fireteam.Config.Get("tacmap.enabled") then return end
+
+    local W, H = ScrW() * 0.92, ScrH() * 0.9
+    commandPanel = kit.CreateFrame(L("ui_command_title"), math.Round(W), math.Round(H), {
+        blur = true,
+        draggable = false,
+        hints = { L("ui_hint_caps_close"), L("ui_hint_click_place") }
+    })
+
+    local sideW = math.Round(300 * (ScrW() / 1920))
+
+    -- ─── 左：大地图 ───
+    local mapCanvas = vgui.Create("DPanel", commandPanel)
+    mapCanvas:SetPos(12, commandPanel.ftContentTop + 6)
+    mapCanvas:SetSize(math.Round(W - sideW - 40), math.Round(H - commandPanel.ftContentTop - commandPanel.ftContentBottom - 14))
+    mapCanvas:SetCursor("crosshair")
+
+    mapCanvas.Paint = function(s, pw, ph)
+        local vmin, vmax = Fireteam.TacMap.ResolveBounds()
+        local tf = Fireteam.TacMap.BuildTransform(vmin, vmax, 0, 0, pw, ph)
+        s.ftTransform = tf
+
+        local x0, y0 = tf.offX, tf.offY
+        local x1, y1 = tf.offX + tf.w, tf.offY + tf.h
+
+        draw.RoundedBox(2, x0, y0, tf.w, tf.h, kit.ColorA("background", 240))
+
+        -- 网格
+        local gridStep = Fireteam.Config.Get("tacmap.grid_step") or 1024
+        local screenStep = gridStep * tf.scale
+        if screenStep >= 24 then
+            surface.SetDrawColor(kit.ColorA("border", 70))
+            local gx = x0 % screenStep
+            while gx <= x1 do
+                if gx >= x0 then surface.DrawRect(gx, y0, 1, tf.h) end
+                gx = gx + screenStep
+            end
+            local gy = y0 % screenStep
+            while gy <= y1 do
+                if gy >= y0 then surface.DrawRect(x0, gy, tf.w, 1) end
+                gy = gy + screenStep
+            end
+        end
+
+        local meIdx = LocalPlayer():EntIndex()
+
+        -- 小队成员
+        local mySquad = Fireteam.Squad.GetMySquad()
+        if mySquad then
+            for _, m in ipairs(mySquad.members or {}) do
+                local ent = Entity(m.idx)
+                if IsValid(ent) and ent:IsPlayer() then
+                    local sx, sy = tf.ToScreen(ent:GetPos())
+                    if sx >= x0 and sx <= x1 and sy >= y0 and sy <= y1 then
+                        local colorName = m.idx == meIdx and "primary"
+                            or m.idx == mySquad.leaderIdx and "squad_leader"
+                            or "squad_ally"
+                        if not ent:Alive() then colorName = "danger" end
+                        local col = kit.Color(colorName)
+                        local yaw = math.rad(ent:EyeAngles().y + 90)
+                        surface.SetDrawColor(col.r, col.g, col.b, 230)
+                        surface.DrawLine(sx, sy,
+                            sx + math.cos(yaw) * 12, sy + math.sin(yaw) * 12)
+                        draw.RoundedBox(0, sx - 4, sy - 4, 8, 8, col)
+                        -- 名字标签
+                        draw.SimpleText(m.name, kit.Font("small"), sx + 8, sy - 14,
+                            kit.ColorA(colorName, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+                    end
+                end
+            end
+        end
+
+        -- 标记
+        local markers = Fireteam.Marker.GetClientMarkers and Fireteam.Marker.GetClientMarkers() or {}
+        for _, marker in pairs(markers) do
+            if mySquad and marker.squadId == mySquad.id and isvector(marker.pos) then
+                local sx, sy = tf.ToScreen(marker.pos)
+                if sx >= x0 and sx <= x1 and sy >= y0 and sy <= y1 then
+                    local col = Fireteam.Marker.GetTypeColor(marker.type)
+                    draw.RoundedBox(3, sx - 9, sy - 9, 18, 18, Color(col.r, col.g, col.b, 60))
+                    surface.SetDrawColor(col.r, col.g, col.b, 220)
+                    surface.DrawOutlinedRect(sx - 9, sy - 9, 18, 18, 1)
+                end
+            end
+        end
+
+        -- 回合目标圈
+        if Fireteam.Rounds and Fireteam.Rounds.Client and Fireteam.Rounds.Client.objective then
+            local prm = Fireteam.Rounds.Client.objective.params
+            if istable(prm) and istable(prm.pos) and prm.pos.x then
+                local wx, wy = tf.ToScreen(Vector(tonumber(prm.pos.x), tonumber(prm.pos.y), tonumber(prm.pos.z) or 0))
+                local pr = (tonumber(prm.radius) or 120) * tf.scale
+                local col = kit.Color("marker_objective")
+                surface.SetDrawColor(col.r, col.g, col.b, 210)
+                local px0, py0
+                for i = 0, 40 do
+                    local a = i / 40 * math.pi * 2
+                    local px, py = wx + math.cos(a) * pr, wy + math.sin(a) * pr
+                    if px0 then surface.DrawLine(px0, py0, px, py) end
+                    px0, py0 = px, py
+                end
+            end
+        end
+
+        surface.SetDrawColor(kit.ColorA("primary", 180))
+        surface.DrawOutlinedRect(x0, y0, tf.w, tf.h, 1)
+    end
+
+    mapCanvas.OnMousePressed = function(s, code)
+        if code ~= MOUSE_LEFT then return end
+        if not Fireteam.Config.Get("tacmap.allow_click_place") then return end
+        if not Fireteam.Squad.GetMySquad() then
+            chat.AddText(kit.Color("danger"), "[FIRETEAM] " .. L("marker_need_squad"))
+            return
+        end
+        local tf = s.ftTransform
+        if not tf then return end
+        local mx, my = s:CursorPos()
+        local wx, wy = tf.ToWorld(mx, my)
+        local tr = util.TraceLine({
+            start = Vector(wx, wy, 32000),
+            endpos = Vector(wx, wy, -32000),
+            mask = MASK_SOLID_BRUSHONLY
+        })
+        net.Start(Fireteam.NET.MARKER_PLACE)
+            net.WriteVector(tr.HitPos + tr.HitNormal * 5)
+            net.WriteString(Fireteam.Marker.TYPE.WAYPOINT)
+            net.WriteString("")
+        net.SendToServer()
+        chat.AddText(kit.Color("info"), "[FIRETEAM] " .. L("marker_placed"))
+    end
+
+    -- ─── 右：队伍情况栏 ───
+    local roster = vgui.Create("DPanel", commandPanel)
+    roster:SetPos(W - sideW - 12, commandPanel.ftContentTop + 6)
+    roster:SetSize(sideW, math.Round(H - commandPanel.ftContentTop - commandPanel.ftContentBottom - 14))
+    roster.Paint = function(s, w, h)
+        draw.SimpleText(L("ui_command_roster"), kit.Font("medium"), 4, 4,
+            kit.Color("text"), TEXT_ALIGN_LEFT)
+
+        local vitals = Fireteam.Vitals and Fireteam.Vitals.Client or {}
+        local y = 34
+
+        -- 本小队成员（无小队时提示）
+        local mySquad = Fireteam.Squad.GetMySquad()
+        if not mySquad then
+            draw.SimpleText(L("ui_command_no_squad"), kit.Font("small"), 4, y,
+                kit.Color("text_muted"), TEXT_ALIGN_LEFT)
+            return
+        end
+
+        draw.SimpleText(mySquad.name or "Squad", kit.Font("body"), 4, y,
+            kit.Color("primary"), TEXT_ALIGN_LEFT)
+        kit.DrawDivider(0, y + 24, w - 8)
+        y = y + 32
+
+        local rowH = 44
+        for _, m in ipairs(mySquad.members or {}) do
+            local isLeader = m.idx == mySquad.leaderIdx
+            local downed = vitals[m.idx] and vitals[m.idx].state == "downed"
+
+            -- 名字行（队长 ◆ / 倒地红显）
+            local nameCol = "squad_ally"
+            if downed then nameCol = "danger"
+            elseif isLeader then nameCol = "squad_leader" end
+            local prefix = isLeader and "◆ " or ""
+            draw.SimpleText(prefix .. (m.name or "?"), kit.Font("small"), 4, y,
+                kit.Color(nameCol), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+            -- 倒地标记 / 职业名
+            if downed then
+                draw.SimpleText(L("ui_command_downed"), kit.Font("small"), w - 8, y,
+                    kit.Color("danger"), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+            elseif m.class then
+                draw.SimpleText(tostring(m.class), kit.Font("small"), w - 8, y,
+                    kit.ColorA("text_muted", 200), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+            end
+
+            -- 血量条（阵亡画满灰）
+            local frac = 0
+            if m.alive then
+                frac = math.Clamp((m.hp or 0) / math.max(m.maxhp or 100, 1), 0, 1)
+            end
+            local barCol = "squad_ally"
+            if not m.alive then barCol = "text_muted"
+            elseif downed then barCol = "danger"
+            elseif frac <= 0.3 then barCol = "danger"
+            elseif frac <= 0.6 then barCol = "warning" end
+            kit.DrawProgressBar(4, y + 18, w - 12, 8, frac, barCol)
+
+            y = y + rowH
+            if y > h - 20 then break end
+        end
+    end
+
+    commandPanel.OnRemove = function()
+        commandPanel = nil
+    end
+end
+
+function Fireteam.TacMap.ToggleCommandView()
+    if IsValid(commandPanel) then
+        CloseCommandView()
+    elseif Fireteam.UI.CanTogglePanel() then
+        Fireteam.TacMap.OpenCommandView()
+    end
+end
+
+-- CapsLock 开合（枚举名跨分支兼容双查）
+local CAPS_KEY = _G.KEY_CAPSLOCK or _G.KEY_CAPLOCK
+hook.Add("PlayerButtonDown", "Fireteam.TacMap.CommandKey", function(ply, button)
+    if ply ~= LocalPlayer() then return end
+    if CAPS_KEY and button == CAPS_KEY then
+        Fireteam.TacMap.ToggleCommandView()
     end
 end)
 
