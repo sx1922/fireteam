@@ -52,9 +52,15 @@ function Fireteam.Modules.Discover()
 
         local sharedFile = firstExisting({ "sh_" .. dir .. ".lua" })
         local serverFile = firstExisting({ "sv_" .. dir .. ".lua" })
-        local clientFile = firstExisting({ "cl_" .. dir .. ".lua", "cl_" .. dir .. "_ui.lua" })
+        -- 客户端可同时存在基础与 _ui 变体，全部下发（缺一会导致专用服上 UI 缺失）
+        local clientFiles = {}
+        for _, fname in ipairs({ "cl_" .. dir .. ".lua", "cl_" .. dir .. "_ui.lua" }) do
+            if file.Exists(modulePath .. fname, "GAME") then
+                clientFiles[#clientFiles + 1] = fname
+            end
+        end
 
-        if sharedFile or serverFile or clientFile then
+        if sharedFile or serverFile or #clientFiles > 0 then
             Fireteam.Modules.Registry[dir] = {
                 id = dir,
                 path = modulePath,
@@ -62,7 +68,7 @@ function Fireteam.Modules.Discover()
                 files = {
                     shared = sharedFile,
                     server = serverFile,
-                    client = clientFile
+                    client = clientFiles
                 }
             }
         end
@@ -102,8 +108,8 @@ function Fireteam.Modules.Load(moduleId)
             ExecLuaFile(gamePath, ToLuaPath(gamePath))
         end
         -- 客户端文件（仅 AddCSLuaFile，服务端不执行）
-        if mod.files.client then
-            local gamePath = mod.path .. mod.files.client
+        for _, fname in ipairs(mod.files.client or {}) do
+            local gamePath = mod.path .. fname
             pcall(AddCSLuaFile, ToLuaPath(gamePath))
         end
     end)

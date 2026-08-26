@@ -44,6 +44,7 @@
     "health": { "style": "text_block", "position": "bottom_left" },
     "squad_status": { "style": "sidebar_list", "position": "left" },
     "consumables": { "style": "chip_row", "position": "bottom_center" },
+    "stamina": { "style": "bar", "position": "bottom_center" },
     "map": { "style": "paper_fold", "open_key": "M" },
     "radio_indicator": { "style": "frequency_dial", "position": "bottom_left" }
   }

@@ -51,6 +51,10 @@ local function BroadcastAll()
             if st.state == Fireteam.Vitals.STATE.DOWNED and st.bleedoutEnds then
                 entry.remain = math.max(st.bleedoutEnds - now, 0)
             end
+            if Fireteam.Stamina and Fireteam.Stamina.SnapshotEntry then
+                local stam = Fireteam.Stamina.SnapshotEntry(p)
+                if stam then entry.stam, entry.stamMax = stam.value, stam.max end
+            end
             local ch = p.FT_ReviveChannel
             if ch then
                 entry.reviving = { tgtIdx = ch.target:EntIndex(), kind = ch.kind,
@@ -60,6 +64,11 @@ local function BroadcastAll()
         end
     end
     Fireteam.Net.SendToAll(Fireteam.NET.VITALS_UPDATE, out)
+end
+
+--- 供关联模块（stamina 等）触发快照重播；内部沿用本地实现
+function Fireteam.Vitals.BroadcastAll()
+    BroadcastAll()
 end
 
 --- 重置到正常（重生/新回合）
@@ -87,6 +96,18 @@ local function FactionChat(factionId, text)
     end
 end
 
+local BASE_WALK, BASE_RUN = 200, 400   -- 与 class.ApplyStats 同基准
+
+--- 职业 speed_mult（速度基准一律由职业数据推导，避免与 stamina 等改速模块互相污染）
+local function ClassSpeedMult(ply)
+    local cd = Fireteam.Class and Fireteam.Class.GetPlayerClassData
+        and Fireteam.Class.GetPlayerClassData(ply) or nil
+    if istable(cd) and istable(cd.stats) and tonumber(cd.stats.speed_mult) then
+        return tonumber(cd.stats.speed_mult)
+    end
+    return 1
+end
+
 local function EnterDowned(ply, attacker)
     local st = EnsureState(ply)
     if st.state ~= Fireteam.Vitals.STATE.NORMAL then return end
@@ -102,10 +123,8 @@ local function EnterDowned(ply, attacker)
     end
     ply:StripWeapons()
 
-    -- 匍匐机动：保存原速度并压到爬行档
-    ply.FT_SpeedSave = {
-        walk = ply:GetWalkSpeed(), run = ply:GetRunSpeed(), jump = ply:GetJumpPower()
-    }
+    -- 匍匐机动：压到爬行档（跳力先存待还原；速度基准由职业数据推导）
+    ply.FT_SpeedSave = { jump = ply:GetJumpPower(), mult = ClassSpeedMult(ply) }
     local spd = tonumber(Fireteam.Vitals.GetParam("downed_speed")) or 40
     ply:SetWalkSpeed(spd)
     ply:SetRunSpeed(spd)
@@ -148,14 +167,15 @@ local function RevivePlayer(target, healer)
     local frac = tonumber(Fireteam.Vitals.GetParam("revive_health_frac")) or 0.4
     target:SetHealth(math.max(math.floor(maxHp * frac), 1))
 
-    -- 恢复机动力与武器
+    -- 恢复机动力（按职业推导的基准）与武器
     local saved = target.FT_SpeedSave
-    if saved then
-        target:SetWalkSpeed(saved.walk)
-        target:SetRunSpeed(saved.run)
-        target:SetJumpPower(saved.jump)
-        target.FT_SpeedSave = nil
+    local mult = (istable(saved) and tonumber(saved.mult)) or ClassSpeedMult(target)
+    target:SetWalkSpeed(BASE_WALK * mult)
+    target:SetRunSpeed(BASE_RUN * mult)
+    if istable(saved) and tonumber(saved.jump) then
+        target:SetJumpPower(tonumber(saved.jump))
     end
+    target.FT_SpeedSave = nil
     if istable(target.FT_DownedWeapons) then
         for _, cls in ipairs(target.FT_DownedWeapons) do
             target:Give(cls)
