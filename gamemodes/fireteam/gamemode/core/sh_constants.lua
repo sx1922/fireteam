@@ -25,7 +25,9 @@ Fireteam.SETTING_DATA_FILES = {
     "items",
     "vehicles",
     "voice_presets",
-    "map_rules"
+    "map_rules",
+    "weapon_overrides",
+    "vehicle_overrides"
 }
 
 -- ═══════════════════════════════════════

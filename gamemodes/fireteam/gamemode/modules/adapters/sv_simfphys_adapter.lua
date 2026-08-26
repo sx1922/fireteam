@@ -50,10 +50,68 @@ local function MapCategory(spData, className, printName)
 end
 
 -- ═══════════════════════════════════════
+-- 标签生成（阵营识别）
+-- ═══════════════════════════════════════
+local function GenerateTags(spData, className, printName)
+    local tags = { "simfphys", "coldwar" }
+    local combined = (className .. " " .. (printName or "")):lower()
+
+    -- 华约坦克/装甲车
+    if combined:find("t_55") or combined:find("t55") or combined:find("t_72")
+        or combined:find("t72") or combined:find("t_90") or combined:find("t90")
+        or combined:find("bmp") or combined:find("btr") or combined:find("brdm")
+        or combined:find("uaz") then
+        table.insert(tags, "warsaw_pact")
+    end
+
+    -- 北约装甲车/车辆
+    if combined:find("m113") or combined:find("hmmwv") or combined:find("humvee")
+        or combined:find("stryker") or combined:find("fv510") or combined:find("warrior")
+        or combined:find("m60a") or combined:find("bradley") then
+        table.insert(tags, "nato")
+    end
+
+    -- 德系（按具体型号细分西德/东德）
+    if combined:find("marder") or combined:find("leopard") then
+        table.insert(tags, "nato")  -- 西德
+    end
+
+    -- 载具类型细分
+    if spData.istank then
+        table.insert(tags, "tank")
+    elseif combined:find("apc") or combined:find("bmp") or combined:find("btr")
+        or combined:find("m113") or combined:find("bradley") then
+        table.insert(tags, "apc")
+    else
+        table.insert(tags, "transport")
+    end
+
+    return tags
+end
+
+-- ═══════════════════════════════════════
 -- 注册
 -- ═══════════════════════════════════════
+-- 设定包覆盖配置加载
+local function LoadVehicleOverrides()
+    if Fireteam.Setting and Fireteam.Setting.GetData then
+        return Fireteam.Setting.GetData("vehicle_overrides") or {}
+    end
+    return {}
+end
+
+local function ApplyOverrides(ftData, className, overrides)
+    local ov = overrides[className]
+    if not istable(ov) then return end
+    if istable(ov.tags) then ftData.tags = ov.tags end
+    if ov.role and Fireteam.VEHICLE_ROLE[ov.role] then
+        ftData.role = Fireteam.VEHICLE_ROLE[ov.role]
+    end
+end
+
 hook.Add(Fireteam.HOOKS.VEHICLE_DISCOVER, "FIRETEAM.SimfphysAdapter", function()
     local count = 0
+    local overrides = LoadVehicleOverrides()
     local vehicles = nil
 
     if istable(simfphys) and isfunction(simfphys.GetVehicles) then
@@ -69,13 +127,15 @@ hook.Add(Fireteam.HOOKS.VEHICLE_DISCOVER, "FIRETEAM.SimfphysAdapter", function()
                 base           = className,
                 displayName    = vData.PrintName or vData.Name or className,
                 category       = MapCategory(vData, className, vData.PrintName),
-                tags           = { "simfphys" },
+                tags           = GenerateTags(vData, className, vData.PrintName),
                 maxSpeed       = tonumber(vData.MaxSpeed) or 800,
                 health         = tonumber(vData.MaxHealth) or 100,
                 fuelCapacity   = 100,
                 crewCapacity   = math.max(tonumber(vData.podcount) or 1, 1),
                 armorLevel     = vData.istank and 5 or 1
             }
+
+            ApplyOverrides(ftData, className, overrides)
 
             Fireteam.VehicleInterface.Register(ftData)
             count = count + 1
@@ -97,13 +157,15 @@ hook.Add(Fireteam.HOOKS.VEHICLE_DISCOVER, "FIRETEAM.SimfphysAdapter", function()
                     base           = className,
                     displayName    = t.PrintName or className,
                     category       = MapCategory(t, className, t.PrintName),
-                    tags           = { "simfphys" },
+                    tags           = GenerateTags(t, className, t.PrintName),
                     maxSpeed       = tonumber(t.MaxSpeed) or 800,
                     health         = tonumber(t.MaxHealth) or 100,
                     fuelCapacity   = 100,
                     crewCapacity   = math.max(tonumber(t.podcount) or 1, 1),
                     armorLevel     = t.istank and 5 or 1
                 }
+
+                ApplyOverrides(ftData, className, overrides)
 
                 Fireteam.VehicleInterface.Register(ftData)
                 count = count + 1
