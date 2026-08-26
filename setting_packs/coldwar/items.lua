@@ -25,6 +25,7 @@ return {
             max_carry = 2,
             amount_per_slot = 1,
             use_time = 4.0,
+            size = { w = 2, h = 1 },   -- 背包网格占格
         },
 
         splint = {
@@ -73,6 +74,7 @@ return {
             max_carry = 2,
             amount_per_slot = 1,
             use_time = 1.0,
+            size = { w = 2, h = 2 },   -- 背包网格占格
         }
 
     }

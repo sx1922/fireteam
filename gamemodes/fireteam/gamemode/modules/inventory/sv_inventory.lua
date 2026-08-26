@@ -16,7 +16,53 @@ local SendSnapshot   -- 前向声明：Reset/Set/Add 在定义之前就会调用
 
 function Fireteam.Inventory.Reset(ply)
     ply.FT_Items = {}
+    ply.FT_ItemCells = {}
     SendSnapshot(ply)
+end
+
+-- ─────────────────────────────────────
+-- 网格布局层（cells 与计数表保持同数量；
+-- 发放空间不足时 Add 截断——背包满了捡不下）
+-- ─────────────────────────────────────
+
+local function EnsureCells(ply)
+    if not istable(ply.FT_ItemCells) then ply.FT_ItemCells = {} end
+    return ply.FT_ItemCells
+end
+
+--- 按 itemId 对齐 cells 实例数（正差补空位、负差从尾删）
+local function SyncCellsFor(ply, itemId, targetCount)
+    local def = Fireteam.Inventory.GetItemDef(itemId)
+    if not def then return end
+    local w, h = Fireteam.Inventory.GetItemSize(def)
+    local cells = EnsureCells(ply)
+
+    -- 从尾删除多余实例
+    while true do
+        local count = 0
+        for _, c in ipairs(cells) do
+            if c.id == itemId then count = count + 1 end
+        end
+        if count <= targetCount then break end
+        for i = #cells, 1, -1 do
+            if cells[i].id == itemId then
+                table.remove(cells, i)
+                break
+            end
+        end
+    end
+
+    -- 补缺实例（无空位则止——调用方应已保证空间）
+    while true do
+        local count = 0
+        for _, c in ipairs(cells) do
+            if c.id == itemId then count = count + 1 end
+        end
+        if count >= targetCount then break end
+        local x, y = Fireteam.Inventory.FindFreeSpot(cells, w, h)
+        if not x then break end
+        cells[#cells + 1] = { id = itemId, x = x, y = y, w = w, h = h }
+    end
 end
 
 function Fireteam.Inventory.Get(ply, itemId)
@@ -39,19 +85,40 @@ function Fireteam.Inventory.Set(ply, itemId, count)
     local value = math.Clamp(math.floor(tonumber(count) or 0), 0, def.max_carry)
     ply.FT_Items = ply.FT_Items or {}
     ply.FT_Items[itemId] = value
+    SyncCellsFor(ply, itemId, value)
     SendSnapshot(ply)
     return value
 end
 
---- 增减数量，返回实际增量（受 0..max_carry 截断）
+--- 增减数量，返回实际增量（受 0..max_carry 与网格剩余空间双重截断）
 function Fireteam.Inventory.Add(ply, itemId, delta)
     local def = Fireteam.Inventory.GetItemDef(itemId)
     if not def then return 0 end
     local current = Fireteam.Inventory.Get(ply, itemId)
     local newValue, applied = Fireteam.Inventory.ApplyDelta(current, delta, def.max_carry)
-    ply.FT_Items = ply.FT_Items or {}
-    ply.FT_Items[itemId] = newValue
-    if applied ~= 0 then SendSnapshot(ply) end
+
+    -- 发放方向：模拟找空位，空间不足截断（背包满捡不下）
+    if applied > 0 then
+        local w, h = Fireteam.Inventory.GetItemSize(def)
+        local sim = {}
+        for i, c in ipairs(EnsureCells(ply)) do sim[i] = c end
+        local canAdd = 0
+        while canAdd < applied do
+            local x, y = Fireteam.Inventory.FindFreeSpot(sim, w, h)
+            if not x then break end
+            sim[#sim + 1] = { id = itemId, x = x, y = y, w = w, h = h }
+            canAdd = canAdd + 1
+        end
+        applied = math.min(applied, canAdd)
+        newValue = current + applied
+    end
+
+    if applied ~= 0 then
+        ply.FT_Items = ply.FT_Items or {}
+        ply.FT_Items[itemId] = newValue
+        SyncCellsFor(ply, itemId, newValue)
+        SendSnapshot(ply)
+    end
     return applied
 end
 
@@ -111,7 +178,8 @@ local function BuildClientDefs()
             name_zh   = def.name_zh or def.name or itemId,
             category  = def.category,
             use_time  = def.use_time,
-            max_carry = def.max_carry
+            max_carry = def.max_carry,
+            size      = def.size
         }
     end
     return out
@@ -119,7 +187,7 @@ end
 
 SendSnapshot = function(ply)
     Fireteam.Net.SendToPlayer(ply, Fireteam.NET.INVENTORY_SYNC,
-        BuildClientDefs(), Fireteam.Inventory.GetAll(ply))
+        BuildClientDefs(), Fireteam.Inventory.GetAll(ply), EnsureCells(ply))
 end
 
 hook.Add(Fireteam.HOOKS.SETTING_LOADED, "Fireteam.Inventory.PackImport", function()
@@ -218,6 +286,32 @@ end
 
 net.Receive(Fireteam.NET.ITEM_USE, function(_, ply)
     Fireteam.Inventory.TryUse(ply, net.ReadString())
+end)
+
+-- 网格拖拽落位（服务端权威碰撞校验）
+net.Receive(Fireteam.NET.ITEM_MOVE, function(_, ply)
+    local itemId = net.ReadString()
+    local cellIndex = net.ReadUInt(6)
+    local x = net.ReadUInt(4)
+    local y = net.ReadUInt(4)
+    local cells = ply.FT_ItemCells
+    local cell = istable(cells) and cells[cellIndex] or nil
+    if not istable(cell) or cell.id ~= itemId then return end
+    if Fireteam.Inventory.CanPlaceCells(cells, x, y, cell.w or 1, cell.h or 1, cellIndex) then
+        cell.x, cell.y = x, y
+        SendSnapshot(ply)
+    end
+end)
+
+-- 丢弃一件（一期直接销毁；落地拾取实体列后续）
+net.Receive(Fireteam.NET.ITEM_DROP, function(_, ply)
+    local itemId = net.ReadString()
+    if not IsValid(ply) or not ply:Alive() then return end
+    local def = Fireteam.Inventory.GetItemDef(itemId)
+    if Fireteam.Inventory.Consume(ply, itemId) then
+        local name = def and def.name or itemId
+        ply:ChatPrint("[FIRETEAM] " .. string.format(Fireteam.Locale.Get("inventory_dropped"), name))
+    end
 end)
 
 print("[FIRETEAM:Inventory] ✓ Server logic loaded")

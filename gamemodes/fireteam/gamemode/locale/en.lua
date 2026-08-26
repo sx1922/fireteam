@@ -164,6 +164,14 @@ return {
     item_none_left         = "None of that item left",
     item_no_effect         = "This item has no use here yet",
     inventory_bind_hint    = "bind a key: ft_item_<id>",
+    ui_inventory_title     = "Backpack",
+    ui_inventory_weapons   = "Weapons",
+    ui_inventory_health    = "Health",
+    ui_inventory_use       = "Use",
+    ui_inventory_drop      = "Drop one",
+    ui_inventory_bind      = "Bind to hotbar %d",
+    ui_inventory_hotbar_hint = "Hotbar — press 7/8/9/0 to use",
+    inventory_dropped      = "Dropped %s",
 
     -- 体征 / 倒地救援
     vitals_downed_self     = "YOU ARE DOWN",

@@ -164,6 +164,14 @@ return {
     item_none_left         = "该物品已用完",
     item_no_effect         = "此物品当前没有可用效果",
     inventory_bind_hint    = "绑定按键：ft_item_<物品ID>",
+    ui_inventory_title     = "背包",
+    ui_inventory_weapons   = "武器",
+    ui_inventory_health    = "健康状态",
+    ui_inventory_use       = "使用",
+    ui_inventory_drop      = "丢弃一件",
+    ui_inventory_bind      = "绑定到快捷栏 %d",
+    ui_inventory_hotbar_hint = "快捷栏 — 按 7/8/9/0 使用",
+    inventory_dropped      = "丢弃了 %s",
 
     -- 体征 / 倒地救援
     vitals_downed_self     = "你已倒地",

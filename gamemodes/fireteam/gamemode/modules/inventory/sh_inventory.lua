@@ -24,6 +24,7 @@ function Fireteam.Inventory.RegisterItem(itemId, def)
     def.use_time  = math.max(tonumber(def.use_time) or 0, 0)
     def.category  = def.category or Fireteam.INVENTORY_CATEGORY.CONSUMABLE
     def.slots     = istable(def.slots) and def.slots or {}
+    if not istable(def.size) then def.size = nil end   -- 网格占格（缺省 1×1）
 
     itemRegistry[itemId] = def
     return true
@@ -97,6 +98,49 @@ function Fireteam.Inventory.ApplyDelta(current, delta, maxCarry)
     delta = tonumber(delta) or 0
     local target = math.Clamp(current + delta, 0, maxCarry or math.huge)
     return target, target - current
+end
+
+-- ═══════════════════════════════════════
+-- 塔科夫式网格背包（10×6；计数表为真源，cells 为其空间投影）
+-- ═══════════════════════════════════════
+Fireteam.Inventory.GRID_W = 10
+Fireteam.Inventory.GRID_H = 6
+
+--- 物品占格尺寸（def.size = {w,h}，缺省 1×1，截断到网格内）
+function Fireteam.Inventory.GetItemSize(def)
+    local s = istable(def) and istable(def.size) and def.size or nil
+    local w = math.Clamp(math.floor(tonumber(s and s.w) or 1), 1, Fireteam.Inventory.GRID_W)
+    local h = math.Clamp(math.floor(tonumber(s and s.h) or 1), 1, Fireteam.Inventory.GRID_H)
+    return w, h
+end
+
+--- (x,y,w,h) 是否可放入 cells（边界 + 与其他实例不重叠；ignoreIndex 用于拖动自身）
+function Fireteam.Inventory.CanPlaceCells(cells, x, y, w, h, ignoreIndex)
+    if x < 0 or y < 0
+        or x + w > Fireteam.Inventory.GRID_W or y + h > Fireteam.Inventory.GRID_H then
+        return false
+    end
+    for i, cell in ipairs(cells or {}) do
+        if i ~= ignoreIndex then
+            local cw, ch = cell.w or 1, cell.h or 1
+            if x < cell.x + cw and cell.x < x + w and y < cell.y + ch and cell.y < y + h then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+--- 扫描第一个能放下 (w,h) 的空位；返回 x,y 或 nil
+function Fireteam.Inventory.FindFreeSpot(cells, w, h)
+    for y = 0, Fireteam.Inventory.GRID_H - h do
+        for x = 0, Fireteam.Inventory.GRID_W - w do
+            if Fireteam.Inventory.CanPlaceCells(cells, x, y, w, h) then
+                return x, y
+            end
+        end
+    end
+    return nil
 end
 
 print("[FIRETEAM:Inventory] ✓ Shared definitions loaded")

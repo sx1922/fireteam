@@ -151,6 +151,8 @@ Fireteam.NET = {
     PACK_EDITOR_PULL     = "FT_PackEditorPull",
     PACK_EDITOR_EXPORT   = "FT_PackEditorExport",
     ITEM_USE             = "FT_ItemUse",
+    ITEM_MOVE            = "FT_ItemMove",
+    ITEM_DROP            = "FT_ItemDrop",
     REVIVE_ACTION        = "FT_ReviveAction"
 }
 
