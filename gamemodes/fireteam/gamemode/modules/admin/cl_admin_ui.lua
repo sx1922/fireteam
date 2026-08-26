@@ -31,6 +31,7 @@ local TABS = {
     { id = "rounds", label = "ui_admin_tab_rounds" },
     { id = "players", label = "ui_admin_tab_players" },
     { id = "packs",  label = "ui_admin_tab_packs" },
+    { id = "coldwar_tool", label = "ui_admin_tab_coldwar_tool" },
 }
 
 local function SortKeys(cfgs)
@@ -257,11 +258,268 @@ local function BuildPacksTab(content)
     end
 end
 
+-- ═════════════════════════════════════════
+-- Cold War Tool Tab
+-- ═════════════════════════════════════════
+local function BuildColdWarToolTab(content)
+    -- Initialize selection storage if not exists
+    if not Fireteam.ColdWarTool then
+        Fireteam.ColdWarTool = {
+            Selection = { scenario = nil, faction = nil, role = nil, spawn = nil }
+        }
+    end
+    local tool = Fireteam.ColdWarTool
+
+    -- Helper functions to get data
+    local function GetScenarios()
+        local list = Fireteam.Rounds.GetScenarioList()
+        if not list then return {} end
+        -- Return sorted list of scenario IDs
+        local ids = {}
+        for id, _ in pairs(list) do table.insert(ids, id) end
+        table.sort(ids)
+        return ids
+    end
+
+    local function GetFactions()
+        local factions = Fireteam.Setting.GetData("factions")
+        if not factions then return {} end
+        local ids = {}
+        for id, _ in pairs(factions) do table.insert(ids, id) end
+        table.sort(ids)
+        return ids
+    end
+
+    local function GetVehicleRolesForFaction(factionId)
+        local vehicles = Fireteam.VehicleInterface.GetAll()
+        if not vehicles then return {} end
+        local roles = {}
+        local factionData = Fireteam.Setting.GetData("factions")
+        local factionInfo = factionData and factionData[factionId] or {}
+        local factionTags = factionInfo.tags or {}
+        -- Also include coldwar and nato/warsaw tags based on faction
+        -- We'll just filter vehicles that have ANY of the faction's tags
+        for _, vData in pairs(vehicles) do
+            if istable(vData.tags) then
+                local match = false
+                for _, tag in ipairs(vData.tags) do
+                    if table.HasValue(factionTags, tag) then
+                        match = true
+                        break
+                    end
+                end
+                if match and vData.role then
+                    roles[vData.role] = true
+                end
+            end
+        end
+        -- Convert to sorted list
+        local list = {}
+        for role, _ in pairs(roles) do table.insert(list, role) end
+        table.sort(list)
+        return list
+    end
+
+    local function GetSpawnPointsForScenarioAndFaction(scenarioId, factionId)
+        -- Temporarily set scenario to get spawns, then restore?
+        -- Actually GetScenarioSpawns uses resolved scenario, so we need to set the scenario temporarily.
+        -- We'll use a helper that forces scenario lookup without changing global state.
+        local scenarioList = Fireteam.Rounds.GetScenarioList()
+        if not scenarioList or not scenarioList[scenarioId] then return {} end
+        local scenarioData = scenarioList[scenarioId]
+        if not scenarioData.spawns then return {} end
+        local spawns = scenarioData.spawns[factionId]
+        if not spawns then return {} end
+        return spawns
+    end
+
+    -- UI Elements
+    local form = vgui.Create("DPanel", content)
+    form:Dock(FILL)
+    form:DockMargin(20, 20, 20, 20)
+    form.Paint = nil
+
+    -- Title
+    local title = vgui.Create("DLabel", form)
+    title:SetText(L("ui_cwt_title"))  -- We'll add this locale key later
+    title:SetFont("Fireteam.Medium")
+    title:SetTextColor(kit.Color("text"))
+    title:Dock(TOP)
+    title:SetTall(30)
+    title:SetContentAlignment(5)
+
+    -- Spacer
+    local spacer1 = vgui.Create("DPanel", form)
+    spacer1:SetTall(10)
+    spacer1:Dock(TOP)
+
+    -- Scenario selector
+    local lblScenario = vgui.Create("DLabel", form)
+    lblScenario:SetText(L("ui_cwt_scenario"))
+    lblScenario:SetFont("Fireteam.Small")
+    lblScenario:SetTextColor(kit.Color("text_muted"))
+    lblScenario:Dock(TOP)
+    lblScenario:SetTall(20)
+
+    local comboScenario = vgui.Create("DComboBox", form)
+    comboScenario:SetTall(25)
+    comboScenario:Dock(TOP)
+    comboScenario:SetSortItems(false)
+    comboScenario.OnSelect = function(_, index, value)
+        -- Clear dependent selections when scenario changes
+        comboFaction:Clear()
+        comboFaction:SetValue("")
+        comboRole:Clear()
+        comboRole:SetValue("")
+        comboSpawn:Clear()
+        comboSpawn:SetValue("")
+        -- Populate factions
+        local factions = GetFactions()
+        for _, fid in ipairs(factions) do
+            comboFaction:AddChoice(fid)
+        end
+    end
+    -- Populate scenarios initially
+    local scenarios = GetScenarios()
+    for _, sid in ipairs(scenarios) do
+        comboScenario:AddChoice(sid)
+    end
+
+    -- Spacer
+    local spacer2 = vgui.Create("DPanel", form)
+    spacer2:SetTall(10)
+    spacer2:Dock(TOP)
+
+    -- Faction selector
+    local lblFaction = vgui.Create("DLabel", form)
+    lblFaction:SetText(L("ui_cwt_faction"))
+    lblFaction:SetFont("Fireteam.Small")
+    lblFaction:SetTextColor(kit.Color("text_muted"))
+    lblFaction:Dock(TOP)
+    lblFaction:SetTall(20)
+
+    local comboFaction = vgui.Create("DComboBox", form)
+    comboFaction:SetTall(25)
+    comboFaction:Dock(TOP)
+    comboFaction:SetSortItems(false)
+    comboFaction.OnSelect = function(_, index, value)
+        -- Clear dependent selections when faction changes
+        comboRole:Clear()
+        comboRole:SetValue("")
+        comboSpawn:Clear()
+        comboSpawn:SetValue("")
+        -- Populate vehicle roles based on selected faction
+        local scenarioId = comboScenario:GetValue()
+        if scenarioId and scenarioId ~= "" then
+            local roles = GetVehicleRolesForFaction(value)
+            for _, role in ipairs(roles) do
+                comboRole:AddChoice(role)
+            end
+        end
+    end
+
+    -- Spacer
+    local spacer3 = vgui.Create("DPanel", form)
+    spacer3:SetTall(10)
+    spacer3:Dock(TOP)
+
+    -- Vehicle Role selector
+    local lblRole = vgui.Create("DLabel", form)
+    lblRole:SetText(L("ui_cwt_role"))
+    lblRole:SetFont("Fireteam.Small")
+    lblRole:SetTextColor(kit.Color("text_muted"))
+    lblRole:Dock(TOP)
+    lblRole:SetTall(20)
+
+    local comboRole = vgui.Create("DComboBox", form)
+    comboRole:SetTall(25)
+    comboRole:Dock(TOP)
+    comboRole:SetSortItems(false)
+    comboRole.OnSelect = function(_, index, value)
+        -- Clear spawn selection when role changes
+        comboSpawn:Clear()
+        comboSpawn:SetValue("")
+        -- Populate spawn points based on selected scenario, faction, and role
+        local scenarioId = comboScenario:GetValue()
+        local factionId = comboFaction:GetValue()
+        if scenarioId and scenarioId ~= "" and factionId and factionId ~= "" then
+            local spawns = GetSpawnPointsForScenarioAndFaction(scenarioId, factionId)
+            for i, spawn in ipairs(spawns) do
+                -- Use a readable label for spawn point
+                local label = string.format("Spawn %d", i)
+                comboSpawn:AddChoice(label, spawn)  -- store spawn data as user data
+            end
+        end
+    end
+
+    -- Spacer
+    local spacer4 = vgui.Create("DPanel", form)
+    spacer4:SetTall(10)
+    spacer4:Dock(TOP)
+
+    -- Spawn Point selector
+    local lblSpawn = vgui.Create("DLabel", form)
+    lblSpawn:SetText(L("ui_cwt_spawn"))
+    lblSpawn:SetFont("Fireteam.Small")
+    lblSpawn:SetTextColor(kit.Color("text_muted"))
+    lblSpawn:Dock(TOP)
+    lblSpawn:SetTall(20)
+
+    local comboSpawn = vgui.Create("DComboBox", form)
+    comboSpawn:SetTall(25)
+    comboSpawn:Dock(TOP)
+    comboSpawn:SetSortItems(false)
+
+    -- Spacer before button
+    local spacer5 = vgui.Create("DPanel", form)
+    spacer5:SetTall(20)
+    spacer5:Dock(TOP)
+
+    -- Apply Button
+    local btnApply = vgui.Create("DButton", form)
+    btnApply:SetTall(35)
+    btnApply:Dock(TOP)
+    btnApply:SetText(L("ui_cwt_apply"))
+    kit.StyleButton(btnApply, { style = "primary" })
+    btnApply.DoClick = function()
+        local scenarioId = comboScenario:GetValue()
+        local factionId = comboFaction:GetValue()
+        local role = comboRole:GetValue()
+        local spawnIndex, spawnData = comboSpawn:GetSelected()
+        if not scenarioId or scenarioId == "" then
+            chat.AddText(kit.Color("warning"), "[ColdWarTool] " .. L("ui_cwt_err_scenario"))
+            return
+        end
+        if not factionId or factionId == "" then
+            chat.AddText(kit.Color("warning"), "[ColdWarTool] " .. L("ui_cwt_err_faction"))
+            return
+        end
+        if not role or role == "" then
+            chat.AddText(kit.Color("warning"), "[ColdWarTool] " .. L("ui_cwt_err_role"))
+            return
+        end
+        if not spawnData then
+            chat.AddText(kit.Color("warning"), "[ColdWarTool] " .. L("ui_cwt_err_spawn"))
+            return
+        end
+        -- Store selection
+        tool.Selection.scenario = scenarioId
+        tool.Selection.faction = factionId
+        tool.Selection.role = role
+        tool.Selection.spawn = spawnData
+        -- Feedback
+        chat.AddText(kit.Color("success"), "[ColdWarTool] " .. L("ui_cwt_applied"))
+        -- Optionally, we could trigger a rediscover or notify other systems
+        -- For now just close the admin panel? Or leave open.
+        -- Fireteam.Admin.Open()  -- rebuild to reflect any changes if needed
+    end
+    end
 local BUILDERS = {
     config  = BuildConfigTab,
     rounds  = BuildRoundsTab,
     players = BuildPlayersTab,
     packs   = BuildPacksTab,
+    coldwar_tool = BuildColdWarToolTab,
 }
 
 -- ═══════════════════════════════════════

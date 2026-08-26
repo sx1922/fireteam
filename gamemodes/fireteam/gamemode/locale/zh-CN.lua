@@ -125,6 +125,7 @@ return {
     ui_admin_tab_rounds    = "回合",
     ui_admin_tab_players   = "玩家",
     ui_admin_tab_packs     = "设定包",
+    ui_admin_tab_coldwar_tool = "冷战工具",
     admin_apply            = "应用",
     admin_reset            = "重置为默认值",
     admin_round_state      = "回合状态: %s",
@@ -143,6 +144,18 @@ return {
     admin_active_pack      = "当前",
     admin_activate         = "激活",
     admin_reload_pack      = "重新加载",
+    -- 冷战工具
+    ui_cwt_title           = "冷战情景工具",
+    ui_cwt_scenario        = "情景:",
+    ui_cwt_faction         = "阵营:",
+    ui_cwt_role            = "载具角色:",
+    ui_cwt_spawn           = "出生点:",
+    ui_cwt_apply           = "应用选择",
+    ui_cwt_err_scenario    = "请选择一个情景。",
+    ui_cwt_err_faction     = "请选择一个阵营。",
+    ui_cwt_err_role        = "请选择一个载具角色。",
+    ui_cwt_err_spawn       = "请选择一个出生点。",
+    ui_cwt_applied         = "选择已应用。",
 
     -- AI 队友
     ai_disabled            = "AI 队友已被禁用。",

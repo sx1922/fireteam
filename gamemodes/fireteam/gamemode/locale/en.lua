@@ -125,6 +125,7 @@ return {
     ui_admin_tab_rounds    = "Rounds",
     ui_admin_tab_players   = "Players",
     ui_admin_tab_packs     = "Packs",
+    ui_admin_tab_coldwar_tool = "Cold War Tool",
     admin_apply            = "Apply",
     admin_reset            = "Reset to default",
     admin_round_state      = "Round state: %s",
@@ -143,6 +144,18 @@ return {
     admin_active_pack      = "ACTIVE",
     admin_activate         = "Activate",
     admin_reload_pack      = "Reload",
+    -- 冷战工具
+    ui_cwt_title           = "Cold War Scenario Tool",
+    ui_cwt_scenario        = "Scenario:",
+    ui_cwt_faction         = "Faction:",
+    ui_cwt_role            = "Vehicle Role:",
+    ui_cwt_spawn           = "Spawn Point:",
+    ui_cwt_apply           = "Apply Selection",
+    ui_cwt_err_scenario    = "Please select a scenario.",
+    ui_cwt_err_faction     = "Please select a faction.",
+    ui_cwt_err_role        = "Please select a vehicle role.",
+    ui_cwt_err_spawn       = "Please select a spawn point.",
+    ui_cwt_applied         = "Selection applied.",
 
     -- AI 队友
     ai_disabled            = "AI teammates are disabled.",
