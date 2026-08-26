@@ -10,3 +10,8 @@ Desktop.ini
 
 # GMod compile artifacts
 *.gma
+
+# Art originals (large, local archive only — final PNGs under content/ are tracked)
+*_original.png
+originals/
+setting_packs/*/artwork/

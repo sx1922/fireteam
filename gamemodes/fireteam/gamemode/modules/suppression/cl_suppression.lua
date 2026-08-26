@@ -85,4 +85,4 @@ hook.Add("HUDPaint", "Fireteam.Suppression.Indicator", function()
     end
 end)
 
-print("[FIRETEAM:Suppression] ✓ Client effects loaded")
+print("[FIRETEAM:Suppression] ✓ 客户端特效已加载")

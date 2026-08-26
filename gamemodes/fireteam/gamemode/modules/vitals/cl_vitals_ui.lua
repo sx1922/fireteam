@@ -158,4 +158,4 @@ hook.Add("HUDPaint", "Fireteam.Vitals.HUD", function()
     end
 end)
 
-print("[FIRETEAM:Vitals] ✓ Client HUD loaded")
+print("[FIRETEAM:Vitals] ✓ 客户端 HUD 已加载")

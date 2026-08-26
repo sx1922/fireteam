@@ -46,43 +46,79 @@ function Fireteam.Vitals.IsDowned(ply)
     return Fireteam.Vitals.GetState(ply) == Fireteam.Vitals.STATE.DOWNED
 end
 
---- 广播全员快照（人数级小表，状态变化时才发）
+--- 广播全员快照（人数级小表，状态变化时才发）。
+--- 手写字段序列化（1 秒周期的高频消息，不走泛型 WriteTable 反射）。
+local STATE_ID = { normal = 0, downed = 1, dead = 2 }
+
 local function BroadcastAll()
-    local out = {}
     local now = CurTime()
-    for _, p in ipairs(player.GetAll()) do
+    local players = player.GetAll()
+
+    local count = 0
+    for _, p in ipairs(players) do
+        if istable(p.FT_Vitals) then count = count + 1 end
+    end
+
+    net.Start(Fireteam.NET.VITALS_UPDATE)
+    net.WriteUInt(count, 6)
+    for _, p in ipairs(players) do
         local st = p.FT_Vitals
         if istable(st) then
-            local entry = {
-                idx        = p:EntIndex(),
-                state      = st.state,
-                bleed      = st.bleed or 0,
-                stabilized = st.stabilized and true or false,
-                pos        = { x = math.floor(p:GetPos().x), y = math.floor(p:GetPos().y), z = math.floor(p:GetPos().z) },
-            }
+            net.WriteUInt(p:EntIndex(), 8)
+            net.WriteUInt(STATE_ID[st.state] or 0, 2)
+            net.WriteUInt(math.Clamp(st.bleed or 0, 0, 15), 4)
+            net.WriteBool(st.stabilized and true or false)
+            net.WriteVector(p:GetPos())
+
             if st.state == Fireteam.Vitals.STATE.DOWNED and st.bleedoutEnds then
-                entry.remain = math.max(st.bleedoutEnds - now, 0)
+                net.WriteBool(true)
+                net.WriteUInt(math.Clamp(math.Round(st.bleedoutEnds - now), 0, 1023), 10)
+            else
+                net.WriteBool(false)
             end
+
             if istable(st.limbs) then
-                entry.limbs = {}
-                for part, hp in pairs(st.limbs) do entry.limbs[part] = hp end
-                entry.fractures = {}
-                for part in pairs(st.fractures or {}) do entry.fractures[part] = true end
-                entry.pain = (st.painkillerUntil or 0) > now
+                net.WriteBool(true)
+                for _, part in ipairs(Fireteam.Vitals.LIMB_ORDER) do
+                    net.WriteUInt(math.Clamp(st.limbs[part] or 0, 0, 127), 7)
+                end
+                local mask = 0
+                for i, part in ipairs(Fireteam.Vitals.LIMB_ORDER) do
+                    if st.fractures and st.fractures[part] then
+                        mask = mask + bit.lshift(1, i - 1)
+                    end
+                end
+                net.WriteUInt(mask, 7)
+                net.WriteBool(st.painkillerUntil and st.painkillerUntil > now or false)
+            else
+                net.WriteBool(false)
             end
+
             if Fireteam.Stamina and Fireteam.Stamina.SnapshotEntry then
                 local stam = Fireteam.Stamina.SnapshotEntry(p)
-                if stam then entry.stam, entry.stamMax = stam.value, stam.max end
+                if stam then
+                    net.WriteBool(true)
+                    net.WriteUInt(math.Clamp(math.Round(stam.value or 0), 0, 1023), 10)
+                    net.WriteUInt(math.Clamp(math.Round(stam.max or 0), 0, 1023), 10)
+                else
+                    net.WriteBool(false)
+                end
+            else
+                net.WriteBool(false)
             end
+
             local ch = p.FT_ReviveChannel
-            if ch then
-                entry.reviving = { tgtIdx = ch.target:EntIndex(), kind = ch.kind,
-                                   ends = math.Round(ch.ends - now, 1) }
+            if ch and IsValid(ch.target) then
+                net.WriteBool(true)
+                net.WriteUInt(ch.target:EntIndex(), 8)
+                net.WriteBool(ch.kind == "revive")
+                net.WriteUInt(math.Clamp(math.Round((ch.ends - now) * 10), 0, 1023), 10)
+            else
+                net.WriteBool(false)
             end
-            out[#out + 1] = entry
         end
     end
-    Fireteam.Net.SendToAll(Fireteam.NET.VITALS_UPDATE, out)
+    net.Broadcast()
 end
 
 --- 供关联模块（stamina 等）触发快照重播；内部沿用本地实现

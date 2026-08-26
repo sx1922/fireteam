@@ -70,4 +70,4 @@ function Fireteam.Squad.IsFull(squad)
     return Fireteam.Squad.GetMemberCount(squad) >= maxSize
 end
 
-print("[FIRETEAM:Squad] ✓ Shared definitions loaded")
+print("[FIRETEAM:Squad] ✓ 共享定义已加载")

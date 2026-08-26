@@ -109,4 +109,4 @@ function Fireteam.PackEditor.ColorToHex(c)
     return string.format("#%02x%02x%02x", c.r, c.g, c.b)
 end
 
-print("[FIRETEAM:PackEditor] ✓ Shared definitions loaded")
+print("[FIRETEAM:PackEditor] ✓ 共享定义已加载")

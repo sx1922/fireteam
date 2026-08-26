@@ -170,24 +170,54 @@ local function ImportPackItems()
     Fireteam.Log.Info("背包", "✓ 物品导入完成: " .. table.Count(itemDefs) .. " 种")
 end
 
-local function BuildClientDefs()
-    local out = {}
-    for itemId, def in pairs(Fireteam.Inventory.GetAllItemDefs()) do
-        out[itemId] = {
-            name      = def.name or itemId,
-            name_zh   = def.name_zh or def.name or itemId,
-            category  = def.category,
-            use_time  = def.use_time,
-            max_carry = def.max_carry,
-            size      = def.size
-        }
-    end
-    return out
-end
-
 SendSnapshot = function(ply)
-    Fireteam.Net.SendToPlayer(ply, Fireteam.NET.INVENTORY_SYNC,
-        BuildClientDefs(), Fireteam.Inventory.GetAll(ply), EnsureCells(ply))
+    -- 手写字段序列化（背包快照随每次拾取/消耗触发，不走泛型 WriteTable 反射）
+    local defs = Fireteam.Inventory.GetAllItemDefs()
+    local defList = {}
+    for id in pairs(defs) do defList[#defList + 1] = id end
+    table.sort(defList)
+
+    local countList = {}
+    if istable(ply.FT_Items) then
+        for id, count in pairs(ply.FT_Items) do
+            countList[#countList + 1] = { id, count }
+        end
+    end
+
+    local cells = EnsureCells(ply)
+
+    net.Start(Fireteam.NET.INVENTORY_SYNC)
+    net.WriteUInt(#defList, 8)
+    for _, id in ipairs(defList) do
+        local d = defs[id]
+        net.WriteString(id)
+        net.WriteString(d.name or id)
+        net.WriteString(d.name_zh or d.name or id)
+        net.WriteString(d.category or "consumable")
+        net.WriteUInt(math.Clamp(math.Round((d.use_time or 0) * 10), 0, 1023), 10)
+        net.WriteUInt(math.Clamp(d.max_carry or 1, 0, 255), 8)
+        local hasSize = istable(d.size)
+        net.WriteBool(hasSize)
+        if hasSize then
+            local sw, sh = Fireteam.Inventory.GetItemSize(d)
+            net.WriteUInt(sw, 4)
+            net.WriteUInt(sh, 4)
+        end
+    end
+    net.WriteUInt(#countList, 8)
+    for _, item in ipairs(countList) do
+        net.WriteString(item[1])
+        net.WriteUInt(math.Clamp(item[2], 0, 255), 8)
+    end
+    net.WriteUInt(#cells, 7)
+    for _, c in ipairs(cells) do
+        net.WriteString(c.id)
+        net.WriteUInt(c.x or 0, 4)
+        net.WriteUInt(c.y or 0, 4)
+        net.WriteUInt(c.w or 1, 4)
+        net.WriteUInt(c.h or 1, 4)
+    end
+    net.Send(ply)
 end
 
 hook.Add(Fireteam.HOOKS.SETTING_LOADED, "Fireteam.Inventory.PackImport", function()
@@ -285,7 +315,8 @@ end
 -- P5b 医疗 / P5d 补给各自接管绷带、医疗包、弹药盒。
 
 net.Receive(Fireteam.NET.ITEM_USE, function(_, ply)
-    Fireteam.Inventory.TryUse(ply, net.ReadString())
+    -- C→S 输入校验：截断超长物品 id
+    Fireteam.Inventory.TryUse(ply, string.sub(net.ReadString(), 1, 64))
 end)
 
 -- 网格拖拽落位（服务端权威碰撞校验）
@@ -305,7 +336,7 @@ end)
 
 -- 丢弃一件（一期直接销毁；落地拾取实体列后续）
 net.Receive(Fireteam.NET.ITEM_DROP, function(_, ply)
-    local itemId = net.ReadString()
+    local itemId = string.sub(net.ReadString(), 1, 64)
     if not IsValid(ply) or not ply:Alive() then return end
     local def = Fireteam.Inventory.GetItemDef(itemId)
     if Fireteam.Inventory.Consume(ply, itemId) then
@@ -314,4 +345,4 @@ net.Receive(Fireteam.NET.ITEM_DROP, function(_, ply)
     end
 end)
 
-print("[FIRETEAM:Inventory] ✓ Server logic loaded")
+print("[FIRETEAM:Inventory] ✓ 服务端逻辑已加载")

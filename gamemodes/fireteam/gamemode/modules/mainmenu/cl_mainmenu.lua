@@ -153,4 +153,4 @@ hook.Add("PlayerButtonDown", "Fireteam.MainMenu.F4Key", function(ply, button)
     end
 end)
 
-print("[FIRETEAM:MainMenu] ✓ ESC menu loaded")
+print("[FIRETEAM:MainMenu] ✓ ESC 菜单已加载")

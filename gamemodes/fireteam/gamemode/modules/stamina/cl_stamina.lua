@@ -59,4 +59,4 @@ hook.Add("CalcView", "Fireteam.Stamina.LowStaminaKick", function(lp, origin, ang
     return view
 end)
 
-print("[FIRETEAM:Stamina] ✓ Client HUD loaded")
+print("[FIRETEAM:Stamina] ✓ 客户端 HUD 已加载")

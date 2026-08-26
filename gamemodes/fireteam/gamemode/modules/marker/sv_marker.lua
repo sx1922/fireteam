@@ -159,8 +159,9 @@ end
 -- ═══════════════════════════════════════
 net.Receive(Fireteam.NET.MARKER_PLACE, function(len, ply)
     local pos = net.ReadVector()
-    local mType = net.ReadString()
-    local label = net.ReadString()
+    -- C→S 输入校验：截断超长字符串（客户端不可信）
+    local mType = string.sub(net.ReadString(), 1, 24)
+    local label = string.sub(net.ReadString(), 1, 32)
     Fireteam.Marker.Add(ply, pos, mType, label)
 end)
 
@@ -169,4 +170,4 @@ net.Receive(Fireteam.NET.MARKER_REMOVE, function(len, ply)
     Fireteam.Marker.Remove(ply, markerId)
 end)
 
-print("[FIRETEAM:Marker] ✓ Server logic loaded")
+print("[FIRETEAM:Marker] ✓ 服务端逻辑已加载")

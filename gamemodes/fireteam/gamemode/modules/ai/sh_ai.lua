@@ -66,4 +66,4 @@ function Fireteam.AI.GetPlayerFaction(ply)
     return squad and squad.faction or nil
 end
 
-print("[FIRETEAM:AI] ✓ Shared definitions loaded")
+print("[FIRETEAM:AI] ✓ 共享定义已加载")

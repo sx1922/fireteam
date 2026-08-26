@@ -12,10 +12,42 @@ local cachedSquads = {}
 local squadPanel = nil
 
 -- ═══════════════════════════════════════
--- 接收同步数据
+-- 接收同步数据（手写字段反序列化，与 sv_squad.SyncToAll 严格配对）
 -- ═══════════════════════════════════════
+local ROLE_NAME = { [0] = "member", [1] = "leader", [2] = "specialist" }
+
 net.Receive(Fireteam.NET.SQUAD_UPDATE, function()
-    cachedSquads = net.ReadTable()
+    local out = {}
+    local squadCount = net.ReadUInt(5)
+    for _ = 1, squadCount do
+        local id = net.ReadUInt(8)
+        local name = net.ReadString()
+        local faction = net.ReadString()
+        local state = net.ReadString()
+        local leaderIdx = net.ReadUInt(8)
+
+        local members = {}
+        local memberCount = net.ReadUInt(5)
+        for i = 1, memberCount do
+            local class = net.ReadString()
+            members[i] = {
+                idx   = net.ReadUInt(8),
+                name  = net.ReadString(),
+                role  = ROLE_NAME[net.ReadUInt(2)] or "member",
+                class = class ~= "" and class or nil,
+                ready = net.ReadBool(),
+                alive = net.ReadBool(),
+                hp    = net.ReadUInt(10),
+                maxhp = net.ReadUInt(10),
+            }
+        end
+
+        out[id] = {
+            id = id, name = name, faction = faction,
+            state = state, leaderIdx = leaderIdx, members = members,
+        }
+    end
+    cachedSquads = out
 end)
 
 -- ═══════════════════════════════════════
@@ -290,4 +322,4 @@ hook.Add("PlayerButtonDown", "Fireteam.Squad.OpenKey", function(ply, button)
     end
 end)
 
-print("[FIRETEAM:Squad] ✓ Client UI loaded")
+print("[FIRETEAM:Squad] ✓ 客户端 UI 已加载")

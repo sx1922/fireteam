@@ -328,4 +328,4 @@ function Fireteam.Rounds.GetScenarioSpawns(factionId)
     return istable(list) and list or {}
 end
 
-print("[FIRETEAM:Rounds] ✓ Shared definitions loaded")
+print("[FIRETEAM:Rounds] ✓ 共享定义已加载")

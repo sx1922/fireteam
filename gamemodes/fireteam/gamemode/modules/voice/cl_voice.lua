@@ -72,4 +72,4 @@ hook.Add("PlayerButtonDown", "Fireteam.Voice.ChannelKeys", function(ply, button)
     end
 end)
 
-print("[FIRETEAM:Voice] ✓ Client state loaded")
+print("[FIRETEAM:Voice] ✓ 客户端状态已加载")

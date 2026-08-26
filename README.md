@@ -129,11 +129,13 @@ garrysmod/
 
 ### 方式二：Addon 打包（推荐分发）
 
-使用 gmad 工具打包：
+使用 gmad 工具打包。**必须在 `gamemodes/` 目录执行并带 `-folder fireteam`**，
+让 GMA 内保留 `gamemodes/fireteam/` 路径前缀——gamemode 的模块/语言/主题加载器
+按该前缀做 file.Find，从 fireteam 目录内部打包会导致运行时找不到文件：
 
 ```bash
-cd garrysmod/gamemodes/fireteam
-gmad create -name "FIRETEAM" -out "fireteam.gma"
+cd garrysmod/gamemodes
+gmad create -folder fireteam -name "FIRETEAM" -out "fireteam.gma"
 ```
 
 ### 验证

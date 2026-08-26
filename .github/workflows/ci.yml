@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Lua 5.1
+        run: sudo apt-get update && sudo apt-get install -y lua5.1
+
+      - name: Syntax check (luac -p, GMod continue known-false-positives tolerated)
+        run: |
+          FAIL=0
+          while IFS= read -r f; do
+            OUT=$(luac -p "$f" 2>&1) || {
+              # GMod 方言 continue 关键字在标准 5.1 下误报，放行；
+              # 其余语法错误视为失败
+              LINE=$(echo "$OUT" | grep -o ':[0-9]*:' | head -1 | tr -d ':')
+              CTX=$(sed -n "$((LINE>2 ? LINE-2 : 1)),${LINE}p" "$f" 2>/dev/null | grep -c "continue" || true)
+              if [ "$CTX" -eq 0 ]; then
+                FAIL=1
+                echo "[ERR] $f"
+                echo "$OUT"
+              fi
+            }
+          done < <(find . -name "*.lua" -not -path "./.git/*")
+          exit $FAIL
+
+      - name: Smoke test (data integrity + pure functions)
+        run: lua5.1 test/smoke_test.lua .

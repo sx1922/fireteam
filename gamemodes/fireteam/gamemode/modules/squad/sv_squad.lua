@@ -238,39 +238,48 @@ end
 
 -- ═══════════════════════════════════════
 -- 网络同步
--- （不通过 net.WriteTable 直接发送 Player 引用，
---   改为 EntIndex + 昵称快照，客户端按 EntIndex 解析）
+-- 快照为纯数据表：成员以 EntIndex + 昵称表示（不序列化 Player 实体引用），
+-- 序列化为手写字段（高频消息，不走泛型 WriteTable 反射），
+-- 客户端按 EntIndex 反查实体。
 -- ═══════════════════════════════════════
+local ROLE_ID = { member = 0, leader = 1, specialist = 2 }
+
 function Fireteam.Squad.SyncToAll()
-    local data = {}
-    for id, squad in pairs(squads) do
-        local members = {}
-        for ply, info in pairs(squad.members) do
-            if IsValid(ply) then
-                table.insert(members, {
-                    idx   = ply:EntIndex(),
-                    name  = ply:Nick(),
-                    role  = info.role,
-                    class = info.class,
-                    ready = info.ready,
-                    alive = ply:Alive(),
-                    hp    = ply:Alive() and ply:Health() or 0,
-                    maxhp = math.max(ply:GetMaxHealth(), 1)
-                })
-            end
-        end
-        data[id] = {
-            id        = squad.id,
-            name      = squad.name,
-            faction   = squad.faction,
-            state     = squad.state,
-            leaderIdx = IsValid(squad.leader) and squad.leader:EntIndex() or 0,
-            members   = members
-        }
+    local list = {}
+    for _, squad in pairs(squads) do
+        list[#list + 1] = squad
     end
+    table.sort(list, function(a, b) return (a.id or 0) < (b.id or 0) end)
 
     net.Start(Fireteam.NET.SQUAD_UPDATE)
-        net.WriteTable(data)
+    net.WriteUInt(#list, 5)
+    for _, squad in ipairs(list) do
+        -- 成员先收集排序，保证写入顺序稳定
+        local members = {}
+        for ply, info in pairs(squad.members) do
+            if IsValid(ply) then members[#members + 1] = { ply = ply, info = info } end
+        end
+        table.sort(members, function(a, b)
+            return a.ply:EntIndex() < b.ply:EntIndex()
+        end)
+
+        net.WriteUInt(squad.id or 0, 8)
+        net.WriteString(squad.name or "")
+        net.WriteString(squad.faction or "")
+        net.WriteString(squad.state or "forming")
+        net.WriteUInt(IsValid(squad.leader) and squad.leader:EntIndex() or 0, 8)
+        net.WriteUInt(#members, 5)
+        for _, m in ipairs(members) do
+            net.WriteUInt(m.ply:EntIndex(), 8)
+            net.WriteString(m.ply:Nick())
+            net.WriteUInt(ROLE_ID[m.info.role or "member"] or 0, 2)
+            net.WriteString(m.info.class or "")
+            net.WriteBool(m.info.ready and true or false)
+            net.WriteBool(m.ply:Alive())
+            net.WriteUInt(math.Clamp(m.ply:Alive() and m.ply:Health() or 0, 0, 1023), 10)
+            net.WriteUInt(math.Clamp(math.max(m.ply:GetMaxHealth(), 1), 0, 1023), 10)
+        end
+    end
     net.Broadcast()
 end
 
@@ -288,8 +297,9 @@ end)
 -- 网络消息处理（消息名统一注册于 Fireteam.NET）
 -- ═══════════════════════════════════════
 net.Receive(Fireteam.NET.SQUAD_CREATE, function(len, ply)
-    local name = net.ReadString()
-    local faction = net.ReadString()
+    -- C→S 输入校验：截断超长字符串（客户端不可信）
+    local name = string.sub(net.ReadString(), 1, 32)
+    local faction = string.sub(net.ReadString(), 1, 32)
     Fireteam.Squad.Create(ply, name, faction)
 end)
 
@@ -307,4 +317,4 @@ net.Receive(Fireteam.NET.SQUAD_READY, function(len, ply)
     Fireteam.Squad.SetReady(ply, ready)
 end)
 
-print("[FIRETEAM:Squad] ✓ Server logic loaded")
+print("[FIRETEAM:Squad] ✓ 服务端逻辑已加载")

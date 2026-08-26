@@ -104,4 +104,4 @@ if SERVER then
     end)
 end
 
-print("[FIRETEAM:Ballistics] ✓ System loaded")
+print("[FIRETEAM:Ballistics] ✓ 系统已加载")

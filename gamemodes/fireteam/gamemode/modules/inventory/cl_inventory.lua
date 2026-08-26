@@ -70,12 +70,47 @@ concommand.Add("ft_item", function(_, _, args)
 end)
 
 -- ─────────────────────────────────────
--- 快照接收
+-- 快照接收（手写字段反序列化，与 sv_inventory.SendSnapshot 严格配对）
 -- ─────────────────────────────────────
 net.Receive(Fireteam.NET.INVENTORY_SYNC, function()
-    Fireteam.Inventory.ClientDefs = net.ReadTable()
-    Fireteam.Inventory.ClientCounts = net.ReadTable()
-    Fireteam.Inventory.ClientCells = net.ReadTable()
+    local defs = {}
+    local defCount = net.ReadUInt(8)
+    for _ = 1, defCount do
+        local id = net.ReadString()
+        local name = net.ReadString()
+        local nameZh = net.ReadString()
+        local category = net.ReadString()
+        local useTime = net.ReadUInt(10) / 10
+        local maxCarry = net.ReadUInt(8)
+        local size
+        if net.ReadBool() then
+            size = { w = net.ReadUInt(4), h = net.ReadUInt(4) }
+        end
+        defs[id] = {
+            name = name, name_zh = nameZh, category = category,
+            use_time = useTime, max_carry = maxCarry, size = size,
+        }
+    end
+
+    local counts = {}
+    local countCount = net.ReadUInt(8)
+    for _ = 1, countCount do
+        counts[net.ReadString()] = net.ReadUInt(8)
+    end
+
+    local cells = {}
+    local cellCount = net.ReadUInt(7)
+    for _ = 1, cellCount do
+        cells[#cells + 1] = {
+            id = net.ReadString(),
+            x = net.ReadUInt(4), y = net.ReadUInt(4),
+            w = net.ReadUInt(4), h = net.ReadUInt(4),
+        }
+    end
+
+    Fireteam.Inventory.ClientDefs = defs
+    Fireteam.Inventory.ClientCounts = counts
+    Fireteam.Inventory.ClientCells = cells
     EnsureCommands()
     hook.Run("Fireteam.Inventory.ClientUpdated")
 end)
@@ -97,4 +132,4 @@ hook.Add("PlayerButtonDown", "Fireteam.Inventory.HotbarKeys", function(ply, butt
     end
 end)
 
-print("[FIRETEAM:Inventory] ✓ Client data loaded")
+print("[FIRETEAM:Inventory] ✓ 客户端数据已加载")

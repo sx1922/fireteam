@@ -2,11 +2,11 @@
 -- FIRETEAM LVS Vehicle Base Adapter
 
 if not LVS then
-    print("[FIRETEAM:Adapter] LVS not detected, skipping adapter")
+    print("[FIRETEAM:Adapter] 未检测到 LVS，跳过适配器")
     return
 end
 
-print("[FIRETEAM:Adapter] LVS detected, registering adapter...")
+print("[FIRETEAM:Adapter] 检测到 LVS，注册适配器……")
 
 -- ═══════════════════════════════════════
 -- 角色推断
@@ -128,7 +128,7 @@ hook.Add(Fireteam.HOOKS.VEHICLE_DISCOVER, "FIRETEAM.LVSAdapter", function(vehicl
         end
     end
 
-    print("[FIRETEAM:Adapter] LVS: registered " .. count .. " vehicle(s)")
+    print("[FIRETEAM:Adapter] LVS: 已注册 " .. count .. " 辆载具")
 end)
 
-print("[FIRETEAM:Adapter] ✓ LVS adapter ready")
+print("[FIRETEAM:Adapter] ✓ LVS 适配器就绪")

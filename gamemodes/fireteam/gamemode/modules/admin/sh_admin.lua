@@ -15,4 +15,4 @@ Fireteam.Admin.ACTIONS = {
     refresh      = true,
 }
 
-print("[FIRETEAM:Admin] ✓ Shared definitions loaded")
+print("[FIRETEAM:Admin] ✓ 共享定义已加载")

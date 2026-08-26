@@ -99,4 +99,4 @@ hook.Add("PlayerDisconnected", "Fireteam.Suppression.Cleanup", function(ply)
     suppressionValues[ply] = nil
 end)
 
-print("[FIRETEAM:Suppression] ✓ Server logic loaded")
+print("[FIRETEAM:Suppression] ✓ 服务端逻辑已加载")

@@ -35,4 +35,4 @@ function Fireteam.Suppression.GetLevel(value)
     end
 end
 
-print("[FIRETEAM:Suppression] ✓ Shared definitions loaded")
+print("[FIRETEAM:Suppression] ✓ 共享定义已加载")

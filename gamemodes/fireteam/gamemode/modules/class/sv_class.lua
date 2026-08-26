@@ -140,4 +140,4 @@ net.Receive(Fireteam.NET.CLASS_ASSIGN, function(len, ply)
     Fireteam.Class.Assign(ply, classId)
 end)
 
-print("[FIRETEAM:Class] ✓ Server logic loaded")
+print("[FIRETEAM:Class] ✓ 服务端逻辑已加载")

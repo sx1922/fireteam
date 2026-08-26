@@ -70,4 +70,4 @@ function Fireteam.Seats.GetData(ent)
     return Fireteam.VehicleInterface.Get(ent:GetClass())
 end
 
-print("[FIRETEAM:Seats] ✓ Shared definitions loaded")
+print("[FIRETEAM:Seats] ✓ 共享定义已加载")

@@ -30,10 +30,22 @@ end
 -- ─────────────────────────────────────
 -- 发现所有模块目录
 -- ─────────────────────────────────────
+
+-- GMA 分发兜底清单：file.Find 未发现目录时回退（与 cl_init.lua 保持同步）
+local FALLBACK_MODULES = {
+    "admin", "ai", "ballistics", "class", "hud", "inventory", "mainmenu",
+    "marker", "packeditor", "pve", "resupply", "rounds", "seats", "spectate",
+    "squad", "stamina", "suppression", "tacmap", "vitals", "voice"
+}
+
 function Fireteam.Modules.Discover()
     Fireteam.Modules.Registry = {}
 
     local dirs = file.Find(MODULE_BASE_PATH .. "*", "GAME")
+    if #dirs == 0 then
+        dirs = FALLBACK_MODULES
+        Fireteam.Log.Warn("模块", "file.Find 未发现模块目录，回退内置清单（GMA 分发场景）")
+    end
     for _, dir in ipairs(dirs) do
         -- 跳过 adapters 子目录（适配器由设定包按需加载）
         if dir == "adapters" then continue end
@@ -154,7 +166,7 @@ function Fireteam.Modules.LoadAll()
             failed = failed + 1
         end
     end
-    print("[FIRETEAM] Modules: " .. loaded .. " loaded, " .. failed .. " failed")
+    print("[FIRETEAM] 模块加载: " .. loaded .. " 成功, " .. failed .. " 失败")
 end
 
 -- ─────────────────────────────────────

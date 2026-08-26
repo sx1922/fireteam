@@ -93,7 +93,8 @@ end)
 -- 网络请求（消息名统一注册于 Fireteam.NET）
 -- ═══════════════════════════════════════
 net.Receive(Fireteam.NET.VOICE_SWITCH_CHANNEL, function(len, ply)
-    local channelId = net.ReadString()
+    -- C→S 输入校验：截断超长频道 id
+    local channelId = string.sub(net.ReadString(), 1, 32)
     Fireteam.Voice.SetChannel(ply, channelId)
 end)
 
@@ -102,4 +103,4 @@ hook.Add("PlayerDisconnected", "Fireteam.Voice.Cleanup", function(ply)
     playerChannels[ply] = nil
 end)
 
-print("[FIRETEAM:Voice] ✓ Server logic loaded")
+print("[FIRETEAM:Voice] ✓ 服务端逻辑已加载")
