@@ -3,7 +3,7 @@
 	"title"		"FIRETEAM"
 	"type"		"gamemode"
 	"maps"		""
-	"icon"		""
+	"icon"		"icon24"
 	"description"	"Tactical squad-based combat framework with swappable setting packs"
 	"author_name"	"FIRETEAM Team"
 	"author_email"	""

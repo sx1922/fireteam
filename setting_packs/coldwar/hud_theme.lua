@@ -1,0 +1,57 @@
+-- setting_packs/coldwar/hud_theme.lua
+-- HUD 主题（Lua 版）。GMA 白名单不含 .json，Workshop 分发必须用本文件；
+-- 磁盘部署时 hud_theme.json 仍可用（加载器 .lua 优先、.json 回退）。
+-- 两份内容需保持同步。
+
+return {
+    theme_id = "crt_green",
+    name = "CRT Green Phosphor",
+
+    palette = {
+        primary          = "#33ff33",
+        secondary        = "#1a8c1a",
+        background       = "#0a0a0a",
+        surface          = "#101810",
+        border           = "#1e3a1e",
+        text             = "#d0ffd0",
+        text_muted       = "#6fa06f",
+        accent           = "#39ff6a",
+        success          = "#33ff33",
+        warning          = "#ffcc00",
+        danger           = "#ff3333",
+        info             = "#64b4ff",
+        squad_ally       = "#66ff66",
+        squad_leader     = "#ffff33",
+        marker_waypoint  = "#33ff88",
+        marker_enemy     = "#ff3333",
+        marker_objective = "#ffcc00",
+        marker_danger    = "#ff6600",
+        marker_rally     = "#64b4ff",
+        marker_medical   = "#ff6699"
+    },
+
+    font = {
+        primary   = "VT323",
+        fallback  = "Courier New",
+        size_base = 16
+    },
+
+    effects = {
+        scanlines = true,
+        flicker   = true,
+        vignette  = 0.3,
+        grain     = 0.15
+    },
+
+    elements = {
+        compass         = { style = "analog_tape", position = "bottom_center" },
+        round_info      = { style = "info_panel", position = "top_left" },
+        ammo            = { style = "text_block", position = "bottom_right" },
+        health          = { style = "text_block", position = "bottom_left" },
+        squad_status    = { style = "sidebar_list", position = "bottom_left" },
+        consumables     = { style = "chip_row", position = "bottom_center" },
+        stamina         = { style = "bar", position = "bottom_center" },
+        map             = { style = "paper_fold", open_key = "M" },
+        radio_indicator = { style = "frequency_dial", position = "bottom_left" }
+    }
+}

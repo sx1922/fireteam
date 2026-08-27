@@ -10,6 +10,43 @@ Fireteam.Setting.Data = {}
 -- 网络消息统一由 sh_net_protocol.lua 注册，此处无需重复 AddNetworkString
 
 -- ─────────────────────────────────────
+-- 安全执行设定包 Lua 文件（不依赖 include 的搜索路径）
+-- ─────────────────────────────────────
+local function RunDataLua(path, realm)
+    local contents = file.Read(path, realm)
+    if not contents then return nil end
+    local fn = CompileString(contents, path, false)
+    if not fn then
+        Fireteam.Log.Error("设定包", "✗ 数据文件语法错误: " .. path)
+        return nil
+    end
+    return fn()
+end
+
+-- ─────────────────────────────────────
+-- 读取包元数据（pack.lua 优先，pack.json 回退）
+-- GMA 白名单不含 .json，Workshop 分发的包只能带 pack.lua；
+-- 磁盘部署与第三方既有包继续用 pack.json，两者都支持。
+-- @return meta|nil, metaPath
+-- ─────────────────────────────────────
+local function ReadPackMeta(dirPath, realm)
+    local luaPath = dirPath .. Fireteam.SETTING_PACK_META_FILE_LUA
+    if file.Exists(luaPath, realm) then
+        local meta = RunDataLua(luaPath, realm)
+        if istable(meta) then return meta, luaPath end
+        return nil, luaPath
+    end
+
+    local jsonPath = dirPath .. Fireteam.SETTING_PACK_META_FILE
+    if file.Exists(jsonPath, realm) then
+        local raw = file.Read(jsonPath, realm)
+        return util.JSONToTable(raw or ""), jsonPath
+    end
+
+    return nil, nil
+end
+
+-- ─────────────────────────────────────
 -- 扫描所有设定包
 -- ─────────────────────────────────────
 function Fireteam.Setting.Discover()
@@ -24,38 +61,23 @@ function Fireteam.Setting.Discover()
     for _, sp in ipairs(searchPaths) do
         local dirs = file.Find(sp.path .. "*", sp.realm)
         for _, dir in ipairs(dirs) do
-            local metaFile = sp.path .. dir .. "/" .. Fireteam.SETTING_PACK_META_FILE
-            if file.Exists(metaFile, sp.realm) then
-                local raw = file.Read(metaFile, sp.realm)
-                local meta = util.JSONToTable(raw)
+            local dirPath = sp.path .. dir .. "/"
+            local meta, metaFile = ReadPackMeta(dirPath, sp.realm)
+            if metaFile then
                 if meta and meta.id then
-                    meta._path = sp.path .. dir .. "/"
+                    meta._path = dirPath
                     meta._source = sp.source
                     meta._realm = sp.realm
                     Fireteam.Setting.Discovered[meta.id] = meta
                     Fireteam.Log.Info("设定包", "  发现设定包: " .. meta.id .. " (来源: " .. sp.source .. ")")
                 else
-                    Fireteam.Log.Error("设定包", "✗ pack.json 无效: " .. metaFile)
+                    Fireteam.Log.Error("设定包", "✗ 包元数据无效: " .. metaFile)
                 end
             end
         end
     end
 
     Fireteam.Log.Info("设定包", "共发现 " .. table.Count(Fireteam.Setting.Discovered) .. " 个设定包")
-end
-
--- ─────────────────────────────────────
--- 安全执行设定包 Lua 文件（不依赖 include 的搜索路径）
--- ─────────────────────────────────────
-local function RunDataLua(path, realm)
-    local contents = file.Read(path, realm)
-    if not contents then return nil end
-    local fn = CompileString(contents, path, false)
-    if not fn then
-        Fireteam.Log.Error("设定包", "✗ 数据文件语法错误: " .. path)
-        return nil
-    end
-    return fn()
 end
 
 -- ─────────────────────────────────────
@@ -198,14 +220,21 @@ function Fireteam.Setting.Activate(packId)
     net.Broadcast()
 
     -- 推送 HUD 主题标识，客户端据此强制重载主题缓存
+    -- 主题文件双格式：hud_theme.lua 优先（GMA 白名单不含 .json），.json 回退
     local themeId = Fireteam.Config.Get("hud.theme") or "crt_green"
-    local hudThemeFile = meta._path .. "hud_theme.json"
-    if file.Exists(hudThemeFile, meta._realm) then
-        local theme = util.JSONToTable(file.Read(hudThemeFile, meta._realm) or "")
-        if theme and theme.theme_id then
-            themeId = theme.theme_id
-            Fireteam.Config.Set("hud.theme", themeId, { silent = true })
+    local theme = nil
+    local themeLua = meta._path .. "hud_theme.lua"
+    if file.Exists(themeLua, meta._realm) then
+        theme = RunDataLua(themeLua, meta._realm)
+    else
+        local themeJson = meta._path .. "hud_theme.json"
+        if file.Exists(themeJson, meta._realm) then
+            theme = util.JSONToTable(file.Read(themeJson, meta._realm) or "")
         end
+    end
+    if istable(theme) and theme.theme_id then
+        themeId = theme.theme_id
+        Fireteam.Config.Set("hud.theme", themeId, { silent = true })
     end
     net.Start(Fireteam.NET.HUD_THEME)
         net.WriteString(themeId)

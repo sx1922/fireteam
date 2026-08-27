@@ -40,13 +40,25 @@ end
 
 -- ═══════════════════════════════════════
 -- 获取当前主题数据
+-- 主题文件双格式：hud_theme.lua 优先（GMA 白名单不含 .json），.json 回退
 -- ═══════════════════════════════════════
+local function ReadThemeFile(path, realm)
+    local raw = file.Read(path, realm or "GAME")
+    if not raw then return nil end
+    if path:sub(-4) == ".lua" then
+        local fn = CompileString(raw, path, false)
+        local tbl = fn and fn() or nil
+        return istable(tbl) and tbl or nil
+    end
+    return util.JSONToTable(raw)
+end
+
 function Fireteam.HUD.GetTheme()
     if Fireteam.HUD.CurrentTheme then
         return Fireteam.HUD.CurrentTheme
     end
 
-    local themeFile = nil
+    local themeFile, themeRealm = nil, "GAME"
 
     if SERVER then
         -- 服务端：从设定包注册表读取
@@ -54,33 +66,39 @@ function Fireteam.HUD.GetTheme()
         if active then
             local meta = Fireteam.Setting.Discovered and Fireteam.Setting.Discovered[active]
             if meta then
-                themeFile = meta._path .. "hud_theme.json"
-                if not file.Exists(themeFile, meta._realm or "GAME") then
-                    themeFile = nil
+                themeRealm = meta._realm or "GAME"
+                for _, ext in ipairs({ ".lua", ".json" }) do
+                    local candidate = meta._path .. "hud_theme" .. ext
+                    if file.Exists(candidate, themeRealm) then
+                        themeFile = candidate
+                        break
+                    end
                 end
             end
         end
     else
-        -- 客户端：按已知部署布局尝试多个候选路径
+        -- 客户端：按已知部署布局尝试多个候选路径（各含 .lua / .json 两种格式）
         local packId = Fireteam.Setting.ActiveId
         if packId then
-            local candidates = {
-                "gamemodes/fireteam/setting_packs/" .. packId .. "/hud_theme.json",
-                "setting_packs/" .. packId .. "/hud_theme.json",
-                "lua/fireteam_setting_packs/" .. packId .. "/hud_theme.json"
+            local bases = {
+                "gamemodes/fireteam/setting_packs/" .. packId .. "/hud_theme",
+                "setting_packs/" .. packId .. "/hud_theme",
+                "lua/fireteam_setting_packs/" .. packId .. "/hud_theme"
             }
-            for _, path in ipairs(candidates) do
-                if file.Exists(path, "GAME") then
-                    themeFile = path
-                    break
+            for _, base in ipairs(bases) do
+                for _, ext in ipairs({ ".lua", ".json" }) do
+                    if file.Exists(base .. ext, "GAME") then
+                        themeFile = base .. ext
+                        break
+                    end
                 end
+                if themeFile then break end
             end
         end
     end
 
     if themeFile then
-        local raw = file.Read(themeFile, "GAME")
-        local parsed = raw and util.JSONToTable(raw) or nil
+        local parsed = ReadThemeFile(themeFile, themeRealm)
         if parsed then
             Fireteam.HUD.CurrentTheme = parsed
             return Fireteam.HUD.CurrentTheme

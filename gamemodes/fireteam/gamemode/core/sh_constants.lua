@@ -15,6 +15,9 @@ Fireteam.MIN_GMOD_VERSION = 250814
 Fireteam.SETTING_PACK_PATH_BUILTIN = "setting_packs/"
 Fireteam.SETTING_PACK_PATH_GAMEMODE = "gamemodes/fireteam/setting_packs/"
 Fireteam.SETTING_PACK_PATH_ADDON   = "lua/fireteam_setting_packs/"
+-- 包元数据双格式：GMA 白名单不含 .json，Workshop 分发必须用 .lua；
+-- 磁盘部署与第三方包沿用 .json（.lua 优先，.json 回退）
+Fireteam.SETTING_PACK_META_FILE_LUA = "pack.lua"
 Fireteam.SETTING_PACK_META_FILE    = "pack.json"
 
 -- 设定包数据文件名（加载顺序即此顺序）
