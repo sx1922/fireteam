@@ -180,6 +180,8 @@ return {
     item_no_effect         = "このアイテムは現在使用できません",
     inventory_bind_hint    = "キー割当：ft_item_<id>",
     ui_inventory_title     = "バックパック",
+    ui_inventory_tab_gear  = "装備",
+    ui_inventory_tab_roster = "名簿",
     ui_inventory_weapons   = "武器",
     ui_inventory_health    = "ヘルス",
     ui_inventory_use       = "使用",

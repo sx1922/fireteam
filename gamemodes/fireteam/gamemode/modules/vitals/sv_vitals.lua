@@ -50,7 +50,8 @@ end
 --- 手写字段序列化（1 秒周期的高频消息，不走泛型 WriteTable 反射）。
 local STATE_ID = { normal = 0, downed = 1, dead = 2 }
 
-local function BroadcastAll()
+--- @param target Player|nil  指定则单发（CLIENT_READY 补齐用），缺省全场广播
+local function BroadcastAll(target)
     local now = CurTime()
     local players = player.GetAll()
 
@@ -118,12 +119,12 @@ local function BroadcastAll()
             end
         end
     end
-    net.Broadcast()
+    if IsValid(target) then net.Send(target) else net.Broadcast() end
 end
 
---- 供关联模块（stamina 等）触发快照重播；内部沿用本地实现
-function Fireteam.Vitals.BroadcastAll()
-    BroadcastAll()
+--- 供关联模块（stamina 等）触发快照重播；target 可选（单发给指定玩家）
+function Fireteam.Vitals.BroadcastAll(target)
+    BroadcastAll(target)
 end
 
 --- 重置到正常（重生/新回合）

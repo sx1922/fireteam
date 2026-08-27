@@ -1,0 +1,75 @@
+/* FIRETEAM ESC Menu - CRT Military Theme */
+:root {
+  /* Core palette - CRT Green Phosphor */
+  --ft-background: #070a07;
+  --ft-foreground: #d0ffd0;
+  --ft-muted: #1a2e1a;
+  --ft-muted-foreground: #6fa06f;
+  --ft-card: #0d150d;
+  --ft-card-foreground: #d0ffd0;
+  --ft-popover: #0a0f0a;
+  --ft-popover-foreground: #d0ffd0;
+  --ft-primary: #33ff33;
+  --ft-primary-foreground: #070a07;
+  --ft-secondary: #1a3a1a;
+  --ft-secondary-foreground: #a0ffa0;
+  --ft-accent: #39ff6a;
+  --ft-accent-foreground: #070a07;
+  --ft-destructive: #ff3333;
+  --ft-destructive-foreground: #ffffff;
+  --ft-border: #1e3a1e;
+  --ft-input: #162816;
+  --ft-ring: #33ff33;
+
+  /* Status colors */
+  --ft-success: #33ff33;
+  --ft-warning: #ffcc00;
+  --ft-danger: #ff3333;
+  --ft-info: #64b4ff;
+
+  /* Radius scale */
+  --ft-radius-sm: 2px;
+  --ft-radius-md: 4px;
+  --ft-radius-lg: 6px;
+  --ft-radius-xl: 8px;
+
+  /* Typography */
+  --ft-font-mono: 'VT323', 'Courier New', monospace;
+  --ft-font-sans: 'Inter', system-ui, sans-serif;
+}
+
+/* CRT scanline effect */
+.crt-overlay {
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.15),
+    rgba(0, 0, 0, 0.15) 1px,
+    transparent 1px,
+    transparent 2px
+  );
+  z-index: 9999;
+}
+
+/* Glow utilities */
+.glow-primary {
+  text-shadow: 0 0 8px rgba(51, 255, 51, 0.6), 0 0 2px rgba(51, 255, 51, 1);
+}
+
+.glow-warning {
+  text-shadow: 0 0 8px rgba(255, 204, 0, 0.6), 0 0 2px rgba(255, 204, 0, 1);
+}
+
+.glow-danger {
+  text-shadow: 0 0 8px rgba(255, 51, 51, 0.6), 0 0 2px rgba(255, 51, 51, 1);
+}
+
+.glow-box-primary {
+  box-shadow: 0 0 12px rgba(51, 255, 51, 0.3), inset 0 0 12px rgba(51, 255, 51, 0.05);
+}
+
+.glow-box-danger {
+  box-shadow: 0 0 12px rgba(255, 51, 51, 0.3), inset 0 0 12px rgba(255, 51, 51, 0.05);
+}

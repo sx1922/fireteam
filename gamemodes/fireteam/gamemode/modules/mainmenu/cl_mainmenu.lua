@@ -94,19 +94,27 @@ function Fireteam.MainMenu.Open()
     spacer.Paint = nil
 
     -- ─── 功能入口 ───
-    AddEntryButton(wrap, L("ui_mm_squad") .. "  (F7)", function()
+    -- 括号内为「当前实际绑定」，由 input.LookupBinding 反查命令，玩家重绑后自动跟随
+    local function KeyHint(cmd, engineHint)
+        local bound = input.LookupBinding(cmd)
+        if bound and bound ~= "" then return "  (" .. string.upper(bound) .. ")" end
+        if engineHint then return "  (" .. engineHint .. ")" end
+        return ""
+    end
+
+    AddEntryButton(wrap, L("ui_mm_squad") .. KeyHint("ft_squad", "F2"), function()
         Fireteam.Squad.OpenPanel()
     end)
-    AddEntryButton(wrap, L("ui_mm_class") .. "  (F8)", function()
+    AddEntryButton(wrap, L("ui_mm_class") .. KeyHint("ft_class", "F3"), function()
         Fireteam.Class.OpenSelectPanel()
     end)
-    AddEntryButton(wrap, L("ui_mm_backpack") .. "  (Tab)", function()
+    AddEntryButton(wrap, L("ui_mm_backpack") .. KeyHint("ft_backpack", "Tab"), function()
         Fireteam.Inventory.ToggleBackpack()
     end)
-    AddEntryButton(wrap, L("ui_mm_tacmap") .. "  (M)", function()
+    AddEntryButton(wrap, L("ui_mm_tacmap") .. KeyHint("ft_map"), function()
         Fireteam.TacMap.Toggle()
     end)
-    AddEntryButton(wrap, L("ui_mm_command") .. "  (CapsLock)", function()
+    AddEntryButton(wrap, L("ui_mm_command") .. KeyHint("ft_command", "F4"), function()
         Fireteam.TacMap.ToggleCommandView()
     end)
 
@@ -115,11 +123,11 @@ function Fireteam.MainMenu.Open()
     adminBtn:SetTall(40)
     adminBtn:Dock(TOP)
     adminBtn:DockMargin(0, 0, 0, 8)
-    adminBtn:SetText(L("ui_mm_admin") .. "  (F10)")
+    adminBtn:SetText(L("ui_mm_admin") .. KeyHint("ft_admin"))
     kit.StyleButton(adminBtn, { style = "danger" })
     adminBtn.DoClick = function()
         if IsValid(menuPanel) then menuPanel:Remove() end
-        Fireteam.Admin.Open()
+        Fireteam.Admin.Toggle()
     end
 end
 
@@ -127,30 +135,16 @@ function Fireteam.MainMenu.Close()
     if IsValid(menuPanel) then menuPanel:Remove() end
 end
 
--- ─────────────────────────────────────
--- ESC 拦截：引擎菜单弹出即隐藏并接管
--- （已打开时 ESC = 关闭；F4 等效入口）
--- ─────────────────────────────────────
-hook.Add("PreRender", "Fireteam.MainMenu.Intercept", function()
-    if gui.IsGameUIVisible() then
-        gui.HideGameUI()
-        if IsValid(menuPanel) then
-            Fireteam.MainMenu.Close()
-        else
-            Fireteam.MainMenu.Open()
-        end
-    end
-end)
-
-hook.Add("PlayerButtonDown", "Fireteam.MainMenu.F4Key", function(ply, button)
-    if ply ~= LocalPlayer() then return end
-    if button ~= KEY_F4 then return end
-    if not kit.CanTogglePanel() then return end
+--- 面板开关由 core/sh_keybinds.lua 统一分配
+--- （引擎 ShowHelp=F1 / 命令 ft_menu）。
+--- ⚠ 不再拦截 ESC：此前的 PreRender + gui.HideGameUI 让玩家完全无法打开引擎菜单
+--- （改设置、断开连接都做不到），ESC 已归还引擎。
+function Fireteam.MainMenu.Toggle()
     if IsValid(menuPanel) then
         Fireteam.MainMenu.Close()
     else
         Fireteam.MainMenu.Open()
     end
-end)
+end
 
-Fireteam.Log.Info("MainMenu", "✓ ESC 菜单已加载")
+Fireteam.Log.Info("MainMenu", "✓ 主菜单已加载")

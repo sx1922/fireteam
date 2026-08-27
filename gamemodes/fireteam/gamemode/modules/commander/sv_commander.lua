@@ -52,7 +52,8 @@ end
 -- ═══════════════════════════════════════
 -- 同步（手写定序，客户端 cl_commander.lua 严格配对）
 -- ═══════════════════════════════════════
-local function SyncToAll()
+--- @param target Player|nil  指定则单发（CLIENT_READY 补齐用），缺省全场广播
+local function SyncToAll(target)
     -- 需广播的阵营集合：席位 ∪ 选举 ∪ 有小队的阵营
     local set = {}
     for f in pairs(commanders) do set[f] = true end
@@ -84,7 +85,12 @@ local function SyncToAll()
             for _, idx in ipairs(cands) do net.WriteUInt(idx, 8) end
         end
     end
-    net.Broadcast()
+    if IsValid(target) then net.Send(target) else net.Broadcast() end
+end
+
+--- 单发指挥席位与选举态（供 CLIENT_READY 握手补齐）
+function Fireteam.Commander.SendStateTo(ply)
+    if IsValid(ply) then SyncToAll(ply) end
 end
 
 -- ═══════════════════════════════════════

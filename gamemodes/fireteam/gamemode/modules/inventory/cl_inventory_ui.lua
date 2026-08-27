@@ -42,10 +42,28 @@ function Fireteam.Inventory.OpenBackpack()
     local gridH = Fireteam.Inventory.GRID_H * cp
     local leftW = math.Round(230 * scaleW)
 
+    -- ─── 页签：装备 / 名单 ───
+    -- Tab（ScoreboardShow）已被背包接管，原版计分板不再出现，
+    -- 因此把玩家名单作为本面板的第二页补回来。
+    local tabs = vgui.Create("DPropertySheet", invPanel)
+    tabs:SetPos(8, invPanel.ftContentTop)
+    tabs:SetSize(W - 16, H - invPanel.ftContentTop - invPanel.ftContentBottom - 8)
+    tabs.Paint = nil
+
+    local gearPage = vgui.Create("DPanel", tabs)
+    gearPage.Paint = nil
+    tabs:AddSheet(L("ui_inventory_tab_gear"), gearPage, "icon16/briefcase.png")
+
+    local rosterPage = vgui.Create("DPanel", tabs)
+    rosterPage.Paint = function(s, w, h) Fireteam.Inventory.PaintRoster(s, w, h) end
+    tabs:AddSheet(L("ui_inventory_tab_roster"), rosterPage, "icon16/group.png")
+
+    local pageH = gearPage:GetTall()
+
     -- ─── 左侧：当前武器 + 健康检查 ───
-    local left = vgui.Create("DPanel", invPanel)
-    left:SetPos(12, invPanel.ftContentTop + 8)
-    left:SetSize(leftW, H - invPanel.ftContentTop - invPanel.ftContentBottom - 16)
+    local left = vgui.Create("DPanel", gearPage)
+    left:SetPos(4, 4)
+    left:SetSize(leftW, pageH - 8)
     left.Paint = function(s, w, h)
         draw.SimpleText(L("ui_inventory_weapons"), kit.Font("small"), 8, 6,
             kit.Color("text_muted"), TEXT_ALIGN_LEFT)
@@ -87,8 +105,8 @@ function Fireteam.Inventory.OpenBackpack()
     end
 
     -- ─── 右侧：10×6 网格 ───
-    local grid = vgui.Create("DPanel", invPanel)
-    grid:SetPos(leftW + 24, invPanel.ftContentTop + 8)
+    local grid = vgui.Create("DPanel", gearPage)
+    grid:SetPos(leftW + 16, 4)
     grid:SetSize(gridW, gridH)
     grid.Paint = function(s, w, h)
         draw.RoundedBox(4, 0, 0, w, h, kit.ColorA("background", 210))
@@ -184,21 +202,25 @@ function Fireteam.Inventory.OpenBackpack()
         dragState = nil
     end
 
-    -- ─── 底部：快捷栏（右键物品可绑定 1-4 槽，数字 7/8/9/0 触发）───
-    local hotbar = vgui.Create("DPanel", invPanel)
-    hotbar:SetPos(leftW + 24, invPanel.ftContentTop + 8 + gridH + 12)
+    -- ─── 底部：快捷栏（右键物品绑定 1-4 槽；键位由 core/sh_keybinds.lua 分配）───
+    local hotbar = vgui.Create("DPanel", gearPage)
+    hotbar:SetPos(leftW + 16, 4 + gridH + 12)
     hotbar:SetSize(gridW, cp + 22)
     hotbar.Paint = function(s, w, h)
         draw.SimpleText(L("ui_inventory_hotbar_hint"), kit.Font("small"), 2, 0,
             kit.Color("text_muted"), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
-        local keys = { 7, 8, 9, 0 }
         for slot = 1, Fireteam.Inventory.HOTBAR_SIZE do
             local x = (slot - 1) * (cp + 8)
             draw.RoundedBox(3, x, 20, cp, cp, kit.ColorA("background", 230))
             surface.SetDrawColor(kit.ColorA("border", 190))
             surface.DrawOutlinedRect(x, 20, cp, cp, 1)
-            draw.SimpleText(tostring(keys[slot]), kit.Font("small"), x + 5, 24,
+
+            -- 槽位提示显示「当前实际绑定键」，玩家重绑后自动跟随
+            local bound = input.LookupBinding("ft_item_slot" .. slot)
+            draw.SimpleText(bound and string.upper(bound) or tostring(slot),
+                kit.Font("small"), x + 5, 24,
                 kit.ColorA("text_muted", 190), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
+
             local itemId = Fireteam.Inventory.Hotbar[slot]
             if itemId then
                 local cnt = Fireteam.Inventory.ClientCounts[itemId] or 0
@@ -213,6 +235,97 @@ function Fireteam.Inventory.OpenBackpack()
     invPanel.OnRemove = function() dragState = nil end
 end
 
+-- ═══════════════════════════════════════
+-- 名单页（替代被背包接管的原版计分板）
+-- 数据来源：SQUAD_UPDATE 快照（小队/职业/血量）+ 本地 player.GetAll()（昵称/ping）
+--          + ROUNDS_STATE 快照（阵营比分）；无小队玩家一并列出
+-- ═══════════════════════════════════════
+function Fireteam.Inventory.PaintRoster(panel, w, h)
+    local scale = ScrH() / 1080
+    local rowH = math.Round(24 * scale)
+    local y = 6
+
+    -- 阵营比分行
+    local rc = Fireteam.Rounds and Fireteam.Rounds.Client or nil
+    if istable(rc) and istable(rc.scores) and next(rc.scores) then
+        local parts = {}
+        for fid, sc in pairs(rc.scores) do
+            parts[#parts + 1] = { id = fid, score = sc }
+        end
+        table.sort(parts, function(a, b) return a.score > b.score end)
+
+        local x = 8
+        for _, p in ipairs(parts) do
+            draw.SimpleText(p.id .. " " .. p.score, kit.Font("small"), x, y,
+                kit.Color("warning"), TEXT_ALIGN_LEFT)
+            x = x + math.Round(120 * scale)
+        end
+        y = y + rowH
+    end
+
+    -- 表头
+    local colName  = 8
+    local colSquad = math.Round(w * 0.34)
+    local colClass = math.Round(w * 0.56)
+    local colState = math.Round(w * 0.76)
+    local colPing  = w - 12
+
+    kit.DrawDivider(4, y + rowH - 4, w - 8)
+    draw.SimpleText(L("admin_col_name"),    kit.Font("small"), colName,  y, kit.Color("text_muted"), TEXT_ALIGN_LEFT)
+    draw.SimpleText(L("admin_col_squad"),   kit.Font("small"), colSquad, y, kit.Color("text_muted"), TEXT_ALIGN_LEFT)
+    draw.SimpleText(L("admin_col_class"),   kit.Font("small"), colClass, y, kit.Color("text_muted"), TEXT_ALIGN_LEFT)
+    draw.SimpleText(L("admin_col_faction"), kit.Font("small"), colState, y, kit.Color("text_muted"), TEXT_ALIGN_LEFT)
+    draw.SimpleText(L("admin_col_ping"),    kit.Font("small"), colPing,  y, kit.Color("text_muted"), TEXT_ALIGN_RIGHT)
+    y = y + rowH + 4
+
+    -- 建索引：EntIndex → { squadName, faction, class, alive }
+    local info = {}
+    for _, sq in pairs(Fireteam.Squad and Fireteam.Squad.GetCachedSquads() or {}) do
+        for _, m in ipairs(sq.members or {}) do
+            info[m.idx] = {
+                squad   = sq.name or "-",
+                faction = sq.faction or "-",
+                class   = m.class or "-",
+                alive   = m.alive,
+                leader  = m.idx == sq.leaderIdx,
+            }
+        end
+    end
+
+    local vitals = Fireteam.Vitals and Fireteam.Vitals.Client or {}
+
+    for _, p in ipairs(player.GetAll()) do
+        if not IsValid(p) then continue end
+        if y > h - rowH then break end
+
+        local idx = p:EntIndex()
+        local e = info[idx]
+        local downed = istable(vitals[idx]) and vitals[idx].state == "downed"
+
+        local nameCol = "text"
+        if downed then nameCol = "danger"
+        elseif e and e.leader then nameCol = "squad_leader"
+        elseif e and not e.alive then nameCol = "text_muted" end
+
+        local prefix = (e and e.leader) and "◆ " or ""
+        draw.SimpleText(prefix .. p:Nick(), kit.Font("small"), colName, y,
+            kit.Color(nameCol), TEXT_ALIGN_LEFT)
+        draw.SimpleText(e and e.squad or "-", kit.Font("small"), colSquad, y,
+            kit.Color("text_muted"), TEXT_ALIGN_LEFT)
+        draw.SimpleText(e and e.class or "-", kit.Font("small"), colClass, y,
+            kit.Color("text_muted"), TEXT_ALIGN_LEFT)
+
+        local stateText = e and e.faction or "-"
+        if downed then stateText = L("ui_command_downed") end
+        draw.SimpleText(stateText, kit.Font("small"), colState, y,
+            kit.Color(downed and "danger" or "text_muted"), TEXT_ALIGN_LEFT)
+
+        draw.SimpleText(tostring(p:Ping()), kit.Font("small"), colPing, y,
+            kit.Color("text_muted"), TEXT_ALIGN_RIGHT)
+        y = y + rowH
+    end
+end
+
 function Fireteam.Inventory.CloseBackpack()
     if IsValid(invPanel) then invPanel:Remove() end
     dragState = nil
@@ -221,22 +334,13 @@ end
 function Fireteam.Inventory.ToggleBackpack()
     if IsValid(invPanel) then
         Fireteam.Inventory.CloseBackpack()
-    elseif Fireteam.UI.CanTogglePanel() then
+    else
         Fireteam.Inventory.OpenBackpack()
     end
 end
 
--- Tab 完全让给背包面板（屏蔽默认计分板）
-hook.Add("ScoreboardShow", "Fireteam.Inventory.BlockScoreboard", function()
-    return false
-end)
-
-hook.Add("PlayerButtonDown", "Fireteam.Inventory.TabKey", function(ply, button)
-    if ply ~= LocalPlayer() then return end
-    if button == KEY_TAB then
-        Fireteam.Inventory.ToggleBackpack()
-    end
-end)
+-- 面板开关由 core/sh_keybinds.lua 统一分配
+-- （引擎 ScoreboardShow=Tab 接管为背包，名单页在面板内；命令 ft_backpack）
 
 -- ═══════════════════════════════════════
 -- HUD：快捷栏 4 槽（consumables 锚点上方）+ 消耗品芯片行

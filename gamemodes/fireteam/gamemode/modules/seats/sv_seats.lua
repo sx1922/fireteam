@@ -62,6 +62,20 @@ local function SyncVehicle(ent)
     Fireteam.Net.SendToAll(Fireteam.NET.SEAT_UPDATE, idx, SnapshotPayload(ent))
 end
 
+--- 全场载具座位状态单发（供 CLIENT_READY 握手补齐；否则加入的玩家看不到既有占座）
+function Fireteam.Seats.SendAllTo(ply)
+    if not IsValid(ply) then return 0 end
+    local n = 0
+    for _, ent in ipairs(ents.GetAll()) do
+        if IsValid(ent) and ent:IsVehicle() then
+            Fireteam.Net.SendToPlayer(ply, Fireteam.NET.SEAT_UPDATE,
+                ent:EntIndex(), SnapshotPayload(ent))
+            n = n + 1
+        end
+    end
+    return n
+end
+
 -- ═══════════════════════════════════════
 -- 进入裁决：目标座位有 allowed_classes 时校验玩家职业
 -- ═══════════════════════════════════════

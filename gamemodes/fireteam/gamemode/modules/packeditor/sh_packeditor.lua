@@ -1,4 +1,4 @@
--- modules/packeditor/sh_pack_editor.lua
+-- modules/packeditor/sh_packeditor.lua
 -- FIRETEAM Setting Pack Editor - Shared Definitions
 -- 接口级可视化设定包编辑器：schema 驱动表单，导出为 JSON 设定包。
 -- GMod 沙箱限制服务端只能写 data/，导出目录为 data/fireteam_packs/<id>/，

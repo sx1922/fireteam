@@ -1,0 +1,143 @@
+{
+  "data": [
+    {
+      "id": "page-esc-menu",
+      "title": "ESC 主菜单",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1756296000000,
+      "canvasData": {
+        "x": 168,
+        "y": 972,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 900,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-13f348b4",
+          "measuredAt": 1787841536464
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/esc-menu.html",
+        "interactions": []
+      }
+    },
+    {
+      "id": "image-001",
+      "title": "冷战-小队管理图标",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1756299600000,
+      "canvasData": {
+        "x": 80,
+        "y": 80
+      },
+      "devMetadata": {
+        "imageSrc": "assets/coldwar/icon-squad.jpg"
+      }
+    },
+    {
+      "id": "image-002",
+      "title": "冷战-职业选择图标",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1756299600000,
+      "canvasData": {
+        "x": 3444,
+        "y": 84
+      },
+      "devMetadata": {
+        "imageSrc": "assets/coldwar/icon-class.jpg"
+      }
+    },
+    {
+      "id": "image-003",
+      "title": "冷战-网格背包图标",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1756299600000,
+      "canvasData": {
+        "x": 1716,
+        "y": 60
+      },
+      "devMetadata": {
+        "imageSrc": "assets/coldwar/icon-backpack.jpg"
+      }
+    },
+    {
+      "id": "image-004",
+      "title": "冷战-战术地图图标",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1756299600000,
+      "canvasData": {
+        "x": 1668,
+        "y": 540
+      },
+      "devMetadata": {
+        "imageSrc": "assets/coldwar/icon-tacmap.jpg"
+      }
+    },
+    {
+      "id": "image-005",
+      "title": "冷战-指挥视图图标",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1756299600000,
+      "canvasData": {
+        "x": 1040,
+        "y": 80
+      },
+      "devMetadata": {
+        "imageSrc": "assets/coldwar/icon-commander.jpg"
+      }
+    },
+    {
+      "id": "image-006",
+      "title": "冷战-语音设置图标",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1756299600000,
+      "canvasData": {
+        "x": 2316,
+        "y": 600
+      },
+      "devMetadata": {
+        "imageSrc": "assets/coldwar/icon-voice.jpg"
+      }
+    },
+    {
+      "id": "image-007",
+      "title": "冷战-角落装饰",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1756299600000,
+      "canvasData": {
+        "x": 80,
+        "y": 360
+      },
+      "devMetadata": {
+        "imageSrc": "assets/coldwar/corner-stencil.jpg"
+      }
+    },
+    {
+      "id": "image-008",
+      "title": "冷战-分隔线装饰",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1756299600000,
+      "canvasData": {
+        "x": 456,
+        "y": 408
+      },
+      "devMetadata": {
+        "imageSrc": "assets/coldwar/divider-stencil.jpg"
+      }
+    },
+    {
+      "id": "image-009",
+      "title": "CRT-小队管理图标",
+      "type": "image",
+      "version": 1,
+      "crea

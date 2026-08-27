@@ -180,6 +180,8 @@ return {
     item_no_effect         = "Cet objet n'a encore aucune utilité ici",
     inventory_bind_hint    = "bind une touche : ft_item_<id>",
     ui_inventory_title     = "Sac à dos",
+    ui_inventory_tab_gear  = "Équipement",
+    ui_inventory_tab_roster = "Liste",
     ui_inventory_weapons   = "Armes",
     ui_inventory_health    = "Santé",
     ui_inventory_use       = "Utiliser",

@@ -1,4 +1,4 @@
--- modules/packeditor/cl_pack_editor_ui.lua
+-- modules/packeditor/cl_packeditor_ui.lua
 -- FIRETEAM Setting Pack Editor - Client UI
 -- F9 开关；schema 驱动表单 + 调色板/元素布局特化编辑器。
 -- 编辑在客户端内存进行，导出时整体发回服务端落盘。
@@ -198,7 +198,7 @@ function Fireteam.PackEditor.Open()
     panel = kit.CreateFrame(L("ui_packeditor_title"), W, H,
         { blur = true, hints = { "ui_hint_f9_close", "ui_hint_esc_close" } })
     panel:Center()
-    panel:MakePopup()
+    -- CreateFrame 内部已 MakePopup，此处不再重复调用
 
     -- ── 顶栏：选择设定包 / 载入 / 导出 ──
     local top = vgui.Create("DPanel", panel)
@@ -299,17 +299,14 @@ function Fireteam.PackEditor.Close()
     if IsValid(panel) then panel:Remove() end
 end
 
-hook.Add("PlayerButtonDown", "Fireteam.PackEditor.Toggle", function(ply, btn)
-    if ply ~= LocalPlayer() then return end
-    if btn ~= KEY_F9 then return end
-    if not kit.CanTogglePanel() then return end
+--- 面板开关由 core/sh_keybinds.lua 统一分配（命令 ft_packeditor）
+function Fireteam.PackEditor.Toggle()
     if not Fireteam.Config.Get("packeditor.enabled") then return end
-
     if IsValid(panel) then
         Fireteam.PackEditor.Close()
     else
         Fireteam.PackEditor.Open()
     end
-end)
+end
 
 Fireteam.Log.Info("PackEditor", "✓ 客户端 UI 已加载")

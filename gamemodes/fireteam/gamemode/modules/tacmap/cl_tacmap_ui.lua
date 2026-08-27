@@ -299,6 +299,10 @@ function Fireteam.TacMap.Open()
     end
 end
 
+function Fireteam.TacMap.Close()
+    CloseMap()
+end
+
 function Fireteam.TacMap.Toggle()
     if IsValid(tacmapPanel) then
         CloseMap()
@@ -307,23 +311,8 @@ function Fireteam.TacMap.Toggle()
     end
 end
 
--- 开关按键：读主题 elements.map.open_key（缺省 M）
-local cachedKeyCode = nil
-local function GetOpenKey()
-    if not cachedKeyCode then
-        local keyName = kit.GetElement("map").open_key or "M"
-        local code = input.GetKeyCode and input.GetKeyCode(keyName)
-        cachedKeyCode = code or KEY_M
-    end
-    return cachedKeyCode
-end
-
-hook.Add("PlayerButtonDown", "Fireteam.TacMap.OpenKey", function(ply, button)
-    if ply ~= LocalPlayer() then return end
-    if button == GetOpenKey() and Fireteam.UI.CanTogglePanel() then
-        Fireteam.TacMap.Toggle()
-    end
-end)
+-- 面板开关由 core/sh_keybinds.lua 统一分配（命令 ft_map，推荐键 M）
+-- 主题 elements.map.open_key 仅作展示提示，不再自行监听物理键
 
 -- ═══════════════════════════════════════
 -- CapsLock 全屏指挥视图（模仿 Squad 队伍界面）：
@@ -606,21 +595,19 @@ function Fireteam.TacMap.OpenCommandView()
     end
 end
 
+function Fireteam.TacMap.CloseCommandView()
+    CloseCommandView()
+end
+
 function Fireteam.TacMap.ToggleCommandView()
     if IsValid(commandPanel) then
         CloseCommandView()
-    elseif Fireteam.UI.CanTogglePanel() then
+    else
         Fireteam.TacMap.OpenCommandView()
     end
 end
 
--- CapsLock 开合（枚举名跨分支兼容双查）
-local CAPS_KEY = _G.KEY_CAPSLOCK or _G.KEY_CAPLOCK
-hook.Add("PlayerButtonDown", "Fireteam.TacMap.CommandKey", function(ply, button)
-    if ply ~= LocalPlayer() then return end
-    if CAPS_KEY and button == CAPS_KEY then
-        Fireteam.TacMap.ToggleCommandView()
-    end
-end)
+-- 面板开关由 core/sh_keybinds.lua 统一分配
+-- （命令 ft_command，推荐键 CapsLock；引擎 ShowSpare2=F4 亦可进入）
 
 Fireteam.Log.Info("TacMap", "✓ 客户端 UI 已加载")

@@ -180,6 +180,8 @@ return {
     item_no_effect         = "이 아이템은 현재 사용 효과가 없습니다",
     inventory_bind_hint    = "키 바인딩: ft_item_<id>",
     ui_inventory_title     = "배낭",
+    ui_inventory_tab_gear  = "장비",
+    ui_inventory_tab_roster = "명단",
     ui_inventory_weapons   = "무기",
     ui_inventory_health    = "체력",
     ui_inventory_use       = "사용",

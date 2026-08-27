@@ -64,24 +64,24 @@ hook.Add("PostDrawTranslucentRenderables", "Fireteam.Marker.Draw3D", function()
 end)
 
 -- ═══════════════════════════════════════
--- 放置标记（按 F6）
+-- 放置标记（命令 ft_marker；键位由 core/sh_keybinds.lua 分配，不硬编码物理键）
 -- ═══════════════════════════════════════
-hook.Add("PlayerButtonDown", "Fireteam.Marker.PlaceKey", function(ply, button)
-    if ply ~= LocalPlayer() then return end
-    if button == KEY_F6 and kit.CanTogglePanel() then
-        -- 射线检测准星指向位置
-        local tr = LocalPlayer():GetEyeTrace()
-        local pos = tr.HitPos + tr.HitNormal * 5
+function Fireteam.Marker.PlaceAtCrosshair()
+    local lp = LocalPlayer()
+    if not IsValid(lp) then return end
 
-        net.Start(Fireteam.NET.MARKER_PLACE)
-            net.WriteVector(pos)
-            net.WriteString(Fireteam.Marker.TYPE.WAYPOINT)
-            net.WriteString("")
-            net.WriteBool(false)   -- 小队级标记；指挥官经战术地图发阵营级
-        net.SendToServer()
+    -- 射线检测准星指向位置
+    local tr = lp:GetEyeTrace()
+    local pos = tr.HitPos + tr.HitNormal * 5
 
-        chat.AddText(kit.Color("info"), "[FIRETEAM] " .. L("marker_placed"))
-    end
-end)
+    net.Start(Fireteam.NET.MARKER_PLACE)
+        net.WriteVector(pos)
+        net.WriteString(Fireteam.Marker.TYPE.WAYPOINT)
+        net.WriteString("")
+        net.WriteBool(false)   -- 小队级标记；指挥官经战术地图发阵营级
+    net.SendToServer()
+
+    chat.AddText(kit.Color("info"), "[FIRETEAM] " .. L("marker_placed"))
+end
 
 Fireteam.Log.Info("Marker", "✓ 客户端渲染已加载")

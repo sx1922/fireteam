@@ -146,6 +146,7 @@ Fireteam.NET = {
     CLASS_ASSIGN         = "FT_ClassAssign",
 
     -- 客户端 → 服务端（请求）
+    CLIENT_READY         = "FT_ClientReady",        -- 客户端模块全量加载完毕，请求初始状态
     MARKER_PLACE         = "FT_MarkerPlace",
     MARKER_REMOVE        = "FT_MarkerRemove",
     SQUAD_CREATE         = "FT_SquadCreate",

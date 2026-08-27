@@ -264,9 +264,22 @@ if CLIENT then
         return label
     end
 
-    --- 键盘焦点守卫：输入框（含中文输入法组合窗口）持有焦点时禁止面板开关热键
+    --- 键盘焦点守卫：仅当**文本输入控件**持有焦点时拦截热键（防打字/输入法组合期误触）。
+    --- ⚠ 不能简单判 `vgui.GetKeyboardFocus() == nil`：CreateFrame 无条件 MakePopup，
+    --- 面板本体也持有键盘焦点，那样写会让任意面板一开就锁死全部热键（历史 P0，worklog 041）。
     function kit.CanTogglePanel()
-        return vgui.GetKeyboardFocus() == nil
+        local focus = vgui.GetKeyboardFocus()
+        if not IsValid(focus) then return true end
+
+        -- 鸭子类型：TextEntry 家族同时具备这三个方法，DFrame/DPanel 不具备
+        if focus.GetText and focus.SetText and focus.IsEditing then return false end
+
+        -- 类名兜底（个别派生控件可能改写方法表）
+        local cls = focus.GetClassName and focus:GetClassName() or ""
+        if cls == "DTextEntry" or cls == "TextEntry" or cls == "RichText" then
+            return false
+        end
+        return true
     end
 
     --- 主题化 DTextEntry 工厂：统一字体/配色/聚焦描边（中文输入请走系统输入法）

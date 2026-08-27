@@ -45,31 +45,54 @@ function Fireteam.Voice.GetSpeakerAlpha(idx)
 end
 
 -- ═══════════════════════════════════════
--- 三频道切换热键（V=地区 / B=小队 / G=指挥，voice.key_* 可改绑）
+-- 按住说话（Squad 式）
+-- 命令 +ft_voice_local / +ft_voice_squad / +ft_voice_command 由
+-- core/sh_keybinds.lua 注册；键位玩家自绑，不碰 vanilla 的 +voicerecord 键。
+--
+-- 语义：按下 → 切到该频道并代发 +voicerecord；松开 → 停止录音并回退原频道。
+-- ⚠ 取舍：切频道请求与首个语音包可能同 tick 到达服务端，极端情况下首 tick
+--   按旧频道分发（<1 tick 的可闻差异），换取零输入延迟。
 -- ═══════════════════════════════════════
-local keyBindings = {
-    { config = "voice.key_local",   channel = "local" },
-    { config = "voice.key_squad",   channel = "squad" },
-    { config = "voice.key_command", channel = "command" },
-}
+local talking = nil          -- 正在按住的 kind
+local prevChannel = nil      -- 按住前的频道，松开后回退
 
-local function ResolveKeyCode(configKey)
-    local name = Fireteam.Config.Get(configKey)
-    if not name or name == "" then return nil end
-    return _G["KEY_" .. string.upper(name)]
+--- 切频道请求（也供面板等其他入口复用）
+function Fireteam.Voice.RequestChannel(channelId)
+    if not isstring(channelId) or channelId == "" then return false end
+    net.Start(Fireteam.NET.VOICE_SWITCH_CHANNEL)
+        net.WriteString(channelId)
+    net.SendToServer()
+    return true
 end
 
-hook.Add("PlayerButtonDown", "Fireteam.Voice.ChannelKeys", function(ply, button)
-    if ply ~= LocalPlayer() then return end
-    if not Fireteam.UI.CanTogglePanel() then return end
-    for _, bind in ipairs(keyBindings) do
-        if ResolveKeyCode(bind.config) == button then
-            net.Start(Fireteam.NET.VOICE_SWITCH_CHANNEL)
-                net.WriteString(bind.channel)
-            net.SendToServer()
-            return
-        end
+function Fireteam.Voice.BeginTalk(kind)
+    if talking then return end            -- 已在说话，忽略其他频道键
+    local lp = LocalPlayer()
+    if not IsValid(lp) then return end
+
+    talking = kind
+    prevChannel = Fireteam.Voice.GetClientChannel(lp)
+    if kind ~= prevChannel then
+        Fireteam.Voice.RequestChannel(kind)
     end
-end)
+    RunConsoleCommand("+voicerecord")
+end
+
+function Fireteam.Voice.EndTalk(kind)
+    if talking ~= kind then return end
+    RunConsoleCommand("-voicerecord")
+    talking = nil
+
+    -- 回退到按住前的频道（避免"按一次就永久改频道"）
+    if prevChannel and prevChannel ~= kind then
+        Fireteam.Voice.RequestChannel(prevChannel)
+    end
+    prevChannel = nil
+end
+
+--- 当前是否正按住某频道说话（HUD 指示器可用）
+function Fireteam.Voice.GetTalkingKind()
+    return talking
+end
 
 Fireteam.Log.Info("Voice", "✓ 客户端状态已加载")

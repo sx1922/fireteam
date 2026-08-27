@@ -1,4 +1,4 @@
--- modules/packeditor/sv_pack_editor.lua
+-- modules/packeditor/sv_packeditor.lua
 -- FIRETEAM Setting Pack Editor - Server Logic
 -- PULL：把设定包全部数据文件解析成表发回客户端
 -- EXPORT：接收编辑结果，写入 data/fireteam_packs/<id>/（JSON 格式）

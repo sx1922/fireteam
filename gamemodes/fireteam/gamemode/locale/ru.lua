@@ -180,6 +180,8 @@ return {
     item_no_effect         = "Здесь у этого предмета пока нет применения",
     inventory_bind_hint    = "привяжите клавишу: ft_item_<id>",
     ui_inventory_title     = "Рюкзак",
+    ui_inventory_tab_gear  = "Снаряжение",
+    ui_inventory_tab_roster = "Список",
     ui_inventory_weapons   = "Оружие",
     ui_inventory_health    = "Здоровье",
     ui_inventory_use       = "Использовать",

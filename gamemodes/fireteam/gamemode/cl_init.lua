@@ -92,3 +92,15 @@ do
 end
 
 Fireteam.Log.Info("核心", "✓ 客户端初始化完成")
+
+-- ═══════════════════════════════════════
+-- 就绪握手：请求服务端补发初始状态
+-- 所有 net.Receive 此刻已注册完毕；InitPostEntity 后再发，保证连接已可收发。
+-- ═══════════════════════════════════════
+hook.Add("InitPostEntity", "Fireteam.ClientReady", function()
+    timer.Simple(1, function()
+        net.Start(Fireteam.NET.CLIENT_READY)
+        net.SendToServer()
+        Fireteam.Log.Debug("核心", "已发送就绪握手，等待初始状态")
+    end)
+end)

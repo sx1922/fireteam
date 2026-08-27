@@ -68,6 +68,8 @@ end)
 
 -- ═══════════════════════════════════════
 -- 输入：鼠标键控制（仅观战状态生效）
+-- 这是本框架唯一保留的 PlayerButtonDown：鼠标键在观战期本就是空闲输入
+-- （+attack 对旁观者无效），无法也不必改成可重绑 concommand。
 -- ═══════════════════════════════════════
 hook.Add("PlayerButtonDown", "Fireteam.Spectate.Input", function(ply, button)
     if ply ~= LocalPlayer() then return end

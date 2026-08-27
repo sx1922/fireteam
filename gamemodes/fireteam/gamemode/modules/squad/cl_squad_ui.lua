@@ -199,19 +199,17 @@ end
 
 hook.Add("HUDPaint", "Fireteam.Squad.DrawHUD", DrawSquadHUD)
 
--- H 键：本地开/关小队栏（输入框聚焦时不触发）
-hook.Add("PlayerButtonDown", "Fireteam.Squad.HUDToggle", function(ply, button)
-    if ply ~= LocalPlayer() then return end
-    if button ~= KEY_H then return end
-    if not kit.CanTogglePanel() then return end
+-- 本地开/关小队栏（命令 ft_hud_squad；键位由 core/sh_keybinds.lua 分配）
+function Fireteam.Squad.ToggleHUD()
     squadHUDVisible = not squadHUDVisible
     chat.AddText(kit.Color("primary"), "[FIRETEAM] ",
         kit.Color("text"),
         L(squadHUDVisible and "hud_squad_panel_shown" or "hud_squad_panel_hidden"))
-end)
+    return squadHUDVisible
+end
 
 -- ═══════════════════════════════════════
--- 小队管理面板（按 F7 打开）
+-- 小队管理面板（命令 ft_squad / 引擎 ShowTeam=F2）
 -- ═══════════════════════════════════════
 --- 指挥官动作快捷发送
 local function CmdAction(action, entIdx)
@@ -527,12 +525,6 @@ function Fireteam.Squad.OpenPanel()
     end
 end
 
--- F7 打开小队面板（输入框聚焦时不触发，防中文输入误关）
-hook.Add("PlayerButtonDown", "Fireteam.Squad.OpenKey", function(ply, button)
-    if ply ~= LocalPlayer() then return end
-    if button == KEY_F7 and kit.CanTogglePanel() then
-        Fireteam.Squad.OpenPanel()
-    end
-end)
+-- 面板开关由 core/sh_keybinds.lua 统一分配（命令 ft_squad / 引擎 ShowTeam=F2）
 
 Fireteam.Log.Info("Squad", "✓ 客户端 UI 已加载")

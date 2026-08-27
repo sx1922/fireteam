@@ -602,9 +602,11 @@ function Fireteam.Admin.Close()
     if IsValid(panel) then panel:Remove() end
 end
 
-hook.Add("PlayerButtonDown", "Fireteam.Admin.Toggle", function(ply, button)
-    if ply ~= LocalPlayer() then return end
-    if button ~= KEY_F10 then return end
-    if not kit.CanTogglePanel() then return end
-    Fireteam.Admin.Open()
-end)
+--- 面板开关由 core/sh_keybinds.lua 统一分配（命令 ft_admin）
+function Fireteam.Admin.Toggle()
+    if IsValid(panel) then
+        Fireteam.Admin.Close()
+    else
+        Fireteam.Admin.Open()
+    end
+end

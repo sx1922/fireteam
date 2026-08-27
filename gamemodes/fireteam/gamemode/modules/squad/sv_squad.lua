@@ -291,7 +291,8 @@ end
 -- ═══════════════════════════════════════
 local ROLE_ID = { member = 0, leader = 1, specialist = 2 }
 
-function Fireteam.Squad.SyncToAll()
+--- @param target Player|nil  指定则单发（CLIENT_READY 补齐用），缺省全场广播
+function Fireteam.Squad.SyncToAll(target)
     local list = {}
     for _, squad in pairs(squads) do
         list[#list + 1] = squad
@@ -328,7 +329,7 @@ function Fireteam.Squad.SyncToAll()
             net.WriteUInt(math.Clamp(math.max(m.ply:GetMaxHealth(), 1), 0, 1023), 10)
         end
     end
-    net.Broadcast()
+    if IsValid(target) then net.Send(target) else net.Broadcast() end
 end
 
 -- ═══════════════════════════════════════

@@ -245,6 +245,27 @@ function Fireteam.Setting.Activate(packId)
 end
 
 -- ─────────────────────────────────────
+-- 状态下发（广播 / 单发同一实现）
+-- ⚠ Activate() 在 Initialize 引导期被调用时全场无人，广播等于发给零接收者；
+--   加入的玩家靠 CLIENT_READY 握手调用本函数补齐（历史 P0）。
+-- ─────────────────────────────────────
+function Fireteam.Setting.SendStateTo(ply)
+    local meta = Fireteam.Setting.Active
+    if not istable(meta) then return false end
+
+    net.Start(Fireteam.NET.SETTING_CHANGED)
+        net.WriteString(meta.id or "")
+        net.WriteString(meta.name or "")
+        net.WriteString(meta._path or "")
+    if IsValid(ply) then net.Send(ply) else net.Broadcast() end
+
+    net.Start(Fireteam.NET.HUD_THEME)
+        net.WriteString(Fireteam.Config.Get("hud.theme") or "crt_green")
+    if IsValid(ply) then net.Send(ply) else net.Broadcast() end
+    return true
+end
+
+-- ─────────────────────────────────────
 -- 获取当前活跃设定包数据
 -- ─────────────────────────────────────
 function Fireteam.Setting.GetData(fileName)

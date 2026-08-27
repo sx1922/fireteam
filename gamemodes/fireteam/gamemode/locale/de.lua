@@ -180,6 +180,8 @@ return {
     item_no_effect         = "Dieser Gegenstand hat hier noch keine Wirkung",
     inventory_bind_hint    = "Taste binden: ft_item_<id>",
     ui_inventory_title     = "Rucksack",
+    ui_inventory_tab_gear  = "Ausrüstung",
+    ui_inventory_tab_roster = "Liste",
     ui_inventory_weapons   = "Waffen",
     ui_inventory_health    = "Gesundheit",
     ui_inventory_use       = "Verwenden",

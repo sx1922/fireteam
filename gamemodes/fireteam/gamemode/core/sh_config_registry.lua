@@ -78,9 +78,10 @@ function Fireteam.Config.Set(key, value, opts)
 
     if not opts.silent then
         hook.Run(Fireteam.HOOKS.CONFIG_CHANGED, key, old, value)
-        -- 服务端广播给客户端（WriteType 自带类型标识，客户端用 ReadType 还原）
+        -- 服务端广播给客户端（批量格式：count + n×(key, WriteType)）
         if SERVER then
             net.Start(Fireteam.NET.CONFIG_SYNC)
+                net.WriteUInt(1, 8)
                 net.WriteString(key)
                 net.WriteType(value)
             net.Broadcast()
@@ -88,6 +89,30 @@ function Fireteam.Config.Set(key, value, opts)
     end
 
     return true
+end
+
+-- ─────────────────────────────────────
+-- 全量同步给单个玩家（CLIENT_READY 握手用）
+-- 设定包 config_overrides 与 hud.theme 都以 { silent = true } 写入，
+-- 从不产生逐键广播；加入的玩家只能靠这一次全量补齐。
+-- ─────────────────────────────────────
+if SERVER then
+    function Fireteam.Config.SyncAllTo(ply)
+        if not IsValid(ply) then return 0 end
+
+        local keys = {}
+        for k in pairs(registry) do keys[#keys + 1] = k end
+        table.sort(keys)   -- 定序，便于抓包比对
+
+        net.Start(Fireteam.NET.CONFIG_SYNC)
+        net.WriteUInt(#keys, 8)
+        for _, k in ipairs(keys) do
+            net.WriteString(k)
+            net.WriteType(registry[k].value)
+        end
+        net.Send(ply)
+        return #keys
+    end
 end
 
 -- ─────────────────────────────────────
@@ -189,18 +214,22 @@ end
 RegisterDefaults()
 
 -- ─────────────────────────────────────
--- 客户端：接收服务端配置同步
+-- 客户端：接收服务端配置同步（批量格式：count + n×(key, ReadType)）
 -- （服务端权威，直接写入本地注册表并触发本地 hook 供 UI 响应）
 -- ─────────────────────────────────────
 if CLIENT then
     net.Receive(Fireteam.NET.CONFIG_SYNC, function()
-        local key = net.ReadString()
-        local value = net.ReadType()
-        local entry = registry[key]
-        if not entry then return end
-        local old = entry.value
-        entry.value = value
-        hook.Run(Fireteam.HOOKS.CONFIG_CHANGED, key, old, value)
+        local count = net.ReadUInt(8)
+        for _ = 1, count do
+            local key = net.ReadString()
+            local value = net.ReadType()
+            local entry = registry[key]
+            if entry then
+                local old = entry.value
+                entry.value = value
+                hook.Run(Fireteam.HOOKS.CONFIG_CHANGED, key, old, value)
+            end
+        end
     end)
 end
 

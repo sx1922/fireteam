@@ -80,12 +80,6 @@ function Fireteam.Class.OpenSelectPanel()
     end
 end
 
--- F8 打开职业选择
-hook.Add("PlayerButtonDown", "Fireteam.Class.OpenKey", function(ply, button)
-    if ply ~= LocalPlayer() then return end
-    if button == KEY_F8 and Fireteam.UI.CanTogglePanel() then
-        Fireteam.Class.OpenSelectPanel()
-    end
-end)
+-- 面板开关由 core/sh_keybinds.lua 统一分配（命令 ft_class / 引擎 ShowSpare1=F3）
 
 Fireteam.Log.Info("Class", "✓ 客户端 UI 已加载")

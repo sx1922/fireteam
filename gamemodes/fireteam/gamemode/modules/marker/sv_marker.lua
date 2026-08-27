@@ -219,12 +219,6 @@ function Fireteam.Marker.SyncToFaction(factionId)
     net.Send(targets)
 end
 
-function Fireteam.Marker.SyncToAll()
-    net.Start(Fireteam.NET.MARKER_ADD)
-        net.WriteTable(SerializeMarkers(activeMarkers))
-    net.Broadcast()
-end
-
 -- ═══════════════════════════════════════
 -- 网络请求（消息名统一注册于 Fireteam.NET）
 -- ═══════════════════════════════════════

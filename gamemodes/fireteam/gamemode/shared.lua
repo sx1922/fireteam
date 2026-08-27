@@ -22,6 +22,7 @@ AddCSLuaFile("core/sh_weapon_interface.lua")
 AddCSLuaFile("core/sh_vehicle_interface.lua")
 AddCSLuaFile("core/sh_locale.lua")
 AddCSLuaFile("core/sh_ui_kit.lua")
+AddCSLuaFile("core/sh_keybinds.lua")
 AddCSLuaFile("api/sh_fireteam_api.lua")
 AddCSLuaFile("api/cl_fireteam_api.lua")
 AddCSLuaFile("core/cl_setting_data.lua")
@@ -36,6 +37,9 @@ include("core/sh_net_protocol.lua")
 include("core/sh_weapon_interface.lua")
 include("core/sh_vehicle_interface.lua")
 include("core/sh_ui_kit.lua")
+
+-- 键位层（引擎 hook + concommand；命令实现惰性解析各模块，故可早于模块加载）
+include("core/sh_keybinds.lua")
 
 -- 公开 API 共享表面（依赖 sh_api_registry 的 Register，故置于其后）
 include("api/sh_fireteam_api.lua")

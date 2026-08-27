@@ -41,6 +41,38 @@ hook.Add("Initialize", "Fireteam.Bootstrap", function()
 end)
 
 -- ═══════════════════════════════════════
+-- 客户端就绪握手：补齐初始状态
+-- ⚠ 引导期（Initialize）激活设定包时全场无人，SETTING_CHANGED / HUD_THEME 的
+--   广播发给零接收者；CONFIG_SYNC 因设定包 overrides 全用 silent 写入更是从不产生。
+--   加入的玩家全靠本握手拿到既有状态（历史 P0，worklog 041）。
+-- ═══════════════════════════════════════
+net.Receive(Fireteam.NET.CLIENT_READY, function(_, ply)
+    if not IsValid(ply) then return end
+    if ply.FT_ReadySynced then return end   -- 每次连接只补一次
+    ply.FT_ReadySynced = true
+
+    local n = Fireteam.Config.SyncAllTo and Fireteam.Config.SyncAllTo(ply) or 0
+    if Fireteam.Setting.SendStateTo then Fireteam.Setting.SendStateTo(ply) end
+    if Fireteam.Squad and Fireteam.Squad.SyncToAll then Fireteam.Squad.SyncToAll(ply) end
+    if Fireteam.Rounds and Fireteam.Rounds.SendSnapshotTo then
+        Fireteam.Rounds.SendSnapshotTo(ply)
+    end
+    if Fireteam.Commander and Fireteam.Commander.SendStateTo then
+        Fireteam.Commander.SendStateTo(ply)
+    end
+    if Fireteam.Vitals and Fireteam.Vitals.BroadcastAll then
+        Fireteam.Vitals.BroadcastAll(ply)
+    end
+    if Fireteam.Seats and Fireteam.Seats.SendAllTo then Fireteam.Seats.SendAllTo(ply) end
+
+    Fireteam.Log.Info("核心", "✓ 已向 " .. ply:Nick() .. " 下发初始状态（配置 " .. n .. " 项）")
+end)
+
+hook.Add("PlayerDisconnected", "Fireteam.ReadyReset", function(ply)
+    if IsValid(ply) then ply.FT_ReadySynced = nil end
+end)
+
+-- ═══════════════════════════════════════
 -- ConVar 注册
 -- ═══════════════════════════════════════
 CreateConVar("ft_setting_pack", "coldwar", FCVAR_REPLICATED + FCVAR_ARCHIVE,

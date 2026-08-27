@@ -10,19 +10,9 @@ Fireteam.Config.Register("voice.ambience", true, {
     desc = "Radio squelch clicks and static bed"
 })
 
--- 三频道切换键（客户端热键；与引擎默认语音键冲突时在此改绑）
-Fireteam.Config.Register("voice.key_local", "V", {
-    type = "string",
-    desc = "Local proximity voice hotkey"
-})
-Fireteam.Config.Register("voice.key_squad", "B", {
-    type = "string",
-    desc = "Squad radio hotkey"
-})
-Fireteam.Config.Register("voice.key_command", "G", {
-    type = "string",
-    desc = "Command radio hotkey"
-})
+-- 频道键位不再由配置项承载：改为 +ft_voice_local / +ft_voice_squad /
+-- +ft_voice_command 三对 concommand（core/sh_keybinds.lua 注册），玩家用
+-- 标准 bind 自由绑定。原 voice.key_* 三个配置键已移除。
 
 -- 频道状态
 Fireteam.Voice.STATE = {

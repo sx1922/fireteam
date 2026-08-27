@@ -1,0 +1,398 @@
+{
+  "success": false,
+  "outcome": "validation_failed",
+  "repairable": true,
+  "terminalViolations": [],
+  "terminalBlockingSummary": null,
+  "skillProvenance": {
+    "name": "solo-design",
+    "version": "2026.08.06.19.15.08",
+    "version_source": "skill-release-manifest.json",
+    "runtime_skill_dir": "c:\\Users\\87059\\.trae-cn\\builtin\\design\\default\\skills\\solo-design",
+    "recorded_at": null,
+    "expected_version": "2026.08.06.19.15.08",
+    "status": "manifest_fallback",
+    "read_status": "ok",
+    "reason": "runtime-orchestration-summary.json missing skillProvenance; used skill-release-manifest.json"
+  },
+  "operatingMode": "free-explore",
+  "renderBlockingErrorCount": 8,
+  "softWarningCount": 5,
+  "renderBlockingErrors": [
+    "[assets-coverage] Image file \"assets/corner-decor.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+    "[assets-coverage] Image file \"assets/divider-glow.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+    "[assets-coverage] Image file \"assets/icon-backpack.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+    "[assets-coverage] Image file \"assets/icon-class.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+    "[assets-coverage] Image file \"assets/icon-commander.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+    "[assets-coverage] Image file \"assets/icon-squad.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+    "[assets-coverage] Image file \"assets/icon-tacmap.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+    "[assets-coverage] Image file \"assets/icon-voice.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b')."
+  ],
+  "errorSignatures": [
+    {
+      "errorClass": "artifact-readiness",
+      "normalized": "[assets-coverage] Image file \"assets/corner-decor.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "signature": "4df53566b1a3ddcb7925493fa0a97f9c366d8e98c35f0ac8e6e8ea47501e9c5c"
+    },
+    {
+      "errorClass": "artifact-readiness",
+      "normalized": "[assets-coverage] Image file \"assets/divider-glow.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "signature": "de47862cbff42334f8afec9332816474b0423583280b3fd982a027959b08123d"
+    },
+    {
+      "errorClass": "artifact-readiness",
+      "normalized": "[assets-coverage] Image file \"assets/icon-backpack.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "signature": "780f887932b1c53b9759c046e1304ffdb3e024281132d5e895c21a4525b09d25"
+    },
+    {
+      "errorClass": "artifact-readiness",
+      "normalized": "[assets-coverage] Image file \"assets/icon-class.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "signature": "00a8819701be9ca5e1e3b15c2e4e705603d14b6d6700993ebbe8d3fca2960296"
+    },
+    {
+      "errorClass": "artifact-readiness",
+      "normalized": "[assets-coverage] Image file \"assets/icon-commander.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "signature": "28e3506c428793b1c55a084e82666cfd38c34185ee3806bda7e15d3bfdf9220e"
+    },
+    {
+      "errorClass": "artifact-readiness",
+      "normalized": "[assets-coverage] Image file \"assets/icon-squad.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "signature": "cc23d6a824c502408d6e4e2d724e5d35a14771f6f3d1db0626d57a0744f62182"
+    },
+    {
+      "errorClass": "artifact-readiness",
+      "normalized": "[assets-coverage] Image file \"assets/icon-tacmap.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "signature": "b4ae4f5f74874b58d81b7ac80b964f467ac2cf1047cd21c9cf150193d7c77b9b"
+    },
+    {
+      "errorClass": "artifact-readiness",
+      "normalized": "[assets-coverage] Image file \"assets/icon-voice.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "signature": "9fffe9b934d8dfec830241f9768e1bea6325057ed4fdbae8e15d615d6b4ddd6b"
+    }
+  ],
+  "softWarnings": [
+    "[orchestration-summary] runtime-orchestration-summary.json is missing skillProvenance.name/version/version_source. Version provenance will be reported as observed_unknown by external evaluators.",
+    "[html-quality] colors_and_type.css: free-explore brand CSS must use one primary hue only; forbidden secondary/accent brand variables found (--ft-secondary, --ft-secondary-foreground, --ft-accent, --ft-accent-foreground). Use --state-success/warning/error/info only for semantic states.",
+    "[html-quality] colors_and_type.css: free-explore radius tokens must stay within the restrained 2/4/8/12/16px scale; oversized or forbidden radius tokens found (--ft-radius-xl: 8px). Do not use 20px+ radii unless the user explicitly requested large rounded shapes.",
+    "[html-quality] esc-menu.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
+    "[html-quality] esc-menu.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states."
+  ],
+  "repairPlanHints": [
+    {
+      "errorClass": "hardcoded-color-in-body",
+      "owner": "sub-agent",
+      "repairScope": "targeted-token-replace",
+      "strategy": "targeted_token_replace_once",
+      "affectedFiles": [
+        "esc-menu.html"
+      ],
+      "repairReportPath": null,
+      "repairAlreadyAttempted": false,
+      "allowSourceRead": "no-full-html-read",
+      "maxValidationRuns": 2
+    }
+  ],
+  "repairActionTable": [
+    {
+      "error": "[assets-coverage] Image file \"assets/corner-decor.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    },
+    {
+      "error": "[assets-coverage] Image file \"assets/divider-glow.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    },
+    {
+      "error": "[assets-coverage] Image file \"assets/icon-backpack.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    },
+    {
+      "error": "[assets-coverage] Image file \"assets/icon-class.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    },
+    {
+      "error": "[assets-coverage] Image file \"assets/icon-commander.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    },
+    {
+      "error": "[assets-coverage] Image file \"assets/icon-squad.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    },
+    {
+      "error": "[assets-coverage] Image file \"assets/icon-tacmap.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    },
+    {
+      "error": "[assets-coverage] Image file \"assets/icon-voice.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    }
+  ],
+  "errorCount": 8,
+  "warningCount": 5,
+  "errors": [
+    "[assets-coverage] Image file \"assets/corner-decor.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+    "[assets-coverage] Image file \"assets/divider-glow.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+    "[assets-coverage] Image file \"assets/icon-backpack.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+    "[assets-coverage] Image file \"assets/icon-class.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+    "[assets-coverage] Image file \"assets/icon-commander.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+    "[assets-coverage] Image file \"assets/icon-squad.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+    "[assets-coverage] Image file \"assets/icon-tacmap.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+    "[assets-coverage] Image file \"assets/icon-voice.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b')."
+  ],
+  "warnings": [
+    "[orchestration-summary] runtime-orchestration-summary.json is missing skillProvenance.name/version/version_source. Version provenance will be reported as observed_unknown by external evaluators.",
+    "[html-quality] colors_and_type.css: free-explore brand CSS must use one primary hue only; forbidden secondary/accent brand variables found (--ft-secondary, --ft-secondary-foreground, --ft-accent, --ft-accent-foreground). Use --state-success/warning/error/info only for semantic states.",
+    "[html-quality] colors_and_type.css: free-explore radius tokens must stay within the restrained 2/4/8/12/16px scale; oversized or forbidden radius tokens found (--ft-radius-xl: 8px). Do not use 20px+ radii unless the user explicitly requested large rounded shapes.",
+    "[html-quality] esc-menu.html: hardcoded colors are forbidden outside <style id=\"theme-vars\">. Use brand CSS variables from the token reference.",
+    "[html-quality] esc-menu.html: free-explore pages must not use secondary/accent brand variables. Use the single primary hue, neutral tints, or --state-success/warning/error/info for real semantic states."
+  ],
+  "validationRunDisciplineStatus": {
+    "declared": true,
+    "restoreMode": false,
+    "maxFullValidationRuns": 2,
+    "validationHistoryCount": 0,
+    "repairLedgerCount": 0,
+    "softWarningsTriggerRepair": false,
+    "terminalState": null,
+    "nextAction": null,
+    "violations": [],
+    "success": true
+  },
+  "terminalState": null,
+  "nextCheck": {
+    "type": "full",
+    "command": "node \"c:\\Users\\87059\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-design-workspace.mjs\" \"c:\\GMOD开发\\战术小队模式\\fireteam\\.design\" --report-json=\"c:\\GMOD开发\\战术小队模式\\fireteam\\.design\\validation-report.json\"",
+    "fullValidationAllowed": true,
+    "reason": "no narrower deterministic targeted check is available for the current failure class"
+  },
+  "repairBatch": [
+    {
+      "error": "[assets-coverage] Image file \"assets/corner-decor.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    },
+    {
+      "error": "[assets-coverage] Image file \"assets/divider-glow.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    },
+    {
+      "error": "[assets-coverage] Image file \"assets/icon-backpack.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    },
+    {
+      "error": "[assets-coverage] Image file \"assets/icon-class.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    },
+    {
+      "error": "[assets-coverage] Image file \"assets/icon-commander.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    },
+    {
+      "error": "[assets-coverage] Image file \"assets/icon-squad.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    },
+    {
+      "error": "[assets-coverage] Image file \"assets/icon-tacmap.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    },
+    {
+      "error": "[assets-coverage] Image file \"assets/icon-voice.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "errorClass": "artifact-readiness",
+      "severity": "blocking",
+      "action": "repair_design_registration_or_file_reference_only",
+      "owner": "main-agent",
+      "sourceReadPolicy": "read .design and affected file metadata only"
+    }
+  ],
+  "repairContextPacket": {
+    "schema_version": "1.0",
+    "purpose": "small-context repair packet; read this before full validation-report.json",
+    "success": false,
+    "terminalState": null,
+    "skillProvenance": {
+      "name": "solo-design",
+      "version": "2026.08.06.19.15.08",
+      "version_source": "skill-release-manifest.json",
+      "runtime_skill_dir": "c:\\Users\\87059\\.trae-cn\\builtin\\design\\default\\skills\\solo-design",
+      "recorded_at": null,
+      "expected_version": "2026.08.06.19.15.08",
+      "status": "manifest_fallback",
+      "read_status": "ok",
+      "reason": "runtime-orchestration-summary.json missing skillProvenance; used skill-release-manifest.json"
+    },
+    "renderBlockingErrorCount": 8,
+    "softWarningCount": 5,
+    "renderBlockingErrors": [
+      "[assets-coverage] Image file \"assets/corner-decor.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "[assets-coverage] Image file \"assets/divider-glow.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "[assets-coverage] Image file \"assets/icon-backpack.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "[assets-coverage] Image file \"assets/icon-class.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "[assets-coverage] Image file \"assets/icon-commander.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "[assets-coverage] Image file \"assets/icon-squad.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "[assets-coverage] Image file \"assets/icon-tacmap.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b').",
+      "[assets-coverage] Image file \"assets/icon-voice.jpg\" exists on disk but is not registered as a type:\"image\" node in any .design file. Every image asset must have a corresponding image node so it surfaces on the canvas. Fix: append an image node to .design (see intent-workflows/intent-project-complex-build/01-graphic-asset-preparation.md or intent-workflows/intent-project-mutation/edit-existing-project.md Step 2b')."
+    ],
+    "repairActionTable": [
+      {
+        "errorClass": "artifact-readiness",
+        "owner": "main-agent",
+        "severity": "blocking",
+        "action": "repair_design_registration_or_file_reference_only",
+        "affectedFiles": [],
+        "sourceReadPolicy": "read .design and affected file metadata only"
+      },
+      {
+        "errorClass": "artifact-readiness",
+        "owner": "main-agent",
+        "severity": "blocking",
+        "action": "repair_design_registration_or_file_reference_only",
+        "affectedFiles": [],
+        "sourceReadPolicy": "read .design and affected file metadata only"
+      },
+      {
+        "errorClass": "artifact-readiness",
+        "owner": "main-agent",
+        "severity": "blocking",
+        "action": "repair_design_registration_or_file_reference_only",
+        "affectedFiles": [],
+        "sourceReadPolicy": "read .design and affected file metadata only"
+      },
+      {
+        "errorClass": "artifact-readiness",
+        "owner": "main-agent",
+        "severity": "blocking",
+        "action": "repair_design_registration_or_file_reference_only",
+        "affectedFiles": [],
+        "sourceReadPolicy": "read .design and affected file metadata only"
+      },
+      {
+        "errorClass": "artifact-readiness",
+        "owner": "main-agent",
+        "severity": "blocking",
+        "action": "repair_design_registration_or_file_reference_only",
+        "affectedFiles": [],
+        "sourceReadPolicy": "read .design and affected file metadata only"
+      },
+      {
+        "errorClass": "artifact-readiness",
+        "owner": "main-agent",
+        "severity": "blocking",
+        "action": "repair_design_registration_or_file_reference_only",
+        "affectedFiles": [],
+        "sourceReadPolicy": "read .design and affected file metadata only"
+      },
+      {
+        "errorClass": "artifact-readiness",
+        "owner": "main-agent",
+        "severity": "blocking",
+        "action": "repair_design_registration_or_file_reference_only",
+        "affectedFiles": [],
+        "sourceReadPolicy": "read .design and affected file metadata only"
+      },
+      {
+        "errorClass": "artifact-readiness",
+        "owner": "main-agent",
+        "severity": "blocking",
+        "action": "repair_design_registration_or_file_reference_only",
+        "affectedFiles": [],
+        "sourceReadPolicy": "read .design and affected file metadata only"
+      }
+    ],
+    "nextCheck": {
+      "type": "full",
+      "command": "node \"c:\\Users\\87059\\.trae-cn\\builtin\\design\\default\\skills\\solo-design\\shared-runtime\\deterministic-tooling\\validate-design-workspace.mjs\" \"c:\\GMOD开发\\战术小队模式\\fireteam\\.design\" --report-json=\"c:\\GMOD开发\\战术小队模式\\fireteam\\.design\\validation-report.json\"",
+      "fullValidationAllowed": true,
+      "reason": "no narrower deterministic targeted check is available for the current failure class"
+    },
+    "forbidden": [
+      "do not read validator source",
+      "do not rerun full validation when nextCheck.fullValidationAllowed=false",
+      "do not start preview/browser unless user explicitly asks",
+      "do not hand-edit repair ledger fields"
+    ]
+  },
+  "projectFileHashes": {
+    "project.design": "e7a55d92bad15ceb39b3c374345579106cab56b409624923933151722ab66301",
+    "colors_and_type.css": "965b82e6c5204cf009b22558d1f8895157b1cf43f91031b8433ef74efd39b561",
+    "runtime-orchestration-summary.json": "6de581b099e6cb4463bf4a1073cbd1f6c6a6797ce9bdd2bb9084ba0fdb8623e5",
+    "pages/esc-menu.html": "538c4cbcf972b944c58a5f4c1f409a21d7056e13b47c85338b2262d0ac9ed941",
+    "assets/coldwar/corner-stencil.jpg": "e4004bd38f73503b151fc7c99a405d8cdca8351dd9049bafc9a2ea51d8df272c",
+    "assets/coldwar/divider-stencil.jpg": "7cc50bd0a14f5d76ee9e64037d99993e0eef8623f89309d259a033c88c469e51",
+    "assets/coldwar/icon-backpack.jpg": "46f8ca1b7a908b65e44bb6edf78cf1d39a0f39a5f2584e85ac25636b63aaf04a",
+    "assets/coldwar/icon-class.jpg": "29819a5673cece7c685a9a98f360db49e66daaba7efb9d46bec15877d7bac2de",
+    "assets/coldwar/icon-commander.jpg": "47c1925877bea2d20ffc214e01a5831a98ffd75dad2fe9617cc035047c4e9bdf",
+    "assets/coldwar/icon-squad.jpg": "bef75bca43adf1f02e662ba0e98f7989aea394cf12c9da232c6af0f2560d4b7d",
+    "assets/coldwar/icon-tacmap.jpg": "1b59d0bc2c3f14a40d0daaa3a5cf2e92b182c1cbe58381377ac0affd3f6d2a1c",
+    "assets/coldwar/icon-voice.jpg": "47e9ccaf43ee4d345a05c7c823e6ade5aae8e985b6fbace34453988c28c225bf",
+    "assets/corner-decor.jpg": "3656fdccbc085e69311dca203bcc77d25057e2ba5bd8644b8496031c47027083",
+    "assets/divider-glow.jpg": "9332799a74ff9058ffab99a66c07e84d44997dfe6c96ae0a965cea3a88393692",
+    "assets/icon-backpack.jpg": "0fc6d88df074d48709878d108168bd1868357acf707539ac7e0e10ef8fbc1fce",
+    "assets/icon-class.jpg": "a6d6cfea3d7de72b3f01bc5ced489c34754cff13426921cc082cc69ea75bfd52",
+    "assets/icon-commander.jpg": "ccd83dd94da30cf5f1705a2484b58b95842c09db2d66bf8a7a526386a624cc5b",
+    "assets/icon-squad.jpg": "251c659ef5fe7b13a141573f73279292d355cd5afab82fb8e45231d6c5912fdf",
+    "assets/icon-tacmap.jpg": "10722eade69d7fe38982800174bf0bddfc9e7e8dd5424a6f930571ae35a623db",
+    "assets/icon-voice.jpg": "f271ca04f82e097786f0ef6ba59303085be00b6cf7ef1d20f7d8d33fe742fe5c"
+  },
+  "designDir": "c:\\GMOD开发\\战术小队模式\\fireteam\\.design",
+  "expectedPages": 1,
+  "requireInteractions": null,
+  "checkedAt": "2026-08-27T15:00:44.058Z"
+}

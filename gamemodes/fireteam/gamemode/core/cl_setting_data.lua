@@ -7,14 +7,19 @@
 -- 本桥接层在客户端按已激活包 id 直读同挂载点的设定包文件并缓存：
 -- GMA/addon 订阅后客户端本地就有完整副本（lua/fireteam_setting_packs/
 -- 或 gamemodes/fireteam/setting_packs），直读比逐文件网络同步更省且零延迟。
+--
+-- ⚠ 不在此注册 net.Receive(SETTING_CHANGED)：GMod 的 net 接收表是「一消息名一
+-- 回调、后注册覆盖」，modules/hud/sh_hud.lua 加载更晚会把本文件的回调顶掉
+-- （历史 P0：桥接层实际零生效）。改为惰性读 sh_hud 统一维护的
+-- Fireteam.Setting.ActiveId，并在 id 变化时自动失效缓存。
 
 if not CLIENT then return end
 
 if not Fireteam then Fireteam = {} end
 Fireteam.Setting = Fireteam.Setting or {}
 
-local cache = {}          -- [packId..":"..fileName] = dataTable|false
-local activeId = nil      -- 当前激活包 id（SETTING_CHANGED 第三段为包基准路径，前两段可反推）
+local cache = {}          -- [fileName] = dataTable|false（cacheId 变化即整体丢弃）
+local cacheId = nil       -- 上次构建缓存时的包 id
 
 local SEARCH = {
     { path = "setting_packs/",                     realm = "GAME" },
@@ -41,9 +46,18 @@ end
 --- 客户端设定包数据访问；未激活或无数据时返回 nil
 function Fireteam.Setting.GetData(fileName)
     fileName = SafeName(fileName)
-    if not (fileName and activeId) then return nil end
+    if not fileName then return nil end
 
-    local key = activeId .. ":" .. fileName
+    local activeId = Fireteam.Setting.ActiveId
+    if not activeId or activeId == "" then return nil end
+
+    -- 换包（或首次拿到 id）即丢弃旧缓存
+    if cacheId ~= activeId then
+        cache = {}
+        cacheId = activeId
+    end
+
+    local key = fileName
     local hit = cache[key]
     if hit ~= nil then return hit or nil end
 
@@ -68,19 +82,5 @@ function Fireteam.Setting.GetData(fileName)
     cache[key] = false   -- 未找到也缓存，避免 Think 类调用反复扫盘
     return nil
 end
-
---- 激活状态（与 sh_hud.lua 的接收互不影响，各读各的消息段）
-net.Receive(Fireteam.NET.SETTING_CHANGED, function()
-    Fireteam.Setting.ActiveId = net.ReadString()
-    net.ReadString()             -- pack name，跳过
-    local basePath = net.ReadString()
-
-    -- 从包路径反推 pack id（取末段目录名），保证缓存键与后续查询一致
-    local cleaned = string.gsub(tostring(basePath), "[\\/]+$", "")
-    local id = string.match(cleaned, "([^/\\]+)$")
-    if id and id ~= "" then activeId = id end
-
-    cache = {}                   -- 换包即清缓存
-end)
 
 Fireteam.Log.Info("设定包", "✓ 客户端数据桥接就绪")

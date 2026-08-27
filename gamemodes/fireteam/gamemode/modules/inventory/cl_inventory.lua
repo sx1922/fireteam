@@ -123,20 +123,14 @@ net.Receive(Fireteam.NET.INVENTORY_SYNC, function()
 end)
 
 -- ─────────────────────────────────────
--- 快捷栏热键（7/8/9/0 → 触发绑定物品；输入框聚焦时不触发）
+-- 快捷栏触发（命令 ft_item_slot1..4；键位由 core/sh_keybinds.lua 分配）
 -- ─────────────────────────────────────
-local HOTBAR_KEYS = { KEY_7, KEY_8, KEY_9, KEY_0 }
-
-hook.Add("PlayerButtonDown", "Fireteam.Inventory.HotbarKeys", function(ply, button)
-    if ply ~= LocalPlayer() then return end
-    if not Fireteam.UI.CanTogglePanel() then return end
-    for slot, key in ipairs(HOTBAR_KEYS) do
-        if button == key then
-            local itemId = Fireteam.Inventory.Hotbar[slot]
-            if itemId then Fireteam.Inventory.UseItem(itemId) end
-            return
-        end
-    end
-end)
+function Fireteam.Inventory.UseHotbar(slot)
+    slot = math.floor(tonumber(slot) or 0)
+    if slot < 1 or slot > Fireteam.Inventory.HOTBAR_SIZE then return false end
+    local itemId = Fireteam.Inventory.Hotbar[slot]
+    if not itemId then return false end
+    return Fireteam.Inventory.UseItem(itemId)
+end
 
 Fireteam.Log.Info("Inventory", "✓ 客户端数据已加载")

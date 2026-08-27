@@ -180,6 +180,8 @@ return {
     item_no_effect         = "此物品当前没有可用效果",
     inventory_bind_hint    = "绑定按键：ft_item_<物品ID>",
     ui_inventory_title     = "背包",
+    ui_inventory_tab_gear  = "装备",
+    ui_inventory_tab_roster = "名单",
     ui_inventory_weapons   = "武器",
     ui_inventory_health    = "健康状态",
     ui_inventory_use       = "使用",

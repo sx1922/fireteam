@@ -51,11 +51,17 @@ local function BuildSnapshot()
     }
 end
 
-local function BroadcastSnapshot()
+--- @param target Player|nil  指定则单发（CLIENT_READY 补齐用），缺省全场广播
+local function BroadcastSnapshot(target)
     net.Start(Fireteam.NET.ROUNDS_STATE)
     net.WriteTable(BuildSnapshot())
-    net.Broadcast()
-    machine.lastBroadcast = CurTime()
+    if IsValid(target) then net.Send(target) else net.Broadcast() end
+    if not IsValid(target) then machine.lastBroadcast = CurTime() end
+end
+
+--- 单发当前回合快照（供 CLIENT_READY 握手补齐）
+function Fireteam.Rounds.SendSnapshotTo(ply)
+    if IsValid(ply) then BroadcastSnapshot(ply) end
 end
 
 -- ═══════════════════════════════════════
