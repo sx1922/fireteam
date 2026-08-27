@@ -59,4 +59,4 @@ function Fireteam.Commander.GetElectionSecondsLeft(faction)
     return math.max(0, (s.expiresAt or 0) - CurTime())
 end
 
-print("[FIRETEAM:Commander] ✓ 客户端已加载")
+Fireteam.Log.Info("Commander", "✓ 客户端已加载")

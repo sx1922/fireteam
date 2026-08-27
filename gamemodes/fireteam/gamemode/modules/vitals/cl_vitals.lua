@@ -82,4 +82,4 @@ net.Receive(Fireteam.NET.VITALS_UPDATE, function()
     hook.Run(Fireteam.HOOKS.VITALS_CLIENT_UPDATED)
 end)
 
-print("[FIRETEAM:Vitals] ✓ 客户端数据已加载")
+Fireteam.Log.Info("Vitals", "✓ 客户端数据已加载")

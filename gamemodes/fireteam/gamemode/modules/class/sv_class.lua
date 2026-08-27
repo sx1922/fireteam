@@ -175,4 +175,4 @@ hook.Add("PlayerDisconnected", "Fireteam.Class.CleanupCooldown", function(ply)
     lastAssignAt[ply] = nil
 end)
 
-print("[FIRETEAM:Class] ✓ 服务端逻辑已加载")
+Fireteam.Log.Info("Class", "✓ 服务端逻辑已加载")

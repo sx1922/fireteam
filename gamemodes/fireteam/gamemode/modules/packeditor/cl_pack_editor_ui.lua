@@ -312,4 +312,4 @@ hook.Add("PlayerButtonDown", "Fireteam.PackEditor.Toggle", function(ply, btn)
     end
 end)
 
-print("[FIRETEAM:PackEditor] ✓ 客户端 UI 已加载")
+Fireteam.Log.Info("PackEditor", "✓ 客户端 UI 已加载")

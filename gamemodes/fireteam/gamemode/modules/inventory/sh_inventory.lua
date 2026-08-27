@@ -143,4 +143,4 @@ function Fireteam.Inventory.FindFreeSpot(cells, w, h)
     return nil
 end
 
-print("[FIRETEAM:Inventory] ✓ 共享定义已加载")
+Fireteam.Log.Info("Inventory", "✓ 共享定义已加载")

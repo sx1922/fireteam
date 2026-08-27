@@ -146,7 +146,7 @@ hook.Add(Fireteam.HOOKS.WEAPON_DISCOVER, "FIRETEAM.ARC9Adapter", function(weapon
         end
     end
 
-    print("[FIRETEAM:Adapter] ARC9: 已注册 " .. count .. " 件武器")
+    Fireteam.Log.Info("Adapter", "ARC9: 已注册 " .. count .. " 件武器")
 end)
 
-print("[FIRETEAM:Adapter] ✓ ARC9 适配器就绪")
+Fireteam.Log.Info("Adapter", "✓ ARC9 适配器就绪")

@@ -35,4 +35,4 @@ function Fireteam.Suppression.GetLevel(value)
     end
 end
 
-print("[FIRETEAM:Suppression] ✓ 共享定义已加载")
+Fireteam.Log.Info("Suppression", "✓ 共享定义已加载")

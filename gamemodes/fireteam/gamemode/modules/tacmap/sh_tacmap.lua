@@ -40,4 +40,4 @@ function Fireteam.TacMap.GetPackBounds()
     return nil
 end
 
-print("[FIRETEAM:TacMap] ✓ 共享定义已加载")
+Fireteam.Log.Info("TacMap", "✓ 共享定义已加载")

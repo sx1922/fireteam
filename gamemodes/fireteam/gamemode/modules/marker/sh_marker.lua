@@ -42,4 +42,4 @@ Fireteam.Marker.LIFETIME = 120
 -- 最大标记数（每人）
 Fireteam.Marker.MAX_PER_PLAYER = 3
 
-print("[FIRETEAM:Marker] ✓ 共享定义已加载")
+Fireteam.Log.Info("Marker", "✓ 共享定义已加载")

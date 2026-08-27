@@ -88,4 +88,4 @@ hook.Add("PlayerButtonDown", "Fireteam.Class.OpenKey", function(ply, button)
     end
 end)
 
-print("[FIRETEAM:Class] ✓ 客户端 UI 已加载")
+Fireteam.Log.Info("Class", "✓ 客户端 UI 已加载")

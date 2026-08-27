@@ -14,7 +14,7 @@ local MODULE_BASE_PATH = "gamemodes/fireteam/gamemode/modules/"
 -- 打包为 GMA 后个别挂载环境下发现可能返回空，此时回退本清单。
 -- ⚠ 新增/删除模块目录时必须同步维护此表。
 local FALLBACK_MODULES = {
-    "admin", "ai", "ballistics", "class", "hud", "inventory", "mainmenu",
+    "admin", "ai", "ballistics", "class", "commander", "hud", "inventory", "mainmenu",
     "marker", "packeditor", "pve", "resupply", "rounds", "seats", "spectate",
     "squad", "stamina", "suppression", "tacmap", "vitals", "voice"
 }

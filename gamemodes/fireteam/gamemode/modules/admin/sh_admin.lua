@@ -15,4 +15,4 @@ Fireteam.Admin.ACTIONS = {
     refresh      = true,
 }
 
-print("[FIRETEAM:Admin] ✓ 共享定义已加载")
+Fireteam.Log.Info("Admin", "✓ 共享定义已加载")

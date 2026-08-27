@@ -57,7 +57,7 @@ end
 
 -- GMA 分发兜底清单：file.Find 未发现目录时回退（与 cl_init.lua 保持同步）
 local FALLBACK_MODULES = {
-    "admin", "ai", "ballistics", "class", "hud", "inventory", "mainmenu",
+    "admin", "ai", "ballistics", "class", "commander", "hud", "inventory", "mainmenu",
     "marker", "packeditor", "pve", "resupply", "rounds", "seats", "spectate",
     "squad", "stamina", "suppression", "tacmap", "vitals", "voice"
 }
@@ -190,7 +190,7 @@ function Fireteam.Modules.LoadAll()
             failed = failed + 1
         end
     end
-    print("[FIRETEAM] 模块加载: " .. loaded .. " 成功, " .. failed .. " 失败")
+    Fireteam.Log.Info("系统", "模块加载: " .. loaded .. " 成功, " .. failed .. " 失败")
 end
 
 -- ─────────────────────────────────────

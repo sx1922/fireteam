@@ -99,7 +99,7 @@ local function Elect(faction, ply, reasonKey)
     for _, p in ipairs(player.GetAll()) do
         p:ChatPrint("[FIRETEAM] ★ " .. ply:Nick() .. " takes command of [" .. faction .. "]")
     end
-    print("[FIRETEAM:Commander] " .. faction .. " → " .. ply:Nick())
+    Fireteam.Log.Info("Commander", "" .. faction .. " → " .. ply:Nick())
     SyncToAll()
 end
 
@@ -343,4 +343,4 @@ net.Receive(Fireteam.NET.COMMANDER_ACTION, function(len, ply)
     end
 end)
 
-print("[FIRETEAM:Commander] ✓ 服务端逻辑已加载")
+Fireteam.Log.Info("Commander", "✓ 服务端逻辑已加载")

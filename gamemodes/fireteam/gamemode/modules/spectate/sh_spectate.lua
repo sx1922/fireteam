@@ -43,4 +43,4 @@ function Fireteam.Spectate.GetCandidates(ply)
     return alive
 end
 
-print("[FIRETEAM:Spectate] ✓ 共享定义已加载")
+Fireteam.Log.Info("Spectate", "✓ 共享定义已加载")

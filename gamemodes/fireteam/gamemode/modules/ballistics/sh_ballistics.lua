@@ -104,4 +104,4 @@ if SERVER then
     end)
 end
 
-print("[FIRETEAM:Ballistics] ✓ 系统已加载")
+Fireteam.Log.Info("Ballistics", "✓ 系统已加载")

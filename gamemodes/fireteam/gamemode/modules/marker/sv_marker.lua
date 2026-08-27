@@ -254,4 +254,4 @@ net.Receive(Fireteam.NET.MARKER_REMOVE, function(len, ply)
     Fireteam.Marker.Remove(ply, markerId)
 end)
 
-print("[FIRETEAM:Marker] ✓ 服务端逻辑已加载")
+Fireteam.Log.Info("Marker", "✓ 服务端逻辑已加载")

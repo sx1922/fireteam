@@ -332,4 +332,4 @@ hook.Add("HUDPaint", "Fireteam.Inventory.HUD", function()
     end
 end)
 
-print("[FIRETEAM:Inventory] ✓ 客户端 UI 已加载")
+Fireteam.Log.Info("Inventory", "✓ 客户端 UI 已加载")

@@ -523,4 +523,4 @@ hook.Add("PlayerButtonDown", "Fireteam.Squad.OpenKey", function(ply, button)
     end
 end)
 
-print("[FIRETEAM:Squad] ✓ 客户端 UI 已加载")
+Fireteam.Log.Info("Squad", "✓ 客户端 UI 已加载")

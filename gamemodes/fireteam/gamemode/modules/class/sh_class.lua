@@ -40,4 +40,4 @@ function Fireteam.Class.GetPlayerClassData(ply)
     return Fireteam.Class.Get(classId)
 end
 
-print("[FIRETEAM:Class] ✓ 共享定义已加载")
+Fireteam.Log.Info("Class", "✓ 共享定义已加载")

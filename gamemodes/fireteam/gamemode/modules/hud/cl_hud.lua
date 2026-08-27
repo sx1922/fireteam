@@ -343,4 +343,4 @@ net.Receive(Fireteam.NET.HUD_THEME, function()
         .. Fireteam.Locale.Get("hud_theme_updated"))
 end)
 
-print("[FIRETEAM:HUD] ✓ 客户端渲染已加载")
+Fireteam.Log.Info("HUD", "✓ 客户端渲染已加载")

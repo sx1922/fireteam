@@ -345,4 +345,4 @@ net.Receive(Fireteam.NET.ITEM_DROP, function(_, ply)
     end
 end)
 
-print("[FIRETEAM:Inventory] ✓ 服务端逻辑已加载")
+Fireteam.Log.Info("Inventory", "✓ 服务端逻辑已加载")

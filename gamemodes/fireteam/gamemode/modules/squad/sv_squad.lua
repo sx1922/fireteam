@@ -65,7 +65,7 @@ function Fireteam.Squad.Create(ply, name, faction)
     hook.Run(Fireteam.HOOKS.PLAYER_JOINED_SQUAD, ply, squad)
     Fireteam.Squad.SyncToAll()
 
-    print("[FIRETEAM:Squad] Created '" .. squad.name .. "' by " .. ply:Nick())
+    Fireteam.Log.Info("Squad", "已创建 '" .. squad.name .. "'（队长 " .. ply:Nick() .. "）")
     return squad
 end
 
@@ -190,7 +190,7 @@ function Fireteam.Squad.Disband(squadId)
     squads[squadId] = nil
     Fireteam.Squad.SyncToAll()
 
-    print("[FIRETEAM:Squad] Disbanded '" .. squad.name .. "'")
+    Fireteam.Log.Info("Squad", "已解散 '" .. squad.name .. "'")
     return true
 end
 
@@ -249,7 +249,7 @@ function Fireteam.Squad.SetReady(ply, ready)
     if allReady and squad.state == Fireteam.Squad.STATE.FORMING then
         squad.state = Fireteam.Squad.STATE.READY
         Fireteam.Squad.SyncToAll()
-        print("[FIRETEAM:Squad] Squad '" .. squad.name .. "' is READY")
+        Fireteam.Log.Info("Squad", "小队 '" .. squad.name .. "' 已就绪")
     end
 
     return true
@@ -368,4 +368,4 @@ net.Receive(Fireteam.NET.SQUAD_LOCK, function(len, ply)
     Fireteam.Squad.SetLocked(ply, locked)
 end)
 
-print("[FIRETEAM:Squad] ✓ 服务端逻辑已加载")
+Fireteam.Log.Info("Squad", "✓ 服务端逻辑已加载")

@@ -70,4 +70,4 @@ function Fireteam.Voice.GetChannelKind(channelId)
     return "squad"
 end
 
-print("[FIRETEAM:Voice] ✓ 共享定义已加载")
+Fireteam.Log.Info("Voice", "✓ 共享定义已加载")

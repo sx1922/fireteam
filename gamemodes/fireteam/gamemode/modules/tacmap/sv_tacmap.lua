@@ -43,4 +43,4 @@ hook.Add(Fireteam.HOOKS.PLAYER_JOINED_SQUAD, "Fireteam.TacMap.SyncMarkersOnJoin"
     end
 end)
 
-print("[FIRETEAM:TacMap] ✓ 服务端逻辑已加载")
+Fireteam.Log.Info("TacMap", "✓ 服务端逻辑已加载")

@@ -37,4 +37,4 @@ Fireteam.Commander.STATE = {
 --     Fireteam.Commander.GetCachedFactionCommander(faction)     → entIndex | nil
 -- ─────────────────────────────────────
 
-print("[FIRETEAM:Commander] ✓ 共享定义已加载")
+Fireteam.Log.Info("Commander", "✓ 共享定义已加载")

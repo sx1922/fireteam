@@ -447,7 +447,7 @@ concommand.Add("ft_round_state", function(ply)
     local msg = string.format("state=%s round=%d until=%.0f scores=%s",
         machine.state, machine.roundNumber, machine.stateUntil,
         table.ToString(machine.scores, "scores", "|"))
-    if IsValid(ply) then ply:PrintMessage(HUD_PRINTCONSOLE, msg) else print("[FIRETEAM] " .. msg) end
+    if IsValid(ply) then ply:PrintMessage(HUD_PRINTCONSOLE, msg) else Fireteam.Log.Info("系统", "" .. msg) end
 end)
 
 -- ═══════════════════════════════════════
@@ -477,13 +477,13 @@ concommand.Add("ft_scenario", function(ply, cmd, args)
 
     local list = Fireteam.Rounds.GetScenarioList()
     if not list then
-        print("[FIRETEAM] 当前设定包未定义 scenarios（使用隐式单剧本）")
+        Fireteam.Log.Info("系统", "当前设定包未定义 scenarios（使用隐式单剧本）")
         return
     end
 
     local id = args[1]
     if not id then
-        print("[FIRETEAM] 可用剧本:")
+        Fireteam.Log.Info("系统", "可用剧本:")
         for sid in pairs(list) do
             print("  " .. sid .. (sid == (Fireteam.Config.Get("rounds.scenario") or "") and "  ← 当前指定" or ""))
         end
@@ -491,7 +491,7 @@ concommand.Add("ft_scenario", function(ply, cmd, args)
     end
 
     if not list[id] then
-        print("[FIRETEAM] 未找到剧本 '" .. id .. "'")
+        Fireteam.Log.Info("系统", "未找到剧本 '" .. id .. "'")
         return
     end
     Fireteam.Config.Set("rounds.scenario", id)
@@ -514,7 +514,7 @@ concommand.Add("ft_mode", function(ply, cmd, args)
     if not want then
         local msg = string.format("mode=%s（用法: ft_mode pvp|pve）",
             tostring(Fireteam.Config.Get("rounds.mode")))
-        if IsValid(ply) then ply:PrintMessage(HUD_PRINTCONSOLE, msg) else print("[FIRETEAM] " .. msg) end
+        if IsValid(ply) then ply:PrintMessage(HUD_PRINTCONSOLE, msg) else Fireteam.Log.Info("系统", "" .. msg) end
         return
     end
 

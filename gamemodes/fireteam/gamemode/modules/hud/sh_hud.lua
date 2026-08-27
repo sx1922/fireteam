@@ -142,4 +142,4 @@ hook.Add(Fireteam.HOOKS.SETTING_LOADED, "HUD.ClearCache", function()
     Fireteam.HUD.ResetThemeCache()
 end)
 
-print("[FIRETEAM:HUD] ✓ 共享定义已加载")
+Fireteam.Log.Info("HUD", "✓ 共享定义已加载")

@@ -196,4 +196,4 @@ function Fireteam.Vitals.ApplyPartDamage(limbs, part, dmg)
     return (limbs.head or 1) <= 0 or (limbs.thorax or 1) <= 0
 end
 
-print("[FIRETEAM:Vitals] ✓ 共享定义已加载")
+Fireteam.Log.Info("Vitals", "✓ 共享定义已加载")

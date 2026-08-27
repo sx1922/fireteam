@@ -623,4 +623,4 @@ hook.Add("PlayerButtonDown", "Fireteam.TacMap.CommandKey", function(ply, button)
     end
 end)
 
-print("[FIRETEAM:TacMap] ✓ 客户端 UI 已加载")
+Fireteam.Log.Info("TacMap", "✓ 客户端 UI 已加载")

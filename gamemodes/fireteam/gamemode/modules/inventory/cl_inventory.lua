@@ -132,4 +132,4 @@ hook.Add("PlayerButtonDown", "Fireteam.Inventory.HotbarKeys", function(ply, butt
     end
 end)
 
-print("[FIRETEAM:Inventory] ✓ 客户端数据已加载")
+Fireteam.Log.Info("Inventory", "✓ 客户端数据已加载")

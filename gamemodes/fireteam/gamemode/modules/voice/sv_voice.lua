@@ -103,4 +103,4 @@ hook.Add("PlayerDisconnected", "Fireteam.Voice.Cleanup", function(ply)
     playerChannels[ply] = nil
 end)
 
-print("[FIRETEAM:Voice] ✓ 服务端逻辑已加载")
+Fireteam.Log.Info("Voice", "✓ 服务端逻辑已加载")

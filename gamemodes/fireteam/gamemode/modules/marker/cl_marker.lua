@@ -84,4 +84,4 @@ hook.Add("PlayerButtonDown", "Fireteam.Marker.PlaceKey", function(ply, button)
     end
 end)
 
-print("[FIRETEAM:Marker] ✓ 客户端渲染已加载")
+Fireteam.Log.Info("Marker", "✓ 客户端渲染已加载")
