@@ -99,14 +99,22 @@ function Fireteam.Locale.SetLanguage(lang)
 end
 
 -- gmod_language → 本框架语言文件名映射
+-- GMod 语言代码（schinese/tchinese/russian/…）→ 框架 locale 文件名
+local LANGUAGE_MAP = {
+    ["schinese"]  = "zh-CN",
+    ["tchinese"]  = "zh-TW",
+    ["russian"]   = "ru",
+    ["spanish"]   = "es",
+    ["french"]    = "fr",
+    ["german"]    = "de",
+    ["japanese"]  = "ja",
+    ["korean"]    = "ko",
+    ["english"]   = "en",
+}
 local function ResolveGameLanguage()
     local cvar = GetConVar("gmod_language")
     local gameLang = cvar and cvar:GetString() or FALLBACK_LANG
-    -- Steam 语言代码映射（schinese/tchinese → zh-CN）
-    if gameLang == "schinese" or gameLang == "tchinese" then
-        return "zh-CN"
-    end
-    return gameLang
+    return LANGUAGE_MAP[gameLang] or gameLang
 end
 
 -- ─────────────────────────────────────
@@ -126,9 +134,7 @@ end
 
 -- 游戏内切换语言时热重载
 cvars.AddChangeCallback("gmod_language", function(_, _, newVal)
-    local lang = newVal == "schinese" and "zh-CN"
-        or newVal == "tchinese" and "zh-CN"
-        or newVal
+    local lang = LANGUAGE_MAP[newVal] or newVal
     Fireteam.Locale.SetLanguage(lang)
 end)
 
