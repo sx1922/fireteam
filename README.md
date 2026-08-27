@@ -74,7 +74,7 @@ FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
 | Seats | `modules/seats/` | 载具座位职业门槛、上车提示、车载电台 |
 | AI | `modules/ai/` | NextBot AI 队友：跟随/驻守/交战、回合补位 |
 | PvE | `modules/pve/` | PvE 战役模式：AI 敌军阵营生成、推进/驻防行为、战役关卡机 |
-| Admin | `modules/admin/` | F10 管理面板：配置 / 回合控制 / 玩家总览 / 设定包切换 |
+| Admin | `modules/admin/` | F10 管理面板：配置 / 回合控制 / 玩家总览 / 设定包切换 / 冷战情景预设工具 |
 | PackEditor | `modules/packeditor/` | F9 设定包可视化编辑（schema 表单）、JSON 导出 |
 | HUD | `modules/hud/` | 准星、弹药、生命、指南针、特效 |
 | Ballistics | `modules/ballistics/` | 子弹下坠、伤害衰减 |

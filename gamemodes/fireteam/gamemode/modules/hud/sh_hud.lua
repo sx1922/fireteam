@@ -29,6 +29,11 @@ if CLIENT then
     net.Receive(Fireteam.NET.SETTING_CHANGED, function()
         Fireteam.Setting.ActiveId = net.ReadString()
         net.ReadString() -- pack name，预留
+        -- 第三段：设定包路径；客户端据此自行注入 <pack>/locale 词条
+        local packPath = net.ReadString()
+        if packPath ~= "" and Fireteam.Locale and Fireteam.Locale.LoadPack then
+            Fireteam.Locale.LoadPack(packPath, "GAME")
+        end
         Fireteam.HUD.ResetThemeCache()
     end)
 end
@@ -129,11 +134,11 @@ end
 function Fireteam.HUD.ResetThemeCache()
     Fireteam.HUD.CurrentTheme = nil
     colorCache = {}
-    hook.Run("Fireteam.UI.ThemeInvalidated")
+    hook.Run(Fireteam.HOOKS.UI_THEME_INVALIDATED)
 end
 
 -- 主题变更时清缓存（服务端侧：设定包重载）
-hook.Add("Fireteam.Setting.Loaded", "HUD.ClearCache", function()
+hook.Add(Fireteam.HOOKS.SETTING_LOADED, "HUD.ClearCache", function()
     Fireteam.HUD.ResetThemeCache()
 end)
 

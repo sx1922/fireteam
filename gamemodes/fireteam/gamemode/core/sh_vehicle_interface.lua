@@ -100,7 +100,7 @@ function Fireteam.VehicleInterface.RunDiscovery()
 end
 
 if SERVER then
-    hook.Add("Fireteam.Setting.Loaded", "VehicleInterface.Rediscover", function()
+    hook.Add(Fireteam.HOOKS.SETTING_LOADED, "VehicleInterface.Rediscover", function()
         Fireteam.VehicleInterface.RunDiscovery()
     end)
 end

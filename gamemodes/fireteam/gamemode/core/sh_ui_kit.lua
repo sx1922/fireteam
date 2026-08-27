@@ -69,7 +69,7 @@ function kit.InvalidateCache()
     kit.BuildFonts()
 end
 
-hook.Add("Fireteam.UI.ThemeInvalidated", "Fireteam.UI.Invalidate", function()
+hook.Add(Fireteam.HOOKS.UI_THEME_INVALIDATED, "Fireteam.UI.Invalidate", function()
     kit.InvalidateCache()
 end)
 

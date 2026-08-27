@@ -13,7 +13,7 @@ net.Receive(Fireteam.NET.VOICE_CHANNEL, function()
     local channelId = net.ReadString()
     if not IsValid(ply) then return end
     Fireteam.Voice.ClientChannels[ply:EntIndex()] = channelId
-    hook.Run("Fireteam.Voice.ChannelChanged", ply, channelId)
+    hook.Run(Fireteam.HOOKS.VOICE_CHANNEL_CHANGED, ply, channelId)
 end)
 
 --- 客户端查询任意玩家的频道（缺省 squad）

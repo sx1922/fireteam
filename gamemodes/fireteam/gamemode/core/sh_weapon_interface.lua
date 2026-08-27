@@ -112,7 +112,7 @@ end
 
 -- 服务端启动时执行
 if SERVER then
-    hook.Add("Fireteam.Setting.Loaded", "WeaponInterface.Rediscover", function()
+    hook.Add(Fireteam.HOOKS.SETTING_LOADED, "WeaponInterface.Rediscover", function()
         Fireteam.WeaponInterface.RunDiscovery()
     end)
 end

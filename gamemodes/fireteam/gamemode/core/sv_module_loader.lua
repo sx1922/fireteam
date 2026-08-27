@@ -16,15 +16,39 @@ local function ToLuaPath(gamePath)
     return gamePath:gsub("^gamemodes/", "", 1)
 end
 
-local function ExecLuaFile(gamePath, luaPath)
-    local ok = pcall(include, luaPath)
+--- AddCSLuaFile 失败要留痕：静默失败时专用服客户端将缺失该文件且无从排查
+local function SafeAddCSLuaFile(luaPath, moduleId)
+    local ok, err = pcall(AddCSLuaFile, luaPath)
     if not ok then
-        -- 兜底：直接读盘编译执行，保证服务端逻辑不因路径规则差异而丢失
-        local contents = file.Read(gamePath, "GAME")
-        if contents then
-            CompileString(contents, gamePath)()
-        end
+        Fireteam.Log.Error("模块",
+            "✗ AddCSLuaFile 失败 [" .. moduleId .. "]: " .. luaPath .. " — " .. tostring(err))
     end
+end
+
+--- 执行 Lua 文件；include 失败时保留原始错误并带模块上下文重新抛出。
+--- 兜底 CompileString 的诊断名用 <moduleId>:<luaPath>，报错可直接定位模块，
+--- 而非指向不可读的磁盘绝对路径。
+local function ExecLuaFile(gamePath, luaPath, moduleId)
+    local ok, err = pcall(include, luaPath)
+    if ok then return true end
+
+    Fireteam.Log.Error("模块",
+        "include 失败 [" .. moduleId .. "]: " .. luaPath .. " — " .. tostring(err))
+
+    -- 兜底：直接读盘编译执行，保证服务端逻辑不因路径规则差异而丢失
+    local contents = file.Read(gamePath, "GAME")
+    if not contents then
+        error("[" .. moduleId .. "] include 与文件读取均失败: " .. gamePath, 0)
+    end
+    local chunk, compileErr = CompileString(contents, moduleId .. ":" .. luaPath)
+    if not chunk then
+        error("[" .. moduleId .. "] 兜底编译失败: " .. tostring(compileErr), 0)
+    end
+    local ranOk, runErr = pcall(chunk)
+    if not ranOk then
+        error("[" .. moduleId .. "] 兜底执行失败: " .. tostring(runErr), 0)
+    end
+    return true
 end
 
 -- ─────────────────────────────────────
@@ -111,18 +135,18 @@ function Fireteam.Modules.Load(moduleId)
         if mod.files.shared then
             local gamePath = mod.path .. mod.files.shared
             local luaPath = ToLuaPath(gamePath)
-            pcall(AddCSLuaFile, luaPath)
-            ExecLuaFile(gamePath, luaPath)
+            SafeAddCSLuaFile(luaPath, moduleId)
+            ExecLuaFile(gamePath, luaPath, moduleId)
         end
         -- 服务端文件
         if mod.files.server then
             local gamePath = mod.path .. mod.files.server
-            ExecLuaFile(gamePath, ToLuaPath(gamePath))
+            ExecLuaFile(gamePath, ToLuaPath(gamePath), moduleId)
         end
         -- 客户端文件（仅 AddCSLuaFile，服务端不执行）
         for _, fname in ipairs(mod.files.client or {}) do
             local gamePath = mod.path .. fname
-            pcall(AddCSLuaFile, ToLuaPath(gamePath))
+            SafeAddCSLuaFile(ToLuaPath(gamePath), moduleId)
         end
     end)
 

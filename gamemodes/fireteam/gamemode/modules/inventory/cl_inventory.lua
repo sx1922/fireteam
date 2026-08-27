@@ -112,7 +112,7 @@ net.Receive(Fireteam.NET.INVENTORY_SYNC, function()
     Fireteam.Inventory.ClientCounts = counts
     Fireteam.Inventory.ClientCells = cells
     EnsureCommands()
-    hook.Run("Fireteam.Inventory.ClientUpdated")
+    hook.Run(Fireteam.HOOKS.INVENTORY_CLIENT_UPDATED)
 end)
 
 -- ─────────────────────────────────────

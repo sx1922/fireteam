@@ -19,17 +19,29 @@ local FALLBACK_MODULES = {
     "squad", "stamina", "suppression", "tacmap", "vitals", "voice"
 }
 
-local function ExecModuleFile(gamePath)
+local function ExecModuleFile(gamePath, moduleId)
     -- 首选 lua 文件系统路径（去掉 "gamemodes/" 前缀）
     local luaPath = gamePath:gsub("^gamemodes/", "", 1)
-    local ok = pcall(include, luaPath)
-    if not ok then
-        -- 兜底：直接读 GAME 磁盘路径编译执行
-        local contents = file.Read(gamePath, "GAME")
-        if contents then
-            CompileString(contents, gamePath)()
-        end
+    local ok, err = pcall(include, luaPath)
+    if ok then return true end
+
+    Fireteam.Log.Error("模块",
+        "include 失败 [" .. moduleId .. "]: " .. luaPath .. " — " .. tostring(err))
+
+    -- 兜底：直接读 GAME 磁盘路径编译执行；诊断名带模块便于定位
+    local contents = file.Read(gamePath, "GAME")
+    if not contents then
+        error("[" .. moduleId .. "] include 与文件读取均失败: " .. gamePath, 0)
     end
+    local chunk, compileErr = CompileString(contents, moduleId .. ":" .. luaPath)
+    if not chunk then
+        error("[" .. moduleId .. "] 兜底编译失败: " .. tostring(compileErr), 0)
+    end
+    local ranOk, runErr = pcall(chunk)
+    if not ranOk then
+        error("[" .. moduleId .. "] 兜底执行失败: " .. tostring(runErr), 0)
+    end
+    return true
 end
 
 -- 立即加载，不等 InitPostEntity：客户端文件在进服时已由 AddCSLuaFile
@@ -40,6 +52,7 @@ if #dirs == 0 then
     Fireteam.Log.Warn("模块", "file.Find 未发现模块目录，回退内置清单（GMA 分发场景）")
 end
 
+local failed = {}
 for _, dir in ipairs(dirs) do
     if dir ~= "adapters" then
         local basePath = MODULE_BASE_PATH .. dir .. "/"
@@ -50,11 +63,22 @@ for _, dir in ipairs(dirs) do
         }
         for _, fname in ipairs(candidates) do
             if file.Exists(basePath .. fname, "GAME") then
-                ExecModuleFile(basePath .. fname)
+                -- 单文件粒度隔离：一个模块报错不应拖垮后续全部模块
+                local ok, err = pcall(ExecModuleFile, basePath .. fname, dir)
+                if not ok then
+                    Fireteam.Log.Error("模块", "✗ 客户端模块失败: " .. dir .. "/" .. fname
+                        .. " — " .. tostring(err))
+                    failed[#failed + 1] = dir .. "/" .. fname
+                end
             end
         end
     end
 end
 
-Fireteam.Log.Info("模块", "✓ 客户端模块已全部加载")
+if #failed > 0 then
+    Fireteam.Log.Error("模块", "✗ 客户端模块加载失败清单: " .. table.concat(failed, ", "))
+    Fireteam.Log.Info("模块", "客户端模块已加载（部分失败）")
+else
+    Fireteam.Log.Info("模块", "✓ 客户端模块已全部加载")
+end
 Fireteam.Log.Info("核心", "✓ 客户端初始化完成")

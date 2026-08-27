@@ -181,7 +181,17 @@ Fireteam.HOOKS = {
     BOT_KILLED           = "Fireteam.PvE.BotKilled", -- bot, attacker（PvE/队友通用阵亡归功）
     ITEM_USED            = "Fireteam.Inventory.ItemUsed", -- ply, itemId（消耗品成功使用后触发）
     VITALS_STATE_CHANGED = "Fireteam.Vitals.StateChanged", -- ply, oldState, newState（normal/downed/dead）
-    SCENARIO_CHANGED     = "Fireteam.Rounds.ScenarioChanged" -- newScenarioId（剧本切换确认，下一回合生效）
+    SCENARIO_CHANGED     = "Fireteam.Rounds.ScenarioChanged", -- newScenarioId（剧本切换确认，下一回合生效）
+
+    -- 客户端/跨模块 UI 与状态通知（P10 收编：原先散落各模块的裸字符串）
+    LOCALE_CHANGED            = "Fireteam.Locale.Changed",       -- lang（语言切换完成）
+    SETTING_ASSET_WARNING     = "Fireteam.Setting.AssetWarning", -- packId, warnings[]
+    UI_THEME_INVALIDATED      = "Fireteam.UI.ThemeInvalidated",  -- （HUD 主题缓存失效）
+    VOICE_CAN_ACCESS_CHANNEL  = "Fireteam.Voice.CanAccessChannel", -- ply, channelId → false 拒绝
+    VOICE_CHANNEL_CHANGED     = "Fireteam.Voice.ChannelChanged",   -- ply, channelId
+    INVENTORY_CLIENT_UPDATED  = "Fireteam.Inventory.ClientUpdated",-- （客户端背包快照已更新）
+    ROUNDS_CLIENT_STATE_CHANGED = "Fireteam.Rounds.ClientStateChanged", -- state（客户端回合状态同步）
+    VITALS_CLIENT_UPDATED     = "Fireteam.Vitals.ClientUpdated"    -- （客户端体征快照已更新）
 }
 
 Fireteam.Log.Info("常量", "✓ 常量已加载 (v" .. Fireteam.VERSION .. ")")

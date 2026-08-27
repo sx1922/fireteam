@@ -1,6 +1,18 @@
 -- gamemode/shared.lua
 -- FIRETEAM Shared Entry Point
 
+-- 全局表初始化必须在所有 include 之前：
+-- 各核心文件自带 `Fireteam.X or {}` 兜底，若初始化放在 include 之后，
+-- 某个 include 静默失败时这些冗余行会掩盖真实加载问题。
+Fireteam = Fireteam or {}
+Fireteam.Config = Fireteam.Config or {}
+Fireteam.API = Fireteam.API or {}
+Fireteam.Modules = Fireteam.Modules or {}
+Fireteam.Setting = Fireteam.Setting or {}
+Fireteam.WeaponInterface = Fireteam.WeaponInterface or {}
+Fireteam.VehicleInterface = Fireteam.VehicleInterface or {}
+Fireteam.Locale = Fireteam.Locale or {}
+
 AddCSLuaFile("core/sh_logger.lua")
 AddCSLuaFile("core/sh_constants.lua")
 AddCSLuaFile("core/sh_config_registry.lua")
@@ -21,15 +33,5 @@ include("core/sh_net_protocol.lua")
 include("core/sh_weapon_interface.lua")
 include("core/sh_vehicle_interface.lua")
 include("core/sh_ui_kit.lua")
-
--- 全局表初始化（仅声明，不赋值）
-Fireteam = Fireteam or {}
-Fireteam.Config = Fireteam.Config or {}
-Fireteam.API = Fireteam.API or {}
-Fireteam.Modules = Fireteam.Modules or {}
-Fireteam.Setting = Fireteam.Setting or {}
-Fireteam.WeaponInterface = Fireteam.WeaponInterface or {}
-Fireteam.VehicleInterface = Fireteam.VehicleInterface or {}
-Fireteam.Locale = Fireteam.Locale or {}
 
 Fireteam.Log.Info("核心", "✓ 共享环境已初始化")

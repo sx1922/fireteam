@@ -1,6 +1,7 @@
 -- core/sh_locale.lua
 -- FIRETEAM Localization System
 -- 词条文件位于 gamemode/locale/<lang>.lua，返回 key = value 表。
+-- 设定包可通过 <pack>/locale/<lang>.lua 注入专属词条（见 LoadPack）。
 -- 双端共享：跟随 gmod_language 自动选择，en 为兜底。
 
 if not Fireteam then Fireteam = {} end
@@ -12,14 +13,16 @@ local FALLBACK_LANG = "en"
 local currentLang = FALLBACK_LANG
 local strings = {}          -- 当前语言词条
 local fallbackStrings = {}  -- en 兜底词条
+local packStrings = {}      -- 设定包词条（当前语言）
+local packFallback = {}     -- 设定包词条（en 兜底）
+local activePack = nil      -- { path=..., realm=... }，语言热切换时自动重载
 
 -- ─────────────────────────────────────
 -- 读取语言文件（GAME 路径 + CompileString，
 -- 与模块/设定包加载器同一模式，双端可用）
 -- ─────────────────────────────────────
-local function LoadLanguage(lang)
-    local path = LOCALE_BASE .. lang .. ".lua"
-    local contents = file.Read(path, "GAME")
+local function ReadLangTable(path, realm)
+    local contents = file.Read(path, realm)
     if not contents then return nil end
     local fn = CompileString(contents, path, false)
     if not fn then
@@ -27,13 +30,19 @@ local function LoadLanguage(lang)
         return nil
     end
     local tbl = fn()
-    if not istable(tbl) then return nil end
-    return tbl
+    return istable(tbl) and tbl or nil
 end
 
---- 取词条；带参数时做 string.format 替换
+local function LoadLanguage(lang)
+    return ReadLangTable(LOCALE_BASE .. lang .. ".lua", "GAME")
+end
+
+--- 取词条；带参数时做 string.format 替换。
+--- 解析顺序：游戏当前语言 → 设定包当前语言 → en 兜底 → 设定包 en。
+--- 同 key 下允许设定包覆盖 gamemode 词条（供题材专有用语微调）。
 function Fireteam.Locale.Get(key, ...)
-    local s = strings[key] or fallbackStrings[key]
+    local s = strings[key] or packStrings[key]
+        or fallbackStrings[key] or packFallback[key]
     if not s then return tostring(key) end
     if select("#", ...) > 0 then
         local ok, res = pcall(string.format, s, ...)
@@ -46,13 +55,45 @@ function Fireteam.Locale.GetLanguage()
     return currentLang
 end
 
---- 切换语言；成功返回 true 并触发 Fireteam.Locale.Changed
+-- ─────────────────────────────────────
+-- 设定包词条注入（双端）
+-- 服务端在 Setting.Activate 时调用；客户端经 FT_SettingChanged
+-- 携带的包路径调用。pathPrefix 形如 "setting_packs/coldwar/"。
+-- 重复调用即整体替换（热切换新包自动顶掉旧包词条）。
+-- ─────────────────────────────────────
+function Fireteam.Locale.LoadPack(pathPrefix, realm)
+    activePack = { path = pathPrefix, realm = realm or "GAME" }
+
+    packStrings = ReadLangTable(pathPrefix .. "locale/" .. currentLang .. ".lua",
+        activePack.realm) or {}
+    packFallback = ReadLangTable(pathPrefix .. "locale/" .. FALLBACK_LANG .. ".lua",
+        activePack.realm) or {}
+
+    local n = table.Count(packStrings) + table.Count(packFallback)
+    Fireteam.Log.Info("多语言", "✓ 设定包词条已注入: "
+        .. pathPrefix .. " (" .. n .. " 条)")
+    hook.Run(Fireteam.HOOKS.LOCALE_CHANGED, currentLang)
+    return true
+end
+
+function Fireteam.Locale.ClearPack()
+    activePack = nil
+    packStrings = {}
+    packFallback = {}
+end
+
+--- 切换语言；成功返回 true 并触发 Fireteam.Locale.Changed。
+--- 有激活设定包时，包词条层按新语言一并重载（保留 en 层不重读）。
 function Fireteam.Locale.SetLanguage(lang)
     local tbl = LoadLanguage(lang)
     if not tbl then return false end
     currentLang = lang
     strings = tbl
-    hook.Run("Fireteam.Locale.Changed", lang)
+    if activePack then
+        packStrings = ReadLangTable(
+            activePack.path .. "locale/" .. lang .. ".lua", activePack.realm) or {}
+    end
+    hook.Run(Fireteam.HOOKS.LOCALE_CHANGED, lang)
     Fireteam.Log.Info("多语言", "✓ 语言已切换: " .. lang)
     return true
 end

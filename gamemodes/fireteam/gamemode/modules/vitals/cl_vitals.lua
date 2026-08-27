@@ -79,7 +79,7 @@ net.Receive(Fireteam.NET.VITALS_UPDATE, function()
 
     Fireteam.Vitals.Client = out
     Fireteam.Vitals.ReceivedAt = now
-    hook.Run("Fireteam.Vitals.ClientUpdated")
+    hook.Run(Fireteam.HOOKS.VITALS_CLIENT_UPDATED)
 end)
 
 print("[FIRETEAM:Vitals] ✓ 客户端数据已加载")

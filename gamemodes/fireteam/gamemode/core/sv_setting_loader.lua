@@ -139,7 +139,7 @@ local function ValidateAssets(meta, data)
         for _, w in ipairs(warnings) do
             Fireteam.Log.Warn("设定包", "  - " .. w)
         end
-        hook.Run("Fireteam.Setting.AssetWarning", meta.id, warnings)
+        hook.Run(Fireteam.HOOKS.SETTING_ASSET_WARNING, meta.id, warnings)
     end
 
     return warnings
@@ -159,6 +159,9 @@ function Fireteam.Setting.Activate(packId)
     if Fireteam.Setting.Active then
         hook.Run(Fireteam.HOOKS.SETTING_UNLOAD, Fireteam.Setting.Active.id)
         Fireteam.Setting.Data = {}
+        if Fireteam.Locale and Fireteam.Locale.ClearPack then
+            Fireteam.Locale.ClearPack()
+        end
     end
 
     -- 加载数据
@@ -166,6 +169,11 @@ function Fireteam.Setting.Activate(packId)
     if not ok then
         Fireteam.Log.Error("设定包", "✗ 数据加载失败 '" .. packId .. "': " .. tostring(data))
         return false
+    end
+
+    -- 注入设定包专属词条（<pack>/locale/<lang>.lua）
+    if Fireteam.Locale and Fireteam.Locale.LoadPack then
+        Fireteam.Locale.LoadPack(meta._path, meta._realm)
     end
 
     -- 应用配置
@@ -181,10 +189,12 @@ function Fireteam.Setting.Activate(packId)
     -- 验证资产
     ValidateAssets(meta, data)
 
-    -- 通知客户端
+    -- 通知客户端（第三段为包路径，客户端据此自行注入 locale 词条；
+    -- 两端读端在 sh_hud.lua 同步维护）
     net.Start(Fireteam.NET.SETTING_CHANGED)
         net.WriteString(packId)
         net.WriteString(meta.name)
+        net.WriteString(meta._path or "")
     net.Broadcast()
 
     -- 推送 HUD 主题标识，客户端据此强制重载主题缓存

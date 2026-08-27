@@ -94,7 +94,7 @@ function Fireteam.AI.Deploy(ply)
     bot:SetNW2String("ftOwnerName", ply:Nick())
     bot:SetNW2String("ftStance", Fireteam.AI.STANCE.FOLLOW)
 
-    hook.Run("Fireteam.AI.Deployed", ply, bot)
+    hook.Run(Fireteam.HOOKS.AI_DEPLOYED, ply, bot)
     return bot
 end
 

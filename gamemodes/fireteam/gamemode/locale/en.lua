@@ -144,18 +144,8 @@ return {
     admin_active_pack      = "ACTIVE",
     admin_activate         = "Activate",
     admin_reload_pack      = "Reload",
-    -- 冷战工具
-    ui_cwt_title           = "Cold War Scenario Tool",
-    ui_cwt_scenario        = "Scenario:",
-    ui_cwt_faction         = "Faction:",
-    ui_cwt_role            = "Vehicle Role:",
-    ui_cwt_spawn           = "Spawn Point:",
-    ui_cwt_apply           = "Apply Selection",
-    ui_cwt_err_scenario    = "Please select a scenario.",
-    ui_cwt_err_faction     = "Please select a faction.",
-    ui_cwt_err_role        = "Please select a vehicle role.",
-    ui_cwt_err_spawn       = "Please select a spawn point.",
-    ui_cwt_applied         = "Selection applied.",
+    -- ui_cwt_*（冷战工具词条）已迁至 setting_packs/coldwar/locale/，
+    -- 随设定包激活经 Locale.LoadPack 注入。
 
     -- AI 队友
     ai_disabled            = "AI teammates are disabled.",

@@ -126,7 +126,7 @@ hook.Add("PlayerLeftVehicle", "Fireteam.Seats.Left", function(ply, veh)
 end)
 
 --- 载具乘员豁免频道的职业 access 限制（仅限载具声明的 radioChannels）
-hook.Add("Fireteam.Voice.CanAccessChannel", "Fireteam.Seats.VehicleRadio", function(ply, channelId)
+hook.Add(Fireteam.HOOKS.VOICE_CAN_ACCESS_CHANNEL, "Fireteam.Seats.VehicleRadio", function(ply, channelId)
     local veh = ply.InVehicle and ply:GetVehicle()
     if not IsValid(veh) then return false end
 
