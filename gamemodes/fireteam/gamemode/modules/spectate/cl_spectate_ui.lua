@@ -7,11 +7,18 @@ local L = function(key, ...)
     return Fireteam.Locale and Fireteam.Locale.Get(key, ...) or key
 end
 
-local MODE_LABEL = {
-    [OBS_MODE_IN_EYE] = "spec_mode_eye",
-    [OBS_MODE_CHASE]  = "spec_mode_chase",
-    [OBS_MODE_ROAM]   = "spec_mode_roam",
-}
+-- OBS_MODE_* 枚举在个别环境下就绪较晚（曾触发 table index is nil），
+-- 改为首次使用时惰性构建，且逐项守卫缺枚举的场景
+local MODE_LABEL
+local function ModeLabel(mode)
+    MODE_LABEL = MODE_LABEL or {}
+    if next(MODE_LABEL) == nil then
+        if OBS_MODE_IN_EYE then MODE_LABEL[OBS_MODE_IN_EYE] = "spec_mode_eye" end
+        if OBS_MODE_CHASE then MODE_LABEL[OBS_MODE_CHASE] = "spec_mode_chase" end
+        if OBS_MODE_ROAM then MODE_LABEL[OBS_MODE_ROAM] = "spec_mode_roam" end
+    end
+    return MODE_LABEL[mode]
+end
 
 -- ═══════════════════════════════════════
 -- 覆盖层
@@ -38,7 +45,7 @@ hook.Add("HUDPaint", "Fireteam.Spectate.Overlay", function()
     -- 目标名 + 视角模式
     local target = me:GetObserverTarget()
     local name = IsValid(target) and target:Nick() or "—"
-    local modeKey = MODE_LABEL[me:GetObserverMode()]
+    local modeKey = ModeLabel(me:GetObserverMode())
 
     draw.SimpleText(L("spec_target", name), kit.Font("body"),
         x + w / 2, y + 42 * scale,
