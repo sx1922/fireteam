@@ -88,8 +88,11 @@ function Fireteam.Marker.Remove(ply, markerId)
         local mySquad = Fireteam.Squad.GetPlayerSquad(ply)
         allowed = isCmdr and mySquad and mySquad.faction == marker.faction
     elseif not allowed then
+        -- 小队级标记：必须是"该标记所属小队"的队长（防跨队删除他人标记）
         local squad = Fireteam.Squad.GetPlayerSquad(ply)
-        allowed = squad ~= nil and squad.leader == ply
+        allowed = squad ~= nil
+            and squad.leader == ply
+            and squad.id == marker.squadId
     end
     if not allowed then return false end
 
@@ -231,12 +234,23 @@ net.Receive(Fireteam.NET.MARKER_PLACE, function(len, ply)
     local mType = string.sub(net.ReadString(), 1, 24)
     local label = string.sub(net.ReadString(), 1, 32)
     -- 第四段：阵营级标记声明——服务端仍以 Commander 校验为准，客户端声明不可信
+
+    -- 坐标有效性（防 NaN 注入广播全服 / 地图外坐标驱动 AI 穿墙）：
+    -- NaN 自比较不等；inf/超大分量视为非法
+    if not isvector(pos)
+        or pos.x ~= pos.x or pos.y ~= pos.y or pos.z ~= pos.z
+        or math.abs(pos.x) > 1e7 or math.abs(pos.y) > 1e7 or math.abs(pos.z) > 1e7 then
+        return
+    end
+
     local factionWide = net.ReadBool()
     Fireteam.Marker.Add(ply, pos, mType, label, { factionWide = factionWide })
 end)
 
 net.Receive(Fireteam.NET.MARKER_REMOVE, function(len, ply)
-    local markerId = net.ReadInt(16)
+    -- nextMarkerId 只增不减：16 位在有符号下 32768 即翻转，长期运行必失效；
+    -- 24 位上限约 1677 万次放置，且两端同仓同改
+    local markerId = net.ReadUInt(24)
     Fireteam.Marker.Remove(ply, markerId)
 end)
 

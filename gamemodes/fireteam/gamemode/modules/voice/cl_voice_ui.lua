@@ -4,6 +4,7 @@
 -- 通话起止的电台咔嗒声、频道内有人讲话时的静噪底声、按距离/遮挡调制的干扰音量。
 
 local kit = Fireteam.UI
+local L = Fireteam.Locale.Get
 
 -- ═══════════════════════════════════════
 -- 音效注册（素材由 gamemode content/ 提供，零外部依赖）

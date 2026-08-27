@@ -127,6 +127,9 @@ function Fireteam.Inventory.OpenBackpack()
     end
 
     grid.OnMousePressed = function(s, code)
+        if code == MOUSE_LEFT then
+            s:MouseCapture(true)
+        end
         local mx, my = s:CursorPos()
         local gx, gy = math.floor(mx / cp), math.floor(my / cp)
         local index, cell = CellAtMouse(gx, gy)

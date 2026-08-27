@@ -42,6 +42,9 @@ local function SortKeys(cfgs)
 end
 
 --- 配置行：按类型渲染编辑器
+--- 布局全部走 Dock（label LEFT / 控件 RIGHT 逆序堆叠）——
+--- 构建期 row:GetWide() 是面板默认值而非真实宽度（Dock 布局在 PerformLayout
+--- 才生效），SetPos 定位会落在负坐标导致控件不可见不可点。
 local function BuildConfigRow(parent, key, meta)
     local row = vgui.Create("DPanel", parent)
     row:Dock(TOP)
@@ -53,17 +56,45 @@ local function BuildConfigRow(parent, key, meta)
     end
 
     local label = vgui.Create("DLabel", row)
-    label:SetText("")
-    label:SetPos(8, 4)
-    label:SetSize(240, 18)
+    label:Dock(LEFT)
+    label:SetWide(240)
     kit.StyleLabel(label, { font = "small" })
     label:SetText(key .. (meta.desc ~= "" and ("  — " .. meta.desc) or ""))
     label:SetTooltip(meta.desc)
 
     local apply = vgui.Create("DButton", row)
-    apply:SetText("")
-    apply:SetSize(52, 20)
     local editor
+
+    -- 从右向左堆叠：apply 最右 → reset → editor
+    if meta.type ~= "boolean" then
+        apply:Dock(RIGHT)
+        apply:SetWide(52)
+        apply:DockMargin(6, 3, 0, 0)
+        apply.DoClick = function()
+            local raw = editor:GetValue()
+            local value = raw
+            if meta.type == "number" then value = tonumber(raw) end
+            if value == nil then return end
+            Act({ type = "set_config", key = key, value = value })
+        end
+        kit.StyleButton(apply, { font = "small" })
+        apply:SetText(L("admin_apply"))
+    else
+        apply:SetVisible(false)
+    end
+
+    -- 重置按钮
+    local reset = vgui.Create("DButton", row)
+    reset:Dock(RIGHT)
+    reset:SetWide(24)
+    reset:DockMargin(6, 3, 0, 0)
+    reset:SetTooltip(L("admin_reset"))
+    reset.Paint = function(s, w, h)
+        draw.SimpleText("↺", kit.Font("small"), w / 2, h / 2,
+            s:IsHovered() and kit.Color("warning") or kit.Color("text_muted"),
+            TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+    end
+    reset.DoClick = function() Act({ type = "reset_config", key = key }) end
 
     if meta.type == "boolean" then
         editor = vgui.Create("DButton", row)
@@ -71,6 +102,9 @@ local function BuildConfigRow(parent, key, meta)
             editor:SetText(tostring(meta.value) == "true" and "ON" or "OFF")
         end
         kit.StyleButton(editor, { style = "ghost", font = "small" })
+        editor:Dock(RIGHT)
+        editor:SetWide(64)
+        editor:DockMargin(6, 3, 0, 0)
         refreshBtn()
         editor.DoClick = function(s)
             -- 本地乐观取反，提交后以服务端回包为准
@@ -83,54 +117,22 @@ local function BuildConfigRow(parent, key, meta)
         for _, opt in ipairs(meta.options) do
             editor:AddChoice(opt)
         end
+        editor:Dock(RIGHT)
+        editor:SetWide(150)
+        editor:DockMargin(4, 2, 0, 0)
         editor:SetValue(tostring(meta.value))
         editor.OnSelect = function(_, _, val)
             Act({ type = "set_config", key = key, value = val })
         end
-    elseif meta.type == "number" then
-        editor = kit.CreateEntry(row)
-        editor:SetValue(tostring(meta.value))
     else
         editor = kit.CreateEntry(row)
+        editor:Dock(RIGHT)
+        editor:SetWide(150)
+        editor:DockMargin(4, 2, 0, 0)
         editor:SetValue(tostring(meta.value))
     end
 
     if editor.SetPlaceholderText then editor:SetPlaceholderText("") end
-
-    -- 布局：label 左，editor 中右，apply 最右（boolean 的编辑器即按钮，无独立 apply）
-    if meta.type == "boolean" then
-        editor:SetSize(64, 20)
-        editor:SetPos(row:GetWide() - 72, 3)
-        apply:SetVisible(false)
-    else
-        apply.DoClick = function()
-            local raw = editor:GetValue()
-            local value = raw
-            if meta.type == "number" then value = tonumber(raw) end
-            if value == nil then return end
-            Act({ type = "set_config", key = key, value = value })
-        end
-        kit.StyleButton(apply, { font = "small" })
-        apply:SetText(L("admin_apply"))
-
-        editor:SetSize(150, 22)
-        editor:SetPos(row:GetWide() - 216, 2)
-
-        apply:SetPos(row:GetWide() - 60, 3)
-    end
-
-    -- 重置按钮
-    local reset = vgui.Create("DButton", row)
-    reset:SetText("")
-    reset:SetSize(24, 20)
-    reset:SetPos(meta.type == "boolean" and row:GetWide() - 100 or row:GetWide() - 244, 3)
-    reset:SetTooltip(L("admin_reset"))
-    reset.Paint = function(s, w, h)
-        draw.SimpleText("↺", kit.Font("small"), w / 2, h / 2,
-            s:IsHovered() and kit.Color("warning") or kit.Color("text_muted"),
-            TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
-    end
-    reset.DoClick = function() Act({ type = "reset_config", key = key }) end
 
     return row
 end
@@ -241,8 +243,9 @@ local function BuildPacksTab(content)
 
         local lbl = vgui.Create("DLabel", row)
         lbl:SetText("")
-        lbl:SetPos(8, 6)
-        lbl:SetSize(360, 18)
+        lbl:Dock(LEFT)
+        lbl:SetWide(360)
+        lbl:DockMargin(8, 6, 0, 0)
         kit.StyleLabel(lbl, { font = "small",
             color = isActive and "success" or "text" })
         lbl:SetText(pack.id .. "  —  " .. pack.name
@@ -250,8 +253,9 @@ local function BuildPacksTab(content)
 
         local btn = vgui.Create("DButton", row)
         btn:SetText("")
-        btn:SetSize(84, 22)
-        btn:SetPos(row:GetWide() - 92, 4)
+        btn:Dock(RIGHT)
+        btn:SetWide(84)
+        btn:DockMargin(0, 4, 8, 4)
         kit.StyleButton(btn, { style = isActive and "ghost" or "primary", font = "small" })
         btn:SetText(isActive and L("admin_reload_pack") or L("admin_activate"))
         btn.DoClick = function() Act({ type = "switch_pack", id = pack.id }) end
@@ -342,8 +346,8 @@ local function BuildColdWarToolTab(content)
     -- Title
     local title = vgui.Create("DLabel", form)
     title:SetText(L("ui_cwt_title"))  -- We'll add this locale key later
-    title:SetFont("Fireteam.Medium")
-    title:SetTextColor(kit.Color("text"))
+    kit.StyleLabel(title, { font = "medium" })
+
     title:Dock(TOP)
     title:SetTall(30)
     title:SetContentAlignment(5)
@@ -356,7 +360,7 @@ local function BuildColdWarToolTab(content)
     -- Scenario selector
     local lblScenario = vgui.Create("DLabel", form)
     lblScenario:SetText(L("ui_cwt_scenario"))
-    lblScenario:SetFont("Fireteam.Small")
+    kit.StyleLabel(lblScenario, { font = "small" })
     lblScenario:SetTextColor(kit.Color("text_muted"))
     lblScenario:Dock(TOP)
     lblScenario:SetTall(20)
@@ -393,7 +397,7 @@ local function BuildColdWarToolTab(content)
     -- Faction selector
     local lblFaction = vgui.Create("DLabel", form)
     lblFaction:SetText(L("ui_cwt_faction"))
-    lblFaction:SetFont("Fireteam.Small")
+    kit.StyleLabel(lblFaction, { font = "small" })
     lblFaction:SetTextColor(kit.Color("text_muted"))
     lblFaction:Dock(TOP)
     lblFaction:SetTall(20)
@@ -426,7 +430,7 @@ local function BuildColdWarToolTab(content)
     -- Vehicle Role selector
     local lblRole = vgui.Create("DLabel", form)
     lblRole:SetText(L("ui_cwt_role"))
-    lblRole:SetFont("Fireteam.Small")
+    kit.StyleLabel(lblRole, { font = "small" })
     lblRole:SetTextColor(kit.Color("text_muted"))
     lblRole:Dock(TOP)
     lblRole:SetTall(20)
@@ -460,7 +464,7 @@ local function BuildColdWarToolTab(content)
     -- Spawn Point selector
     local lblSpawn = vgui.Create("DLabel", form)
     lblSpawn:SetText(L("ui_cwt_spawn"))
-    lblSpawn:SetFont("Fireteam.Small")
+    kit.StyleLabel(lblSpawn, { font = "small" })
     lblSpawn:SetTextColor(kit.Color("text_muted"))
     lblSpawn:Dock(TOP)
     lblSpawn:SetTall(20)

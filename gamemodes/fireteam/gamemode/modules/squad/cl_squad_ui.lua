@@ -306,6 +306,7 @@ end
 function Fireteam.Squad.OpenPanel()
     if IsValid(squadPanel) then
         squadPanel:Remove()
+        return
     end
 
     local W, H = math.Round(520 * (ScrW() / 1920)), math.Round(560 * (ScrH() / 1080))
@@ -389,8 +390,9 @@ function Fireteam.Squad.OpenPanel()
 
                     local kickBtn = vgui.Create("DButton", row)
                     kickBtn:SetText("")
-                    kickBtn:SetSize(52, 20)
-                    kickBtn:SetPos(row:GetWide() - 58, 3)
+                    kickBtn:Dock(RIGHT)
+                    kickBtn:SetWide(52)
+                    kickBtn:DockMargin(6, 3, 0, 3)
                     kit.StyleButton(kickBtn, { style = "danger", font = "small" })
                     kickBtn:SetText(L("ui_kick_btn"))
                     kickBtn.DoClick = function()

@@ -97,6 +97,26 @@ function Fireteam.Squad.Join(ply, squadId)
         return false
     end
 
+    -- 阵营一致性（防伪造客户端换边/窃听敌队语音）：
+    -- 玩家一旦选了职业即锁定阵营，此后只能加入同阵营小队；
+    -- 未选职业者自由（其阵营随首支加入的小队确定，选职业时反向受 sv_class 校验）。
+    local myClass = ply.FT_Class
+    if isstring(myClass) then
+        local classDefs = Fireteam.Setting.GetData and Fireteam.Setting.GetData("classes") or nil
+        local classDef = istable(classDefs) and classDefs[myClass] or nil
+        if classDef and classDef.faction and classDef.faction ~= squad.faction then
+            ply:ChatPrint("[FIRETEAM] You are committed to another faction.")
+            return false
+        end
+    end
+
+    -- 回合进行中禁止换队（歼灭判定/比分基于小队阵营，中途换边等于刷分）
+    if Fireteam.Rounds and Fireteam.Rounds.GetState
+        and Fireteam.Rounds.GetState() == "active" then
+        ply:ChatPrint("[FIRETEAM] Cannot switch squads mid-round.")
+        return false
+    end
+
     ply.FT_SquadData = squad
     squad.members[ply] = {
         role  = Fireteam.Squad.ROLE.MEMBER,

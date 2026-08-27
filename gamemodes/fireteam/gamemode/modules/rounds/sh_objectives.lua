@@ -228,8 +228,11 @@ Fireteam.Rounds.RegisterObjective("eliminate", {
                 lastFaction = f
             end
         end
+        -- 结束条件 = 恰好剩一方（standing == 1）。
+        -- 旧写法 standing < #startList 在 3+ 阵营下任意一方被灭即结束，
+        -- 且 lastFaction 只是字母序最后一个存活方（胜者记录错误）。
         if standing == 0 then return true, nil end              -- 全灭平局
-        if standing < #startList then return true, lastFaction end
+        if standing == 1 then return true, lastFaction end      -- 唯一幸存方获胜
         return false
     end,
 

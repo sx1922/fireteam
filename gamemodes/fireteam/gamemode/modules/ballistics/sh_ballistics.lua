@@ -69,8 +69,8 @@ if SERVER then
         local ftData = Fireteam.WeaponInterface.Get(weapon:GetClass())
         if not ftData then return end
 
-        -- 应用下坠（估算枪口速度：有效射程 × 3）
-        local muzzleVel = math.max((ftData.effectiveRange or 300) / 3, 100)
+        -- 应用下坠（估算枪口速度：有效射程单位 → 米，近似作 m/s）
+        local muzzleVel = math.max((ftData.effectiveRange or 300) / 52.5, 100)
         local trace = ply:GetEyeTrace()
         local dist = ply:GetShootPos():Distance(trace.HitPos)
 

@@ -133,7 +133,7 @@ hook.Add("HUDPaint", "Fireteam.Seats.Prompt", function()
     local scale = ScrH() / 1080
 
     -- ══ 乘员视角：常显本车布局 ══
-    if me.InVehicle() and me:GetVehicle() then
+    if me:InVehicle() and me:GetVehicle() then
         local veh = me:GetVehicle()
         -- 乘员坐在子座上时定位主载具
         local parent = veh

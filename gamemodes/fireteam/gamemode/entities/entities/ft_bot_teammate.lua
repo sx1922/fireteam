@@ -97,12 +97,15 @@ function ENT:GetFaction()
     return Fireteam.AI.GetPlayerFaction(self.FT_Owner)
 end
 
---- 视线可达（忽略自身）
+--- 视线可达（忽略自身；其余实体正常阻挡——bot 不会隔着队友/掩体索敌）
+--- 注意 filter 语义：函数返回 true = 该实体被"命中并阻挡"。
+--- 旧写法 return e == self 恰好写反（只命中自己），且射线起点在自身
+--- 碰撞盒内必先打到自己，导致 bot 实际全盲。
 function ENT:HasLOS(target)
     local tr = util.TraceLine({
         start  = self:EyePos(),
         endpos = target:EyePos(),
-        filter = function(e) return e == self end,
+        filter = self,
         mask   = MASK_BLOCKLOS,
     })
     return not tr.Hit or tr.Entity == target

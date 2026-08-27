@@ -107,7 +107,8 @@ if CLIENT then
                 font      = faceName,
                 size      = math.Round(baseSize * mult * scale),
                 weight    = stepName == "title" and 700 or 400,
-                antialias = true
+                antialias = true,
+                extended  = true
             })
             set[stepName] = fontName
         end
@@ -387,6 +388,12 @@ if CLIENT then
     -- 屏幕特效
     -- ─────────────────────────────────────
     local grainMat = Material("effects/tvscreen_noise002a")
+    local vignetteMats = {
+        up = Material("vgui/gradient-u"),
+        down = Material("vgui/gradient-d"),
+        left = Material("vgui/gradient-l"),
+        right = Material("vgui/gradient-r")
+    }
 
     --- 扫描线（区域可选，缺省全屏）
     function kit.DrawScanlines(alpha)
@@ -404,16 +411,15 @@ if CLIENT then
         local a = strength01 * 255
         local edgeW = math.Round(ScrW() * 0.35)
         local edgeH = math.Round(ScrH() * 0.35)
-        local gradU = Material("vgui/gradient-u")
-        local gradD = Material("vgui/gradient-d")
-        local gradL = Material("vgui/gradient-l")
-        local gradR = Material("vgui/gradient-r")
-
         surface.SetDrawColor(0, 0, 0, a)
-        surface.SetMaterial(gradD) surface.DrawTexturedRect(0, 0, ScrW(), edgeH)          -- 上缘向下渐隐
-        surface.SetMaterial(gradU) surface.DrawTexturedRect(0, ScrH() - edgeH, ScrW(), edgeH)
-        surface.SetMaterial(gradR) surface.DrawTexturedRect(0, 0, edgeW, ScrH())
-        surface.SetMaterial(gradL) surface.DrawTexturedRect(ScrW() - edgeW, 0, edgeW, ScrH())
+        surface.SetMaterial(vignetteMats.down)
+        surface.DrawTexturedRect(0, 0, ScrW(), edgeH)          -- 上缘向下渐隐
+        surface.SetMaterial(vignetteMats.up)
+        surface.DrawTexturedRect(0, ScrH() - edgeH, ScrW(), edgeH)
+        surface.SetMaterial(vignetteMats.right)
+        surface.DrawTexturedRect(0, 0, edgeW, ScrH())
+        surface.SetMaterial(vignetteMats.left)
+        surface.DrawTexturedRect(ScrW() - edgeW, 0, edgeW, ScrH())
     end
 
     --- 噪点颗粒

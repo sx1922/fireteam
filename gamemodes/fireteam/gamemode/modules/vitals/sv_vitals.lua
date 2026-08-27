@@ -318,7 +318,14 @@ hook.Add("ScalePlayerDamage", "Fireteam.Vitals.ScaleDamage", function(ply, hitgr
     if LimbsEnabled() then
         local part = Fireteam.Vitals.HitgroupToPart(hitgroup)
         local died = Fireteam.Vitals.ApplyPartDamage(st.limbs, part, dmginfo:GetDamage())
-        if died then st.bypassDowned = true end
+        if died and ply:Alive() then
+            -- 头/胸打黑 = 部位致死：同击放大伤害让引擎立即击杀。
+            -- 顺序说明：EntityTakeDamage（LethalIntercept）先于本 hook 执行，
+            -- 其"截断到 1 血转倒地"已发生，但本 hook 最后一次 SetDamage 覆盖生效，
+            -- 引擎按放大后伤害结算 → PlayerDeath 归因 attacker 正确。
+            -- （旧实现置 st.bypassDowned 等下一击才生效，致死慢一拍且截断已把人打到 1 血倒地）
+            dmginfo:SetDamage(ply:Health() + 100)
+        end
 
         -- 腿部受击概率骨折；部位打黑强制骨折
         if part == "l_leg" or part == "r_leg" then
@@ -350,12 +357,15 @@ hook.Add("EntityTakeDamage", "Fireteam.Vitals.LethalIntercept", function(ent, dm
 
     if st.state == Fireteam.Vitals.STATE.NORMAL then
         if st.bypassDowned then
-            -- 头/胸部位打黑：跳过倒地，放行致死伤害走引擎击杀
+            -- 兜底：部位致死的旁路标志（正常流程已在 ScalePlayerDamage 同击放大，
+            -- 引擎击杀接管；此分支仅防御性保留——标志存在说明死亡未落成）
             st.bypassDowned = nil
             st.state = Fireteam.Vitals.STATE.DEAD
             BroadcastAll()
         elseif ent:Alive() and ent:Health() - dmginfo:GetDamage() <= 0 then
-            -- 截断到 1 点血，本帧末转入倒地
+            -- 截断到 1 点血，本帧末转入倒地。
+            -- 若同击随后在 ScalePlayerDamage 里被判部位致死，伤害会被重新放大，
+            -- 引擎先行击杀 → 下方回调的 Alive() 检查自然不成立，不会误入倒地。
             dmginfo:SetDamage(math.max(ent:Health() - 1, 0))
             timer.Simple(0, function()
                 if IsValid(ent) and ent:Alive()
@@ -438,7 +448,10 @@ local function FindRescueTarget(actor)
     if not Fireteam.Vitals.IsDowned(tgt) then return nil, nil end
     if actor:GetPos():Distance(tgt:GetPos()) > CHANNEL_RANGE then return nil, nil end
 
-    local hasMedkit = Fireteam.Inventory.Get(actor, "medkit") > 0
+    -- inventory 模块缺失/加载失败时按"无医疗包"处理（稳定而非复活），
+    -- 避免 0.25s 救援扫描 timer 连锁报错刷屏
+    local hasMedkit = Fireteam.Inventory and Fireteam.Inventory.Get
+        and (Fireteam.Inventory.Get(actor, "medkit") or 0) > 0 or false
     local kind = Fireteam.Vitals.ResolveRescueKind(hasMedkit,
         Fireteam.Vitals.GetState(tgt), tgt.FT_Vitals and tgt.FT_Vitals.stabilized or false)
     return tgt, kind
@@ -463,7 +476,8 @@ timer.Create("Fireteam.Vitals.Rescue", RESCUE_SCAN, 0, function()
                 BroadcastAll()
             elseif now >= ch.ends then
                 if ch.kind == "revive" then
-                    if Fireteam.Inventory.Consume(actor, "medkit") then
+                    if Fireteam.Inventory and Fireteam.Inventory.Consume
+                        and Fireteam.Inventory.Consume(actor, "medkit") then
                         RevivePlayer(tgt, actor)
                     end
                 else
@@ -591,13 +605,18 @@ local MEDICAL_ACTIONS = {
     end,
 }
 
-Fireteam.Inventory.RegisterUseHandler(Fireteam.INVENTORY_CATEGORY.CONSUMABLE,
-    function(ply, itemId)
-        if not Fireteam.Vitals.IsEnabled() then return false end
-        local fn = MEDICAL_ACTIONS[itemId]
-        if not fn then return false end   -- 非医疗消耗品：交回通用无效果提示
-        local st = EnsureState(ply)
-        return fn(ply, st) and true or false
-    end)
+-- inventory 模块缺失时跳过注册（医疗品"使用"退化为无效果提示），避免加载期硬报错
+if Fireteam.Inventory and Fireteam.Inventory.RegisterUseHandler then
+    Fireteam.Inventory.RegisterUseHandler(Fireteam.INVENTORY_CATEGORY.CONSUMABLE,
+        function(ply, itemId)
+            if not Fireteam.Vitals.IsEnabled() then return false end
+            local fn = MEDICAL_ACTIONS[itemId]
+            if not fn then return false end   -- 非医疗消耗品：交回通用无效果提示
+            local st = EnsureState(ply)
+            return fn(ply, st) and true or false
+        end)
+else
+    Fireteam.Log.Warn("体征", "⚠ Inventory 模块不可用，医疗消耗品使用效果未注册")
+end
 
 Fireteam.Log.Info("体征", "✓ 健康/倒地系统服务端已加载")

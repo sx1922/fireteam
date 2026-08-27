@@ -27,6 +27,7 @@ end)
 function Fireteam.Class.OpenSelectPanel()
     if IsValid(classPanel) then
         classPanel:Remove()
+        return
     end
 
     local mySquad = Fireteam.Squad.GetMySquad()

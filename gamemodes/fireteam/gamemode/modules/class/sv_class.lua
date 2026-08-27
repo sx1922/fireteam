@@ -134,10 +134,45 @@ end)
 
 -- ═══════════════════════════════════════
 -- 网络：客户端请求分配职业（消息名统一注册于 Fireteam.NET）
+-- 门控（防战斗中刷血刷弹药；重生路径走 PlayerSpawn 钩子不受限）：
+--   1. 死亡/倒地不可换职业（防止倒地时换职业刷新状态）
+--   2. 回合 ACTIVE 期间换职业需 30s 冷却——满血+Strip+重发的收益
+--      只允许在非战斗阶段（warmup/briefing/intermission/idle）免费获得
 -- ═══════════════════════════════════════
+local ASSIGN_COOLDOWN = 30
+local lastAssignAt = {}
+
 net.Receive(Fireteam.NET.CLASS_ASSIGN, function(len, ply)
-    local classId = net.ReadString()
+    local classId = string.sub(net.ReadString(), 1, 64)
+
+    if not ply:Alive() then
+        ply:ChatPrint("[FIRETEAM] Cannot change class while dead.")
+        return
+    end
+    if Fireteam.Vitals and Fireteam.Vitals.GetState
+        and Fireteam.Vitals.GetState(ply) == Fireteam.Vitals.STATE.DOWNED then
+        ply:ChatPrint("[FIRETEAM] Cannot change class while downed.")
+        return
+    end
+
+    -- 同职业重复请求也计入冷却（防连点抖动重发）
+    local active = Fireteam.Rounds and Fireteam.Rounds.GetState
+        and Fireteam.Rounds.GetState() == "active" or false
+    if active then
+        local last = lastAssignAt[ply] or 0
+        if CurTime() - last < ASSIGN_COOLDOWN then
+            ply:ChatPrint(string.format("[FIRETEAM] Class change on cooldown (%ds).",
+                math.ceil(ASSIGN_COOLDOWN - (CurTime() - last))))
+            return
+        end
+    end
+    lastAssignAt[ply] = CurTime()
+
     Fireteam.Class.Assign(ply, classId)
+end)
+
+hook.Add("PlayerDisconnected", "Fireteam.Class.CleanupCooldown", function(ply)
+    lastAssignAt[ply] = nil
 end)
 
 print("[FIRETEAM:Class] ✓ 服务端逻辑已加载")
