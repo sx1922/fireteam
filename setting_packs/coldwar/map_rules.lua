@@ -125,9 +125,11 @@ return {
 
             -- ══ 剧本 1：富尔达缺口 ══
             -- 想定：华约装甲洪流穿越走廊直扑莱茵河，北约且战且退、守待增援。
+            -- 推荐地图：gm_mountain_v1（山地走廊，贴合富尔达丘陵通道地形）
             fulda_gap = {
                 name = "Fulda Gap",
                 name_zh = "富尔达缺口",
+                maps = { "gm_mountain_v1" },
 
                 objectives = {
                     {   -- 占区：边境哨所「阿尔法点」（真实地标 Point Alpha）
@@ -175,9 +177,11 @@ return {
 
             -- ══ 剧本 2：西柏林之战 ══
             -- 想定：华约不越境封锁而是直取全城，三国守军背水固守等待空桥承诺。
+            -- 推荐地图：rp_wiesau（城镇街区，贴合柏林城市攻坚）
             berlin = {
                 name = "Battle of West Berlin",
                 name_zh = "西柏林之战",
+                maps = { "rp_wiesau", "rp_wiesau_one_spawn" },
 
                 -- 城市攻坚节奏更快：简报缩短、单回合压缩到 7 分钟
                 timings = { briefing = 8, round_time = 420 },
