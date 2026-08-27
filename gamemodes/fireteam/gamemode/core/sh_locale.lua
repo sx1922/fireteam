@@ -102,7 +102,7 @@ end
 -- GMod 语言代码（schinese/tchinese/russian/…）→ 框架 locale 文件名
 local LANGUAGE_MAP = {
     ["schinese"]  = "zh-CN",
-    ["tchinese"]  = "zh-TW",
+    ["tchinese"]  = "zh-Hant",
     ["russian"]   = "ru",
     ["spanish"]   = "es",
     ["french"]    = "fr",

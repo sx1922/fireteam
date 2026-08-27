@@ -1,4 +1,4 @@
--- gamemode/locale/zh-TW.lua
+-- gamemode/locale/zh-Hant.lua
 -- FIRETEAM Traditional Chinese Localization (繁體中文)
 
 return {
