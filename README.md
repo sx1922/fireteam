@@ -23,7 +23,12 @@
 - [设定包系统](#设定包系统)
 - [适配器支持](#适配器支持)
 - [按键操作](#按键操作)
+- [阵营指挥官](#阵营指挥官)
+- [语音频道](#语音频道战术小队式三频道)
 - [配置项一览](#配置项一览)
+- [HUD 布局](#hud-布局战术小队风格)
+- [网格背包](#网格背包塔科夫式)
+- [分部位健康](#分部位健康塔科夫式)
 - [目录结构](#目录结构)
 - [开发路线](#开发路线)
 - [贡献指南](#贡献指南)
@@ -33,18 +38,24 @@
 
 FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
 
-- 🎯 **小队管理** — 创建、加入、解散、角色分配
+- 🎯 **小队管理** — 创建、加入、解散、角色分配、锁队/踢人/就绪
 - 🪖 **职业系统** — 基于 Tag 的装备匹配，不写死武器类名
-- 🗺️ **标记系统** — 路点、敌人、目标点标记与同步
-- 📻 **语音通讯** — 频道制语音，支持干扰/距离衰减
+- 🗺️ **标记系统** — 路点、敌人、目标点标记与同步，指挥官可下阵营级标记
+- 📻 **语音通讯** — 三频道（地区/小队/指挥）+ 应急，按频道语义分流收听
+- ⭐ **阵营指挥官** — 志愿就任 / 竞选投票 / 重选挑战，指挥频道准入与全阵营态势视图
 - ⏱️ **回合制引擎** — 状态机 + 目标接口（占区/摧毁/撤离/歼灭）+ 计分，支持多剧本切换
-- 🛰️ **战术地图** — M 键程序化"纸质图纸"地图，与标记系统联动
+- 🎖️ **PvP / PvE** — 管理员切换模式，PvE 生成 AI 敌军阵营并逐关推进战役
+- 🗺️ **战术地图** — M 键程序化"纸质图纸"地图 + CapsLock 全屏指挥视图
+- 🎒 **网格背包** — Tab 开合 10×6 拖拽背包、物品占格、4 槽快捷栏
+- 🩹 **分部位健康** — 七部位独立血量、骨折/黑肢/止痛药、倒地濒死与医疗品
+- 🏃 **体力与补给** — 冲刺力竭、备弹池、弹药盒、尸体搜刮
 - 🤖 **AI 队友** — NextBot 跟随/驻守/自主交战，响应路点指令与回合补位
 - 👻 **观察者模式** — 阵亡后旁观队友（第一/第三/自由视角），回合制联动
-- 🎨 **HUD 主题** — 可配置的界面风格（CRT / 纸质 / 现代）
+- 🎨 **HUD 主题** — 战术小队式布局，锚点与配色全由设定包主题驱动
 - 💥 **弹道模拟** — 子弹下坠、伤害衰减
 - 😰 **压制系统** — 屏幕模糊、准星扩散、视觉震动
-- 🔌 **适配器层** — 自动识别 ARC9 / TFA / LVS / Simfphys
+- 🔌 **适配器层** — 自动识别 ARC9 / TFA / CW 2.0 / LVS / Simfphys
+- 🌐 **多语言** — 9 种语言，跟随 `gmod_language` 自动切换，设定包可注入专属词条
 - 🧰 **运维工具** — F10 管理面板 + F9 可视化设定包编辑器
 
 > ⚠️ FIRETEAM 是**框架**，不是完整游戏模式。它提供战术小队的基础设施，
@@ -67,7 +78,7 @@ FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
 | Squad | `modules/squad/` | 小队 CRUD、队长转移、就绪状态 |
 | Class | `modules/class/` | 职业分配、属性应用、装备加载 |
 | Marker | `modules/marker/` | 标记放置/移除/过期、3D 渲染 |
-| Voice | `modules/voice/` | 频道切换、距离/权限拦截 |
+| Voice | `modules/voice/` | 三频道语音（地区/小队/指挥 + 应急）、按频道 kind 分流收听、职业与指挥官准入、电台氛围音 |
 | Rounds | `modules/rounds/` | 回合状态机、目标类型（占区/摧毁/撤离/歼灭）、计分、多剧本解析 |
 | TacMap | `modules/tacmap/` | M 键战术地图、世界坐标投影、点击放置路点 |
 | Spectate | `modules/spectate/` | 阵亡旁观队友（第一/第三/自由视角）、回合联动 |
@@ -80,12 +91,12 @@ FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
 | HUD | `modules/hud/` | 准星、弹药、生命、指南针、特效 |
 | Ballistics | `modules/ballistics/` | 子弹下坠、伤害衰减 |
 | Suppression | `modules/suppression/` | 压制值累积/衰减、视觉效果 |
-| Inventory | `modules/inventory/` | 消耗品栏：物品定义数据驱动、职业槽位统一解析（武器优先→物品回落）、手雷投掷物、HUD 芯片栏 |
-| Vitals | `modules/vitals/` | 健康与医疗：部位倍率伤害、出血累积、倒地濒死（稳定/复活/补刀）、体征 HUD |
+| Inventory | `modules/inventory/` | 网格背包（Tab 面板 10×6 拖拽 + 服务端碰撞校验）、物品占格、4 槽快捷栏、手雷投掷物、消耗品芯片栏；物品定义与职业槽位解析全数据驱动 |
+| Vitals | `modules/vitals/` | 分部位健康：七部位独立血量（黑部位伤害转移胸腔 / 头胸黑即死）、骨折与止痛药、出血累积、倒地濒死（稳定/复活/补刀）、医疗品效果、移速统一收口 |
 | Stamina | `modules/stamina/` | 体力：职业上限冲刺消耗/滞回力竭、移速惩罚、低体力开火抖动 |
 | Resupply | `modules/resupply/` | 弹药与补给：备弹池补满、可放置弹药盒（N 次使用）、尸体搜刮 |
 | MainMenu | `modules/mainmenu/` | ESC 主菜单：引擎菜单接管、战局状态、各面板聚合入口 |
-| Adapters | `modules/adapters/` | ARC9 / TFA / LVS / Simfphys 桥接 |
+| Adapters | `modules/adapters/` | ARC9 / TFA / CW 2.0 / LVS / Simfphys 桥接（引导期全量执行，基座缺失自跳过） |
 
 ## 架构总览
 
@@ -139,6 +150,24 @@ cd garrysmod/gamemodes
 gmad create -folder fireteam -name "FIRETEAM" -out "fireteam.gma"
 ```
 
+**GMA 白名单三条硬约束**（违反会导致打包失败或文件被静默丢弃）：
+
+| 约束 | 后果 | 应对 |
+| --- | --- | --- |
+| 0 字节文件 | gmad **中止整包**（`Failed to create the addon`） | 删除或填充空文件 |
+| 文件名含大写字母 | 该文件被**静默跳过**，包内缺失 | 文件名一律全小写 |
+| `.json` 不在白名单 | 该文件被静默跳过 | 元数据与主题改用 `pack.lua` / `hud_theme.lua` |
+
+打包前自查：
+
+```bash
+find . -type f -size 0                  # 应为空
+find . -type f -name "*[A-Z]*"          # 应为空（addon.json 除外，它不进 GMA 内容层）
+```
+
+设定包若随 addon 分发，放到 `lua/fireteam_setting_packs/<包名>/`（该路径在白名单内，
+且被加载器以 realm=LUA 扫描）。
+
 ### 验证
 
 启动 GMod → 新建游戏 → 模式列表中出现 "FIRETEAM" → 选择进入。
@@ -146,15 +175,20 @@ gmad create -folder fireteam -name "FIRETEAM" -out "fireteam.gma"
 控制台应依次输出：
 
 ```
-[FIRETEAM] ✓ Shared environment initialized
-[FIRETEAM] ✓ Constants loaded (v0.1.0-alpha)
-[FIRETEAM] ✓ Config registry ready (12 keys)
-[FIRETEAM] ✓ Module loader ready
-[FIRETEAM] ✓ Setting loader ready
-[FIRETEAM] Discovered 8 module(s)
-[FIRETEAM] ✓ Setting pack active: Iron Curtain Germany (v1.2.0)
-[FIRETEAM] ✓ Bootstrap complete
+[FIRETEAM] ✓ 共享环境已初始化
+[FIRETEAM] ✓ 常量已加载 (v0.1.0-alpha)
+[FIRETEAM] ✓ 多语言系统就绪 (zh-CN, N 条词条)
+[FIRETEAM] ✓ 模块加载器就绪
+[FIRETEAM] 发现 21 个模块
+[FIRETEAM] 模块加载: 21 成功, 0 失败
+[FIRETEAM] ✓ 已执行 5 个基座适配器
+[FIRETEAM] ✓ 武器发现完成: 共注册 N 把武器
+[FIRETEAM] ✓ 已激活: Iron Curtain Germany (v1.2.0)
+[FIRETEAM] ✓ 引导流程完成
 ```
+
+> 「武器发现完成」若显示注册 0 把，说明没装匹配当前设定包标签的武器 addon——
+> 框架仍可运行，但职业发不出主武器。装 ARC9 / TFA / CW 2.0 冷战枪包即可。
 
 ## 快速开始
 
@@ -202,15 +236,30 @@ ft_ai_fill [人数]       # （管理员）全体小队补位
 
 ```
 setting_packs/your_pack/
-├── pack.json          # 元数据（必须）
-├── factions.lua       # 阵营定义
-├── classes.lua        # 职业 + 装备槽位
-├── weapons.lua        # 武器池规则
-├── vehicles.lua       # 载具规则（可选）
-├── voice_presets.lua  # 通讯频道（可选）
-├── hud_theme.json     # UI 主题（可选）
-└── map_rules.lua      # 地图规则（可选）
+├── pack.lua             # 元数据（必须；pack.json 亦可，见下方双格式说明）
+├── factions.lua         # 阵营定义
+├── classes.lua          # 职业 + 装备槽位
+├── weapons.lua          # 武器池规则
+├── items.lua            # 物品 / 消耗品（可选）
+├── vehicles.lua         # 载具规则（可选）
+├── voice_presets.lua    # 通讯频道（可选）
+├── hud_theme.lua        # UI 主题（可选；hud_theme.json 亦可）
+├── map_rules.lua        # 地图规则 + 回合 + 剧本 + PvE + 体征（可选）
+├── player_models.lua    # 阵营玩家模型映射（可选）
+├── weapon_overrides.lua # 单件武器标签/分类覆盖（可选）
+├── vehicle_overrides.lua# 单辆载具覆盖（可选）
+└── locale/              # 设定包专属词条（可选）
+    ├── en.lua
+    └── zh-cn.lua
 ```
+
+**元数据与主题双格式**：加载器优先读 `pack.lua` / `hud_theme.lua`，缺失时回退
+`pack.json` / `hud_theme.json`。**GMA 白名单不含 `.json`**，所以要发布到创意工坊的包
+必须提供 `.lua` 版本；磁盘部署与第三方既有包继续用 `.json` 也能跑。
+
+**发现路径**（三处按序扫描）：`setting_packs/`（仓库内置）、
+`gamemodes/fireteam/setting_packs/`（部署后同级）、
+`lua/fireteam_setting_packs/`（Addon/GMA 分发，realm=LUA）。
 
 ### 内置设定包
 
@@ -236,8 +285,8 @@ coldwar 包内置 8 个现实国家阵营：北约的美国/英国/西德/法国
 # 复制模板
 cp -r setting_packs/_template setting_packs/my_setting
 
-# 编辑 pack.json 中的 id 和 name
-# 编辑各数据文件
+# 编辑 pack.lua 中的 id 和 name
+# 编辑各数据文件（字段契约见 setting_packs/_template/README.md）
 
 # 服务器执行
 ft_setting_pack my_setting
@@ -259,6 +308,7 @@ ft_setting_pack another_pack
 | --- | --- | --- |
 | ARC9 | `sv_arc9_adapter.lua` | `if ARC9 then` |
 | TFA Base | `sv_tfa_adapter.lua` | `if TFA then` |
+| CW 2.0 | `sv_cw2_adapter.lua` | `if CustomizableWeaponry then` |
 | LVS | `sv_lvs_adapter.lua` | `if LVS then` |
 | Simfphys | `sv_simfphys_adapter.lua` | `if simfphys then` |
 
@@ -302,6 +352,18 @@ end)
 
 - **ESC 主菜单**：拦截引擎菜单（`gui.IsGameUIVisible` + `gui.HideGameUI`），弹出 FIRETEAM 主面板——当前剧本/模式/回合状态 + 小队、职业、背包、地图、指挥视图、管理面板入口。F4 等效。单人模式下 ESC 的引擎暂停语义被接管，游戏不会暂停。
 - **CapsLock 指挥视图**（模仿《战术小队》队伍界面）：全屏左右分栏——左侧大地图（复用战术地图投影，含队友朝向/名字、小队标记、回合目标圈，可点击放路点），右侧队伍情况栏（成员存活/血量条/职业/倒地红显/队长菱形）。
+
+## 阵营指挥官
+
+每个阵营一个指挥官席位，入口在 **F7 小队面板**（无需额外按键）：
+
+- **志愿就任**：席位空缺时，任意小队长可直接接任
+- **竞选投票**：多人同时申请则进入限时投票，同阵营成员投票决出
+- **重选挑战**：已有指挥官时，其他小队长可发起挑战重选
+- **权限**：指挥频道（`G`）发言准入自动放行；可下发**阵营级地图标记**（全阵营可见，非仅本小队）
+- **断线自动腾位**：指挥官掉线或离开阵营即释放席位
+
+指挥官的阵营级标记与全阵营态势在 **CapsLock 指挥视图**中汇总显示。
 
 ## 语音频道（战术小队式三频道）
 
@@ -356,6 +418,34 @@ end)
 | `vitals.bleedout_time` | number | `60` | 倒地失血时限（秒） |
 | `vitals.revive_time` | number | `7` | 医疗兵复活读条（消耗 medkit） |
 | `vitals.finish_damage` | number | `25` | 补刀倒地单位所需单次伤害 |
+| `vitals.head_mult` | number | `2.5` | 头部伤害倍率 |
+| `vitals.chest_mult` | number | `1.0` | 胸部伤害倍率 |
+| `vitals.stomach_mult` | number | `0.85` | 腹部伤害倍率 |
+| `vitals.limb_mult` | number | `0.6` | 四肢伤害倍率 |
+| `vitals.max_bleed_stacks` | number | `5` | 出血层数上限 |
+| `vitals.bleed_dps_per_stack` | number | `1.2` | 每层出血每秒掉血 |
+| `vitals.stabilize_time` | number | `3.5` | 队友按 E 稳定读条秒数 |
+| `vitals.revive_health_frac` | number | `0.4` | 复活后恢复生命比例 |
+| `vitals.downed_speed` | number | `40` | 倒地匍匐移速 |
+| `vitals.leg_speed_mult` | number | `0.55` | 单腿黑/骨折移速倍率 |
+| `vitals.both_legs_speed_mult` | number | `0.35` | 双腿黑/骨折移速倍率 |
+| `ai.health` | number | `100` | AI 队友生命值 |
+| `ai.acquire_range` | number | `1200` | AI 索敌距离 |
+| `ai.attack_damage` | number | `8` | AI 单次射击伤害 |
+| `ai.follow_distance` | number | `150` | AI 跟随保持距离 |
+| `stamina.enabled` | boolean | `true` | 体力系统总开关 |
+| `stamina.default_max` | number | `100` | 体力上限兜底（职业 stats.stamina 优先） |
+| `stamina.drain_per_sec` | number | `9` | 冲刺每秒消耗 |
+| `stamina.regen_per_sec` | number | `12` | 停跑后每秒回复 |
+| `stamina.regen_delay` | number | `1.5` | 停跑到开始回复的延迟秒数 |
+| `stamina.exhausted_frac` | number | `0.15` | 进入力竭的体力比例 |
+| `stamina.recover_frac` | number | `0.4` | 解除力竭所需回复比例 |
+| `stamina.low_speed_mult` | number | `0.7` | 力竭时移速倍率 |
+| `resupply.reserve_primary` | number | `240` | 主武器备弹池 |
+| `resupply.reserve_secondary` | number | `64` | 副武器备弹池 |
+| `resupply.crate_uses` | number | `4` | 弹药盒可补给次数 |
+| `resupply.loot_enabled` | boolean | `true` | 尸体搜刮开关 |
+| `resupply.loot_frac` | number | `0.5` | 尸体可搜刮比例 |
 
 ## HUD 布局（战术小队风格）
 
@@ -430,6 +520,7 @@ gamemodes/fireteam/
 │   │   ├── seats/                  # 载具座位
 │   │   ├── ai/                     # AI 队友
 │   │   ├── pve/                    # PvE 战役模式
+│   │   ├── commander/              # 阵营指挥官（选举 / 指挥频道 / 阵营标记）
 │   │   ├── inventory/              # 物品 / 网格背包 / 快捷栏
 │   │   ├── vitals/                 # 分部位健康 / 倒地复活
 │   │   ├── stamina/                # 体力
@@ -441,22 +532,28 @@ gamemodes/fireteam/
 │   │   ├── ballistics/             # 弹道
 │   │   ├── suppression/            # 压制
 │   │   └── adapters/               # 基座适配器
-│   ├── api/                        # 公开 API 文档目录
+│   ├── api/                        # 公开 API 表面（sh/sv/cl 三层，第三方 addon 入口）
 │   └── locale/
-│       ├── en.lua                  # English
-│       └── zh-CN.lua               # 简体中文
+│       ├── en.lua                  # English（兜底）
+│       ├── zh-cn.lua               # 简体中文
+│       ├── zh-hant.lua             # 繁體中文
+│       ├── ru.lua  es.lua  fr.lua  # 俄 / 西 / 法
+│       └── de.lua  ja.lua  ko.lua  # 德 / 日 / 韩
 ├── setting_packs/
-│   ├── _template/                  # 空白模板
+│   ├── _template/                  # 空白模板（含自制模式指南 README）
 │   └── coldwar/                    # 冷战默认包
 └── docs/
     └── api_reference.md            # API 参考文档
 ```
 
+> `locale/` 文件名一律全小写：GMA 白名单拒收含大写字母的文件名（打包时被静默丢弃），
+> 对外语言标识仍是 BCP 47 的 `zh-CN` / `zh-Hant`，由 `sh_locale.lua` 转换。
+
 ## 开发路线
 
 ### ✅ 已完成 (v0.1.0-alpha)
 
-- [x] 项目骨架（18 目录 / 66 文件）
+- [x] 项目骨架（21 模块 / 120+ 文件）
 - [x] 全局表 / 常量 / 枚举
 - [x] 模块加载器 + 设定包加载器
 - [x] 配置注册 / API 注册 / 网络协议
@@ -464,9 +561,9 @@ gamemodes/fireteam/
 - [x] 小队 / 职业 / 标记 / 语音模块
 - [x] HUD 渲染（准星/弹药/生命/指南针）
 - [x] 弹道计算 + 压制系统
-- [x] ARC9 / TFA / LVS / Simfphys 适配器
+- [x] ARC9 / TFA / CW 2.0 / LVS / Simfphys 适配器
 - [x] 冷战设定包 + 模板包
-- [x] 多语言（en / zh-CN）
+- [x] 多语言（9 种：en / zh-CN / zh-Hant / ru / es / fr / de / ja / ko）
 - [x] API 文档
 
 ### ✅ 近期迭代 (v0.2.x)
@@ -490,7 +587,7 @@ gamemodes/fireteam/
 - [x] 塔科夫式分部位健康（七部位独立血量：黑部位伤害转移胸腔、头/胸黑即死、胃黑大出血、腿黑/骨折减速、臂黑开火晃动；绷带/夹板/止痛药/医疗包真实生效；class/stamina/vitals 速度统一收口）
 - [x] 塔科夫式网格背包（Tab 开合、10×6 网格拖拽/服务端碰撞校验、物品占格 size、双击使用/右键丢弃、4 槽快捷栏 7/8/9/0、背包满截断发放、面板内嵌七部位健康页）
 - [x] ESC 主菜单（引擎菜单接管，聚合各面板入口与战局状态）+ CapsLock 全屏指挥视图（大地图 + 队伍情况栏）
-- [ ] 设定包 Workshop 分发格式
+- [x] 设定包 Workshop 分发格式（`pack.lua` / `hud_theme.lua` 双格式、`lua/fireteam_setting_packs/` 发现路径、GMA 白名单自查）
 
 ### 💭 远期愿景 (v1.0)
 
