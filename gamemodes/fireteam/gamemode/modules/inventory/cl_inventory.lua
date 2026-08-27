@@ -85,7 +85,10 @@ net.Receive(Fireteam.NET.INVENTORY_SYNC, function()
         local maxCarry = net.ReadUInt(8)
         local size
         if net.ReadBool() then
-            size = { w = net.ReadUInt(4), h = net.ReadUInt(4) }
+            -- 逐字段读：Lua 不保证 table 构造式内表达式的求值顺序
+            local sw = net.ReadUInt(4)
+            local sh = net.ReadUInt(4)
+            size = { w = sw, h = sh }
         end
         defs[id] = {
             name = name, name_zh = nameZh, category = category,
@@ -96,17 +99,20 @@ net.Receive(Fireteam.NET.INVENTORY_SYNC, function()
     local counts = {}
     local countCount = net.ReadUInt(8)
     for _ = 1, countCount do
-        counts[net.ReadString()] = net.ReadUInt(8)
+        -- t[k] = v 的 k/v 求值顺序在 Lua 中未定义，必须先落地再赋值
+        local itemId = net.ReadString()
+        counts[itemId] = net.ReadUInt(8)
     end
 
     local cells = {}
     local cellCount = net.ReadUInt(7)
     for _ = 1, cellCount do
-        cells[#cells + 1] = {
-            id = net.ReadString(),
-            x = net.ReadUInt(4), y = net.ReadUInt(4),
-            w = net.ReadUInt(4), h = net.ReadUInt(4),
-        }
+        local cid = net.ReadString()
+        local cx  = net.ReadUInt(4)
+        local cy  = net.ReadUInt(4)
+        local cw  = net.ReadUInt(4)
+        local ch  = net.ReadUInt(4)
+        cells[#cells + 1] = { id = cid, x = cx, y = cy, w = cw, h = ch }
     end
 
     Fireteam.Inventory.ClientDefs = defs

@@ -40,16 +40,26 @@ net.Receive(Fireteam.NET.SQUAD_UPDATE, function()
         local members = {}
         local memberCount = net.ReadUInt(5)
         for i = 1, memberCount do
-            local class = net.ReadString()
+            -- 逐字段顺序读取：必须与 sv_squad.SyncToAll 的写序完全一致。
+            -- 不要把 net.Read* 写进 table 构造式——Lua 不保证构造式内表达式求值顺序。
+            local idx     = net.ReadUInt(8)
+            local mName   = net.ReadString()
+            local role    = ROLE_NAME[net.ReadUInt(2)] or "member"
+            local class   = net.ReadString()
+            local ready   = net.ReadBool()
+            local alive   = net.ReadBool()
+            local hp      = net.ReadUInt(10)
+            local maxhp   = net.ReadUInt(10)
+
             members[i] = {
-                idx   = net.ReadUInt(8),
-                name  = net.ReadString(),
-                role  = ROLE_NAME[net.ReadUInt(2)] or "member",
+                idx   = idx,
+                name  = mName,
+                role  = role,
                 class = class ~= "" and class or nil,
-                ready = net.ReadBool(),
-                alive = net.ReadBool(),
-                hp    = net.ReadUInt(10),
-                maxhp = net.ReadUInt(10),
+                ready = ready,
+                alive = alive,
+                hp    = hp,
+                maxhp = maxhp,
             }
         end
 

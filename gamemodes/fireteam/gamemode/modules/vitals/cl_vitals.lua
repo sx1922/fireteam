@@ -31,12 +31,18 @@ net.Receive(Fireteam.NET.VITALS_UPDATE, function()
 
     local count = net.ReadUInt(6)
     for _ = 1, count do
-        local idx = net.ReadUInt(8)
+        -- 逐字段顺序读取：必须与 sv_vitals.BroadcastAll 的写序完全一致。
+        -- 不要把 net.Read* 写进 table 构造式——Lua 不保证构造式内表达式求值顺序。
+        local idx        = net.ReadUInt(8)
+        local state      = STATE_NAME[net.ReadUInt(2)] or "normal"
+        local bleed      = net.ReadUInt(4)
+        local stabilized = net.ReadBool()
+
         local entry = {
             idx        = idx,
-            state      = STATE_NAME[net.ReadUInt(2)] or "normal",
-            bleed      = net.ReadUInt(4),
-            stabilized = net.ReadBool(),
+            state      = state,
+            bleed      = bleed,
+            stabilized = stabilized,
         }
 
         local v = net.ReadVector()
@@ -67,11 +73,10 @@ net.Receive(Fireteam.NET.VITALS_UPDATE, function()
         end
 
         if net.ReadBool() then
-            entry.reviving = {
-                tgtIdx = net.ReadUInt(8),
-                kind   = net.ReadBool() and "revive" or "stabilize",
-                ends   = now + net.ReadUInt(10) / 10,
-            }
+            local tgtIdx = net.ReadUInt(8)
+            local kind   = net.ReadBool() and "revive" or "stabilize"
+            local ends   = now + net.ReadUInt(10) / 10
+            entry.reviving = { tgtIdx = tgtIdx, kind = kind, ends = ends }
         end
 
         out[idx] = entry
