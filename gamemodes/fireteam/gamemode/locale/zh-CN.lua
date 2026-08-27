@@ -222,5 +222,27 @@ return {
     resupply_loot_item     = "从遗体搜刮了 +%d 个%s",
     resupply_reserve_full  = "备弹已满",
     resupply_crate_take    = "备弹已补满（剩余 %d 次补给）",
-    resupply_crate_spent   = "弹药盒已耗尽"
+    resupply_crate_spent   = "弹药盒已耗尽",
+
+    -- 小队增强（P11）
+    squad_locked           = "该小队已被队长锁定。",
+    ui_squad_ready         = "标记就绪",
+    ui_squad_unready       = "取消就绪",
+    ui_squad_lock          = "锁定小队",
+    ui_squad_unlock        = "解锁小队",
+    ui_kick_btn            = "踢出",
+    ui_ready_tag           = "已就绪",
+    ui_locked_tag          = "已锁定",
+
+    -- 阵营指挥官（P11）
+    ui_cmd_section         = "阵营指挥部",
+    ui_cmd_none            = "未加入任何阵营——请先加入小队。",
+    ui_cmd_current         = "指挥官: %s",
+    ui_cmd_vacant          = "指挥官席位空缺",
+    ui_cmd_volunteer       = "就任指挥官",
+    ui_cmd_challenge       = "发起挑战选举",
+    ui_cmd_relinquish      = "让出指挥权",
+    ui_cmd_vote            = "投票: %s",
+    ui_cmd_election        = "选举进行中 · 剩余 %d 秒 · %s",
+    ui_cmd_election_hud    = "★ 选举剩余 %d 秒"
 }

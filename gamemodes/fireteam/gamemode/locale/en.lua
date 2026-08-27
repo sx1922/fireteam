@@ -222,5 +222,27 @@ return {
     resupply_loot_item     = "Salvaged +%d x %s",
     resupply_reserve_full  = "Reserves already full",
     resupply_crate_take    = "Reserves replenished (%d uses left)",
-    resupply_crate_spent   = "Ammo crate depleted"
+    resupply_crate_spent   = "Ammo crate depleted",
+
+    -- 小队增强（P11）
+    squad_locked           = "Squad is locked by its leader.",
+    ui_squad_ready         = "Mark Ready",
+    ui_squad_unready       = "Cancel Ready",
+    ui_squad_lock          = "Lock Squad",
+    ui_squad_unlock        = "Unlock Squad",
+    ui_kick_btn            = "Kick",
+    ui_ready_tag           = "READY",
+    ui_locked_tag          = "LOCKED",
+
+    -- 阵营指挥官（P11）
+    ui_cmd_section         = "FACTION COMMAND",
+    ui_cmd_none            = "No faction — join a squad first.",
+    ui_cmd_current         = "Commander: %s",
+    ui_cmd_vacant          = "Command seat VACANT",
+    ui_cmd_volunteer       = "Take Command",
+    ui_cmd_challenge       = "Challenge Election",
+    ui_cmd_relinquish      = "Relinquish Command",
+    ui_cmd_vote            = "Vote: %s",
+    ui_cmd_election        = "ELECTION · %ds left · %s",
+    ui_cmd_election_hud    = "★ election: %ds left"
 }

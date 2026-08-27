@@ -132,6 +132,7 @@ Fireteam.NET = {
     MAP_INFO             = "FT_MapInfo",
     ROUNDS_STATE         = "FT_RoundsState",
     SEAT_UPDATE          = "FT_SeatUpdate",
+    COMMANDER_UPDATE     = "FT_CommanderUpdate",   -- 各阵营指挥官席位 + 选举态全量广播
     ADMIN_STATE          = "FT_AdminState",
     PACK_EDITOR_DATA     = "FT_PackEditorData",
     INVENTORY_SYNC       = "FT_InventorySync",
@@ -147,6 +148,9 @@ Fireteam.NET = {
     SQUAD_JOIN           = "FT_SquadJoin",
     SQUAD_LEAVE          = "FT_SquadLeave",
     SQUAD_READY          = "FT_SquadReady",
+    SQUAD_KICK           = "FT_SquadKick",          -- ply(leader), targetEnt
+    SQUAD_LOCK           = "FT_SquadLock",          -- ply(leader), locked(bool)
+    COMMANDER_ACTION     = "FT_CommanderAction",    -- action(volunteer/vote/relinquish) [, targetEnt]
     VOICE_SWITCH_CHANNEL = "FT_VoiceSwitchChannel",
     SPECTATE_CONTROL     = "FT_SpecControl",
     ADMIN_ACTION         = "FT_AdminAction",
@@ -191,7 +195,8 @@ Fireteam.HOOKS = {
     VOICE_CHANNEL_CHANGED     = "Fireteam.Voice.ChannelChanged",   -- ply, channelId
     INVENTORY_CLIENT_UPDATED  = "Fireteam.Inventory.ClientUpdated",-- （客户端背包快照已更新）
     ROUNDS_CLIENT_STATE_CHANGED = "Fireteam.Rounds.ClientStateChanged", -- state（客户端回合状态同步）
-    VITALS_CLIENT_UPDATED     = "Fireteam.Vitals.ClientUpdated"    -- （客户端体征快照已更新）
+    VITALS_CLIENT_UPDATED     = "Fireteam.Vitals.ClientUpdated",   -- （客户端体征快照已更新）
+    COMMANDER_CHANGED         = "Fireteam.Commander.Changed"       -- faction, newCommander|nil（指挥官就任/腾位）
 }
 
 Fireteam.Log.Info("常量", "✓ 常量已加载 (v" .. Fireteam.VERSION .. ")")

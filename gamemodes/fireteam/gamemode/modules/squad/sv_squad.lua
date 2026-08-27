@@ -48,6 +48,7 @@ function Fireteam.Squad.Create(ply, name, faction)
         faction   = faction or DefaultFaction(),
         leader    = ply,
         members   = {},
+        locked    = false,
         state     = Fireteam.Squad.STATE.FORMING,
         createdAt = CurTime()
     }
@@ -89,6 +90,10 @@ function Fireteam.Squad.Join(ply, squadId)
     end
     if squad.state == Fireteam.Squad.STATE.DISBANDED then
         ply:ChatPrint("[FIRETEAM] Squad has been disbanded.")
+        return false
+    end
+    if squad.locked then
+        ply:ChatPrint("[FIRETEAM] Squad is locked by its leader.")
         return false
     end
 
@@ -178,11 +183,26 @@ function Fireteam.Squad.Kick(leaderPly, targetPly)
     if squad.leader ~= leaderPly then return false end
     if targetPly == leaderPly then return false end
     if not IsValid(targetPly) then return false end
+    -- 只能踢本队现有成员，防止伪造消息清掉任意玩家的小队引用
+    if not squad.members[targetPly] then return false end
 
     squad.members[targetPly] = nil
     targetPly.FT_SquadData = nil
     targetPly:ChatPrint("[FIRETEAM] You have been kicked from the squad.")
     hook.Run(Fireteam.HOOKS.PLAYER_LEFT_SQUAD, targetPly, squad)
+    Fireteam.Squad.SyncToAll()
+    return true
+end
+
+-- ═══════════════════════════════════════
+-- 锁队开关（仅队长）：锁定后新玩家无法加入
+-- ═══════════════════════════════════════
+function Fireteam.Squad.SetLocked(ply, locked)
+    local squad = Fireteam.Squad.GetPlayerSquad(ply)
+    if not squad then return false end
+    if squad.leader ~= ply then return false end
+
+    squad.locked = locked and true or false
     Fireteam.Squad.SyncToAll()
     return true
 end
@@ -267,6 +287,7 @@ function Fireteam.Squad.SyncToAll()
         net.WriteString(squad.name or "")
         net.WriteString(squad.faction or "")
         net.WriteString(squad.state or "forming")
+        net.WriteBool(squad.locked and true or false)
         net.WriteUInt(IsValid(squad.leader) and squad.leader:EntIndex() or 0, 8)
         net.WriteUInt(#members, 5)
         for _, m in ipairs(members) do
@@ -315,6 +336,16 @@ end)
 net.Receive(Fireteam.NET.SQUAD_READY, function(len, ply)
     local ready = net.ReadBool()
     Fireteam.Squad.SetReady(ply, ready)
+end)
+
+net.Receive(Fireteam.NET.SQUAD_KICK, function(len, ply)
+    local target = Entity(net.ReadUInt(8))
+    Fireteam.Squad.Kick(ply, target)
+end)
+
+net.Receive(Fireteam.NET.SQUAD_LOCK, function(len, ply)
+    local locked = net.ReadBool()
+    Fireteam.Squad.SetLocked(ply, locked)
 end)
 
 print("[FIRETEAM:Squad] ✓ 服务端逻辑已加载")

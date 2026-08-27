@@ -27,7 +27,10 @@ hook.Add("PostDrawTranslucentRenderables", "Fireteam.Marker.Draw3D", function()
     if not mySquad then return end
 
     for _, marker in pairs(cachedMarkers) do
-        if marker.squadId ~= mySquad.id then continue end
+        -- 小队级标记只画本队；阵营级标记（指挥官放置）对本阵营全队可见
+        local mine = marker.squadId == mySquad.id
+            or (marker.faction and marker.faction == mySquad.faction)
+        if not mine then continue end
 
         local pos = marker.pos
         if not isvector(pos) then continue end
@@ -74,6 +77,7 @@ hook.Add("PlayerButtonDown", "Fireteam.Marker.PlaceKey", function(ply, button)
             net.WriteVector(pos)
             net.WriteString(Fireteam.Marker.TYPE.WAYPOINT)
             net.WriteString("")
+            net.WriteBool(false)   -- 小队级标记；指挥官经战术地图发阵营级
         net.SendToServer()
 
         chat.AddText(kit.Color("info"), "[FIRETEAM] " .. L("marker_placed"))

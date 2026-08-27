@@ -197,7 +197,10 @@ function Fireteam.TacMap.Open()
         -- ── 标记 ──
         local markers = Fireteam.Marker.GetClientMarkers and Fireteam.Marker.GetClientMarkers() or {}
         for _, marker in pairs(markers) do
-            if not mySquad or marker.squadId ~= mySquad.id then continue end
+            -- 小队级只画本队；阵营级（指挥官放置）对本阵营全部可见
+            local mine = mySquad and (marker.squadId == mySquad.id
+                or (marker.faction and marker.faction == mySquad.faction))
+            if not mine then continue end
             if not isvector(marker.pos) then continue end
 
             local sx, sy = tf.ToScreen(marker.pos)
@@ -288,6 +291,7 @@ function Fireteam.TacMap.Open()
             net.WriteVector(pos)
             net.WriteString(Fireteam.Marker.TYPE.WAYPOINT)
             net.WriteString("")
+            net.WriteBool(false)
         net.SendToServer()
 
         chat.AddText(kit.Color("info"), "[FIRETEAM] " .. L("marker_placed"))
@@ -382,36 +386,44 @@ function Fireteam.TacMap.OpenCommandView()
 
         local meIdx = LocalPlayer():EntIndex()
 
-        -- 小队成员
+        -- 本阵营全部小队成员（P11 全阵营态势）；本队高亮、他队加 [S#id] 前缀
         local mySquad = Fireteam.Squad.GetMySquad()
-        if mySquad then
-            for _, m in ipairs(mySquad.members or {}) do
-                local ent = Entity(m.idx)
-                if IsValid(ent) and ent:IsPlayer() then
-                    local sx, sy = tf.ToScreen(ent:GetPos())
-                    if sx >= x0 and sx <= x1 and sy >= y0 and sy <= y1 then
-                        local colorName = m.idx == meIdx and "primary"
-                            or m.idx == mySquad.leaderIdx and "squad_leader"
-                            or "squad_ally"
-                        if not ent:Alive() then colorName = "danger" end
-                        local col = kit.Color(colorName)
-                        local yaw = math.rad(ent:EyeAngles().y + 90)
-                        surface.SetDrawColor(col.r, col.g, col.b, 230)
-                        surface.DrawLine(sx, sy,
-                            sx + math.cos(yaw) * 12, sy + math.sin(yaw) * 12)
-                        draw.RoundedBox(0, sx - 4, sy - 4, 8, 8, col)
-                        -- 名字标签
-                        draw.SimpleText(m.name, kit.Font("small"), sx + 8, sy - 14,
-                            kit.ColorA(colorName, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+        local myFaction = mySquad and mySquad.faction or nil
+        if myFaction then
+            local allSquads = Fireteam.Squad.GetCachedSquads()
+            for _, sq in pairs(allSquads) do
+                if sq.faction ~= myFaction then continue end
+                for _, m in ipairs(sq.members or {}) do
+                    local ent = Entity(m.idx)
+                    if IsValid(ent) and ent:IsPlayer() then
+                        local sx, sy = tf.ToScreen(ent:GetPos())
+                        if sx >= x0 and sx <= x1 and sy >= y0 and sy <= y1 then
+                            local colorName = m.idx == meIdx and "primary"
+                                or m.idx == sq.leaderIdx and "squad_leader"
+                                or "squad_ally"
+                            if not ent:Alive() then colorName = "danger" end
+                            local col = kit.Color(colorName)
+                            local yaw = math.rad(ent:EyeAngles().y + 90)
+                            surface.SetDrawColor(col.r, col.g, col.b, 230)
+                            surface.DrawLine(sx, sy,
+                                sx + math.cos(yaw) * 12, sy + math.sin(yaw) * 12)
+                            draw.RoundedBox(0, sx - 4, sy - 4, 8, 8, col)
+                            -- 名字标签（他队带小队编号）
+                            local tag = sq.id ~= mySquad.id and ("[S" .. tostring(sq.id) .. "] ") or ""
+                            draw.SimpleText(tag .. m.name, kit.Font("small"), sx + 8, sy - 14,
+                                kit.ColorA(colorName, 220), TEXT_ALIGN_LEFT, TEXT_ALIGN_BOTTOM)
+                        end
                     end
                 end
             end
         end
 
-        -- 标记
+        -- 标记（小队级=本队；阵营级=本阵营全体可见）
         local markers = Fireteam.Marker.GetClientMarkers and Fireteam.Marker.GetClientMarkers() or {}
         for _, marker in pairs(markers) do
-            if mySquad and marker.squadId == mySquad.id and isvector(marker.pos) then
+            local mine = mySquad and (marker.squadId == mySquad.id
+                or (marker.faction and marker.faction == mySquad.faction))
+            if mine and isvector(marker.pos) then
                 local sx, sy = tf.ToScreen(marker.pos)
                 if sx >= x0 and sx <= x1 and sy >= y0 and sy <= y1 then
                     local col = Fireteam.Marker.GetTypeColor(marker.type)
@@ -464,6 +476,14 @@ function Fireteam.TacMap.OpenCommandView()
             net.WriteVector(tr.HitPos + tr.HitNormal * 5)
             net.WriteString(Fireteam.Marker.TYPE.WAYPOINT)
             net.WriteString("")
+            -- 指挥官在指挥视图放置 = 阵营级标记；普通成员走小队级
+            -- （客户端缓存判定；最终权限由服务端 Commander 校验）
+            local isCmdr = false
+            if mySquad and Fireteam.Commander and Fireteam.Commander.GetCachedFactionCommander then
+                isCmdr = Fireteam.Commander.GetCachedFactionCommander(mySquad.faction)
+                    == LocalPlayer():EntIndex()
+            end
+            net.WriteBool(isCmdr)
         net.SendToServer()
         chat.AddText(kit.Color("info"), "[FIRETEAM] " .. L("marker_placed"))
     end
@@ -479,54 +499,104 @@ function Fireteam.TacMap.OpenCommandView()
         local vitals = Fireteam.Vitals and Fireteam.Vitals.Client or {}
         local y = 34
 
-        -- 本小队成员（无小队时提示）
         local mySquad = Fireteam.Squad.GetMySquad()
         if not mySquad then
             draw.SimpleText(L("ui_command_no_squad"), kit.Font("small"), 4, y,
                 kit.Color("text_muted"), TEXT_ALIGN_LEFT)
             return
         end
+        local myFaction = mySquad.faction
 
-        draw.SimpleText(mySquad.name or "Squad", kit.Font("body"), 4, y,
-            kit.Color("primary"), TEXT_ALIGN_LEFT)
-        kit.DrawDivider(0, y + 24, w - 8)
-        y = y + 32
+        -- ── 指挥官行（P11）＋ 选举倒计时 ──
+        if Fireteam.Commander then
+            local fs = Fireteam.Commander.GetClientState()[myFaction]
+            local cmdrIdx = Fireteam.Commander.GetCachedFactionCommander(myFaction)
+            local cmdrName = nil
+            if cmdrIdx and IsValid(Entity(cmdrIdx)) then
+                cmdrName = Entity(cmdrIdx):Nick()
+            end
+            if cmdrName then
+                draw.SimpleText(L("ui_cmd_current", "★ " .. cmdrName),
+                    kit.Font("small"), 4, y, kit.Color("warning"), TEXT_ALIGN_LEFT)
+            else
+                draw.SimpleText(L("ui_cmd_vacant"),
+                    kit.Font("small"), 4, y, kit.Color("text_muted"), TEXT_ALIGN_LEFT)
+            end
+            y = y + 20
+            if fs and fs.voting then
+                local remain = math.ceil(Fireteam.Commander.GetElectionSecondsLeft(myFaction))
+                draw.SimpleText(L("ui_cmd_election_hud", remain),
+                    kit.Font("small"), 4, y, kit.Color("warning"), TEXT_ALIGN_LEFT)
+                y = y + 18
+            end
+        end
+
+        -- ── 本阵营全部小队编成（本队排最前）──
+        local groups = {}
+        for _, sq in pairs(Fireteam.Squad.GetCachedSquads()) do
+            if sq.faction == myFaction then table.insert(groups, sq) end
+        end
+        table.sort(groups, function(a, b)
+            local aMine = a.id == mySquad.id and 0 or 1
+            local bMine = b.id == mySquad.id and 0 or 1
+            if aMine ~= bMine then return aMine < bMine end
+            return (a.id or 0) < (b.id or 0)
+        end)
 
         local rowH = 44
-        for _, m in ipairs(mySquad.members or {}) do
-            local isLeader = m.idx == mySquad.leaderIdx
-            local downed = vitals[m.idx] and vitals[m.idx].state == "downed"
+        for gi, sq in ipairs(groups) do
+            -- 队名分组标题
+            draw.SimpleText((sq.id == mySquad.id and "▶ " or "· ") .. (sq.name or ("S" .. tostring(sq.id))),
+                kit.Font("body"), 4, y,
+                sq.id == mySquad.id and kit.Color("primary") or kit.Color("text_muted"),
+                TEXT_ALIGN_LEFT)
+            y = y + 22
+            kit.DrawDivider(0, y - 2, w - 8)
 
-            -- 名字行（队长 ◆ / 倒地红显）
-            local nameCol = "squad_ally"
-            if downed then nameCol = "danger"
-            elseif isLeader then nameCol = "squad_leader" end
-            local prefix = isLeader and "◆ " or ""
-            draw.SimpleText(prefix .. (m.name or "?"), kit.Font("small"), 4, y,
-                kit.Color(nameCol), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            local cmdrIdx = Fireteam.Commander
+                and Fireteam.Commander.GetCachedFactionCommander
+                and Fireteam.Commander.GetCachedFactionCommander(myFaction) or nil
 
-            -- 倒地标记 / 职业名
-            if downed then
-                draw.SimpleText(L("ui_command_downed"), kit.Font("small"), w - 8, y,
-                    kit.Color("danger"), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
-            elseif m.class then
-                draw.SimpleText(tostring(m.class), kit.Font("small"), w - 8, y,
-                    kit.ColorA("text_muted", 200), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+            for _, m in ipairs(sq.members or {}) do
+                local isLeader = m.idx == sq.leaderIdx
+                local isCmdr = cmdrIdx ~= nil and m.idx == cmdrIdx
+                local downed = vitals[m.idx] and vitals[m.idx].state == "downed"
+
+                -- 前缀体系：★ 指挥官 · ◆ 队长 · 倒地红显
+                local nameCol = sq.id == mySquad.id and "squad_ally" or "text"
+                if downed then nameCol = "danger"
+                elseif isCmdr then nameCol = "warning"
+                elseif isLeader then nameCol = "squad_leader" end
+                local prefix = (isCmdr and "★ " or "") .. (isLeader and "◆ " or "")
+                draw.SimpleText(prefix .. (m.name or "?"), kit.Font("small"), 4, y,
+                    kit.Color(nameCol), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+                -- 倒地标记 / 职业名
+                if downed then
+                    draw.SimpleText(L("ui_command_downed"), kit.Font("small"), w - 8, y,
+                        kit.Color("danger"), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+                elseif m.class then
+                    draw.SimpleText(tostring(m.class), kit.Font("small"), w - 8, y,
+                        kit.ColorA("text_muted", 200), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
+                end
+
+                -- 血量条（阵亡画满灰）
+                local frac = 0
+                if m.alive then
+                    frac = math.Clamp((m.hp or 0) / math.max(m.maxhp or 100, 1), 0, 1)
+                end
+                local barCol = "squad_ally"
+                if not m.alive then barCol = "text_muted"
+                elseif downed then barCol = "danger"
+                elseif frac <= 0.3 then barCol = "danger"
+                elseif frac <= 0.6 then barCol = "warning" end
+                kit.DrawProgressBar(4, y + 18, w - 12, 8, frac, barCol)
+
+                y = y + rowH
+                if y > h - 20 then break end
             end
 
-            -- 血量条（阵亡画满灰）
-            local frac = 0
-            if m.alive then
-                frac = math.Clamp((m.hp or 0) / math.max(m.maxhp or 100, 1), 0, 1)
-            end
-            local barCol = "squad_ally"
-            if not m.alive then barCol = "text_muted"
-            elseif downed then barCol = "danger"
-            elseif frac <= 0.3 then barCol = "danger"
-            elseif frac <= 0.6 then barCol = "warning" end
-            kit.DrawProgressBar(4, y + 18, w - 12, 8, frac, barCol)
-
-            y = y + rowH
+            y = y + 8
             if y > h - 20 then break end
         end
     end
