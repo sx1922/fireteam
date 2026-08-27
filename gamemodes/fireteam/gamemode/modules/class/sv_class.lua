@@ -32,6 +32,9 @@ function Fireteam.Class.Assign(ply, classId)
     -- 加载装备
     Fireteam.Class.ApplyLoadout(ply, classData)
 
+    -- 设置阵营玩家模型
+    Fireteam.Class.ApplyPlayerModel(ply, classData)
+
     -- 通知客户端
     net.Start(Fireteam.NET.CLASS_ASSIGN)
         net.WriteEntity(ply)
@@ -115,6 +118,42 @@ function Fireteam.Class.ApplyLoadout(ply, classData)
 end
 
 -- ═══════════════════════════════════════
+-- 阵营玩家模型
+-- 从设定包 player_models 数据读取模型列表，随机取一个 SetModel。
+-- 无映射的阵营（含 locked 阵营）回退引擎默认模型。
+-- ═══════════════════════════════════════
+local playerModelCache = {}  -- [faction] = { model paths }
+
+function Fireteam.Class.ApplyPlayerModel(ply, classData)
+    if not IsValid(ply) then return end
+    local faction = classData and classData.faction or nil
+    if not faction then return end
+
+    -- 读设定包数据（GetData 已缓存，无需反复 file.Read）
+    local models = playerModelCache[faction]
+    if models == nil then
+        local data = Fireteam.Setting and Fireteam.Setting.GetData
+            and Fireteam.Setting.GetData("player_models") or nil
+        if istable(data) and istable(data[faction]) and #data[faction] > 0 then
+            models = data[faction]
+        else
+            models = false  -- 标记无映射，避免重复查表
+        end
+        playerModelCache[faction] = models
+    end
+
+    if istable(models) and #models > 0 then
+        local mdl = models[math.random(#models)]
+        ply:SetModel(mdl)
+    end
+end
+
+-- 设定包热切换时清缓存
+hook.Add(Fireteam.HOOKS.SETTING_LOADED, "Fireteam.Class.ClearModelCache", function()
+    playerModelCache = {}
+end)
+
+-- ═══════════════════════════════════════
 -- 玩家重生时重新加载
 -- ═══════════════════════════════════════
 hook.Add("PlayerSpawn", "Fireteam.Class.Respawn", function(ply)
@@ -126,6 +165,7 @@ hook.Add("PlayerSpawn", "Fireteam.Class.Respawn", function(ply)
                 if IsValid(ply) then
                     Fireteam.Class.ApplyStats(ply, classData)
                     Fireteam.Class.ApplyLoadout(ply, classData)
+                    Fireteam.Class.ApplyPlayerModel(ply, classData)
                 end
             end)
         end

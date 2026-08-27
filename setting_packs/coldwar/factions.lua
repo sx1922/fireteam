@@ -98,6 +98,7 @@ return {
         name_zh = "波兰人民军",
         icon = "fireteam/factions/pol_badge.png",
         color = Color(205, 105, 150),
+        locked = true,  -- 无玩家模型包，暂不开放
         allowed_tags = { "warsaw_pact", "coldwar_east", "eastern", "poland", "polish_army" },
         banned_tags = { "nato", "coldwar_west", "western" },
         voice_pack = "sound/fireteam/coldwar/voice_pl/",
@@ -112,6 +113,7 @@ return {
         name_zh = "捷克斯洛伐克人民军",
         icon = "fireteam/factions/tch_badge.png",
         color = Color(140, 70, 160),
+        locked = true,  -- 无玩家模型包，暂不开放
         allowed_tags = { "warsaw_pact", "coldwar_east", "eastern", "czechoslovakia", "csla" },
         banned_tags = { "nato", "coldwar_west", "western" },
         voice_pack = "sound/fireteam/coldwar/voice_cs/",

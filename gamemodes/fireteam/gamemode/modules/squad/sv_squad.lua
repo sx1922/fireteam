@@ -32,9 +32,16 @@ function Fireteam.Squad.Create(ply, name, faction)
     end
     -- 阵营必须存在于当前设定包（防伪造 net 消息创建幽灵阵营小队）
     local packFactions = Fireteam.Setting.GetData and Fireteam.Setting.GetData("factions") or nil
-    if istable(packFactions) and faction and not packFactions[faction] then
-        ply:ChatPrint("[FIRETEAM] Unknown faction.")
-        return nil
+    if istable(packFactions) then
+        if not faction or not packFactions[faction] then
+            ply:ChatPrint("[FIRETEAM] Unknown faction.")
+            return nil
+        end
+        -- 锁定阵营（无模型包等）不开放建队
+        if packFactions[faction].locked then
+            ply:ChatPrint("[FIRETEAM] This faction is not available yet.")
+            return nil
+        end
     end
     -- 用当前存活小队数判断（nextSquadId 只增不减，直接比较会永久锁死）
     if table.Count(squads) >= Fireteam.Squad.MAX_SQUADS then

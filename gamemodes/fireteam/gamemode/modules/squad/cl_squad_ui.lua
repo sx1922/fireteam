@@ -446,10 +446,12 @@ function Fireteam.Squad.OpenPanel()
         local factions = Fireteam.Setting.GetData("factions") or {}
         local firstId = nil
         for factionId, def in pairs(factions) do
-            local displayName = (def.name_zh or def.name or factionId)
-                .. " (" .. factionId .. ")"
-            factionCombo:AddChoice(displayName, factionId)
-            firstId = firstId or factionId
+            if not def.locked then  -- 跳过锁定阵营（无模型包等）
+                local displayName = (def.name_zh or def.name or factionId)
+                    .. " (" .. factionId .. ")"
+                factionCombo:AddChoice(displayName, factionId)
+                firstId = firstId or factionId
+            end
         end
         if firstId then
             factionCombo:ChooseOptionValue(firstId)
