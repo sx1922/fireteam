@@ -172,6 +172,25 @@ find . -type f -name "*[A-Z]*"          # 应为空（addon.json 除外，它不
 
 启动 GMod → 新建游戏 → 模式列表中出现 "FIRETEAM" → 选择进入。
 
+> **模式列表里看不到？** 检查 `fireteam.txt` —— 该文件是**引擎读的 gamemode 声明**，
+> 字段集与 `addon.json` 完全不同，必须包含 `"menusystem" "1"`（决定是否出现在
+> 主菜单模式列表，`base` 模式没有它所以不可见）与 `"base" "base"`（派生基座）。
+> `type` / `icon` / `description` / `author_name` / `tags` 是 addon.json 的字段，
+> 写进 `.txt` 无效。`"category"` 需为合法值（`pvp` / `pve` / `rp` / `other` 等），
+> 可对照 `garrysmod/gamemodes/sandbox/sandbox.txt` 与 `terrortown/terrortown.txt`。
+>
+> 本框架当前声明：
+> ```
+> "fireteam"
+> {
+> 	"base"		"base"
+> 	"title"		"FIRETEAM"
+> 	"category"	"pvp"
+> 	"maps"		""
+> 	"menusystem"	"1"
+> }
+> ```
+
 控制台应依次输出：
 
 ```

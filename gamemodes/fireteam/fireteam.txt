@@ -1,13 +1,8 @@
 "fireteam"
 {
+	"base"		"base"
 	"title"		"FIRETEAM"
-	"type"		"gamemode"
+	"category"	"pvp"
 	"maps"		""
-	"icon"		"icon24"
-	"description"	"Tactical squad-based combat framework with swappable setting packs"
-	"author_name"	"FIRETEAM Team"
-	"author_email"	""
-	"website_url"	""
-	"category"	"gamemodes"
-	"tags"		"realism,roleplay"
+	"menusystem"	"1"
 }
