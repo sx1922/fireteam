@@ -194,6 +194,40 @@ function Fireteam.Modules.LoadAll()
 end
 
 -- ─────────────────────────────────────
+-- 基座适配器加载（modules/adapters/sv_*.lua，纯服务端）
+-- 每个适配器文件顶部自守卫（`if not ARC9 then return end` 等），
+-- 因此无条件全部执行即可：缺失的基座自行跳过。
+-- 必须在设定包激活之前调用——WEAPON_DISCOVER / VEHICLE_DISCOVER 由
+-- SETTING_LOADED 触发，适配器要先挂上钩子才能注册武器与载具。
+-- ─────────────────────────────────────
+local ADAPTER_DIR = MODULE_BASE_PATH .. "adapters/"
+
+-- GMA 兜底清单（file.Find 在部分挂载环境返回空，与 cl_init 同一模式）
+local FALLBACK_ADAPTERS = {
+    "sv_arc9_adapter.lua", "sv_cw2_adapter.lua", "sv_lvs_adapter.lua",
+    "sv_simfphys_adapter.lua", "sv_tfa_adapter.lua"
+}
+
+function Fireteam.Modules.LoadAdapters()
+    local files = file.Find(ADAPTER_DIR .. "sv_*.lua", "GAME")
+    if #files == 0 then files = FALLBACK_ADAPTERS end
+
+    local count = 0
+    for _, fname in ipairs(files) do
+        local gamePath = ADAPTER_DIR .. fname
+        if file.Exists(gamePath, "GAME") then
+            local ok, err = pcall(ExecLuaFile, gamePath, ToLuaPath(gamePath), "adapters")
+            if ok then
+                count = count + 1
+            else
+                Fireteam.Log.Error("适配器", "✗ 加载失败 [" .. fname .. "]: " .. tostring(err))
+            end
+        end
+    end
+    Fireteam.Log.Info("适配器", "✓ 已执行 " .. count .. " 个基座适配器")
+end
+
+-- ─────────────────────────────────────
 -- 查询模块状态
 -- ─────────────────────────────────────
 function Fireteam.Modules.GetState(moduleId)

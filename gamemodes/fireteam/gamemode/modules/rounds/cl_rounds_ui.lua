@@ -19,8 +19,7 @@ local function FactionDisplayName(factionId)
     local facs = Fireteam.Setting and Fireteam.Setting.GetData("factions") or {}
     local f = facs[factionId]
     if not istable(f) then return factionId end
-    local cv = GetConVar("gmod_language")
-    local lang = cv and cv:GetString() or "en"
+    local lang = Fireteam.Locale.GetLanguage()
     if lang:sub(1, 2) == "zh" and f.name_zh then return f.name_zh end
     return f.name or factionId
 end
@@ -95,8 +94,8 @@ local function DrawBanner(c)
     if c.state == "active" and obj then
         local label = L(obj.label ~= "" and obj.label or "objective_unknown")
         local objName = obj.name
-        local cv = GetConVar("gmod_language")
-        if cv and cv:GetString():sub(1, 2) == "zh" and obj.name_zh and obj.name_zh ~= "" then
+        if Fireteam.Locale.GetLanguage():sub(1, 2) == "zh"
+            and obj.name_zh and obj.name_zh ~= "" then
             objName = obj.name_zh
         end
         if objName and objName ~= "" then label = label .. " — " .. objName end

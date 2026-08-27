@@ -239,8 +239,9 @@ hook.Add("HUDPaint", "Fireteam.Voice.RadioIndicator", function()
     local chDef = Fireteam.Voice.GetChannel(channelId)
     local label
     if chDef then
-        local cv = GetConVar("gmod_language")
-        label = (cv and cv:GetString():sub(1, 2) == "zh" and chDef.name_zh) and chDef.name_zh or chDef.name
+        -- 走框架语言标识（gmod_language 原值为 schinese/tchinese，不能直接判 "zh"）
+        local lang = Fireteam.Locale.GetLanguage()
+        label = (lang:sub(1, 2) == "zh" and chDef.name_zh) and chDef.name_zh or chDef.name
     end
     label = label or channelId
 

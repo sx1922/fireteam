@@ -22,6 +22,8 @@ AddCSLuaFile("core/sh_weapon_interface.lua")
 AddCSLuaFile("core/sh_vehicle_interface.lua")
 AddCSLuaFile("core/sh_locale.lua")
 AddCSLuaFile("core/sh_ui_kit.lua")
+AddCSLuaFile("api/sh_fireteam_api.lua")
+AddCSLuaFile("api/cl_fireteam_api.lua")
 
 -- 日志系统必须最先加载（后续所有核心文件依赖 Fireteam.Log）
 include("core/sh_logger.lua")
@@ -33,5 +35,8 @@ include("core/sh_net_protocol.lua")
 include("core/sh_weapon_interface.lua")
 include("core/sh_vehicle_interface.lua")
 include("core/sh_ui_kit.lua")
+
+-- 公开 API 共享表面（依赖 sh_api_registry 的 Register，故置于其后）
+include("api/sh_fireteam_api.lua")
 
 Fireteam.Log.Info("核心", "✓ 共享环境已初始化")

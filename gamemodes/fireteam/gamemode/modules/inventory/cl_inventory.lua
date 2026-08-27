@@ -38,11 +38,12 @@ function Fireteam.Inventory.IsBusy()
         and Fireteam.Inventory.ClientBusyUntil > CurTime() or false
 end
 
---- 物品显示名：跟随框架语言选择（zh-CN 用包内 name_zh）
+--- 物品显示名：跟随框架语言选择（中文客户端用包内 name_zh）
 function Fireteam.Inventory.GetDisplayName(itemId)
     local def = Fireteam.Inventory.ClientDefs[itemId]
     if not def then return itemId end
-    if Fireteam.Locale.GetLanguage() == "zh-CN" then
+    -- 简中与繁中同取 name_zh（zh-CN / zh-Hant 同前缀）
+    if Fireteam.Locale.GetLanguage():sub(1, 2) == "zh" then
         return def.name_zh or def.name or itemId
     end
     return def.name or itemId

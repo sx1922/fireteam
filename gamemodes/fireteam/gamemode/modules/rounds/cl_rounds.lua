@@ -34,8 +34,9 @@ end)
 function Fireteam.Rounds.GetScenarioName()
     local s = Fireteam.Rounds.Client.scenario
     if not s then return nil end
-    local lang = GetConVar("gmod_language") and GetConVar("gmod_language"):GetString() or "en"
-    return (lang == "zh-CN" and s.name_zh) and s.name_zh or s.name
+    -- 走框架语言标识：gmod_language 原值是 schinese/tchinese，直接比 "zh-CN" 永不命中
+    local lang = Fireteam.Locale.GetLanguage()
+    return (lang:sub(1, 2) == "zh" and s.name_zh) and s.name_zh or s.name
 end
 
 --- 剩余秒数（客户端本地时钟推算）

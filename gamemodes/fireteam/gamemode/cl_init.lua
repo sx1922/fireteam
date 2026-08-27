@@ -81,4 +81,14 @@ if #failed > 0 then
 else
     Fireteam.Log.Info("模块", "✓ 客户端模块已全部加载")
 end
+
+-- 客户端公开 API 表面（读各模块客户端缓存，故置于模块加载之后）
+do
+    local ok, err = pcall(ExecModuleFile,
+        "gamemodes/fireteam/gamemode/api/cl_fireteam_api.lua", "api")
+    if not ok then
+        Fireteam.Log.Error("API", "✗ 客户端 API 表面加载失败: " .. tostring(err))
+    end
+end
+
 Fireteam.Log.Info("核心", "✓ 客户端初始化完成")

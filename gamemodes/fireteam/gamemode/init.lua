@@ -6,6 +6,9 @@ AddCSLuaFile("cl_init.lua")
 
 include("shared.lua")
 
+-- 服务端公开 API 表面（惰性解析，可在模块加载前 include）
+include("api/sv_fireteam_api.lua")
+
 -- ═══════════════════════════════════════
 -- Core 服务端模块
 -- ═══════════════════════════════════════
@@ -23,6 +26,9 @@ hook.Add("Initialize", "Fireteam.Bootstrap", function()
     -- 1. 发现并加载所有模块
     Fireteam.Modules.Discover()
     Fireteam.Modules.LoadAll()
+
+    -- 1.5 基座适配器（须早于设定包激活：武器/载具发现由 SETTING_LOADED 触发）
+    Fireteam.Modules.LoadAdapters()
 
     -- 2. 发现并激活默认设定包
     Fireteam.Setting.Discover()

@@ -3,12 +3,20 @@
 -- 词条文件位于 gamemode/locale/<lang>.lua，返回 key = value 表。
 -- 设定包可通过 <pack>/locale/<lang>.lua 注入专属词条（见 LoadPack）。
 -- 双端共享：跟随 gmod_language 自动选择，en 为兜底。
+--
+-- ⚠ 文件名必须全小写：GMA 白名单拒收含大写字母的文件名（打包时被静默丢弃），
+-- 而语言标识对外仍保持 BCP 47 大小写（zh-CN / zh-Hant）。二者经 LangFile 转换。
 
 if not Fireteam then Fireteam = {} end
 Fireteam.Locale = Fireteam.Locale or {}
 
 local LOCALE_BASE = "gamemodes/fireteam/gamemode/locale/"
 local FALLBACK_LANG = "en"
+
+--- 语言标识 → 磁盘文件名（全小写）
+local function LangFile(lang)
+    return string.lower(tostring(lang or FALLBACK_LANG))
+end
 
 local currentLang = FALLBACK_LANG
 local strings = {}          -- 当前语言词条
@@ -34,7 +42,7 @@ local function ReadLangTable(path, realm)
 end
 
 local function LoadLanguage(lang)
-    return ReadLangTable(LOCALE_BASE .. lang .. ".lua", "GAME")
+    return ReadLangTable(LOCALE_BASE .. LangFile(lang) .. ".lua", "GAME")
 end
 
 --- 取词条；带参数时做 string.format 替换。
@@ -64,9 +72,9 @@ end
 function Fireteam.Locale.LoadPack(pathPrefix, realm)
     activePack = { path = pathPrefix, realm = realm or "GAME" }
 
-    packStrings = ReadLangTable(pathPrefix .. "locale/" .. currentLang .. ".lua",
+    packStrings = ReadLangTable(pathPrefix .. "locale/" .. LangFile(currentLang) .. ".lua",
         activePack.realm) or {}
-    packFallback = ReadLangTable(pathPrefix .. "locale/" .. FALLBACK_LANG .. ".lua",
+    packFallback = ReadLangTable(pathPrefix .. "locale/" .. LangFile(FALLBACK_LANG) .. ".lua",
         activePack.realm) or {}
 
     local n = table.Count(packStrings) + table.Count(packFallback)
@@ -91,7 +99,7 @@ function Fireteam.Locale.SetLanguage(lang)
     strings = tbl
     if activePack then
         packStrings = ReadLangTable(
-            activePack.path .. "locale/" .. lang .. ".lua", activePack.realm) or {}
+            activePack.path .. "locale/" .. LangFile(lang) .. ".lua", activePack.realm) or {}
     end
     hook.Run(Fireteam.HOOKS.LOCALE_CHANGED, lang)
     Fireteam.Log.Info("多语言", "✓ 语言已切换: " .. lang)
