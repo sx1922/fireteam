@@ -15,3 +15,6 @@ Desktop.ini
 *_original.png
 originals/
 setting_packs/*/artwork/
+
+# Design tool workspace (local mockups & asset drafts)
+.design/
