@@ -278,20 +278,24 @@ end)
 
 hook.Add("ShowHelp", "Fireteam.Keybinds.ShowHelp", function()
     if Fireteam.MainMenu and Fireteam.MainMenu.Toggle then Fireteam.MainMenu.Toggle() end
+    return false
 end)
 
 hook.Add("ShowTeam", "Fireteam.Keybinds.ShowTeam", function()
     if Fireteam.Squad and Fireteam.Squad.OpenPanel then Fireteam.Squad.OpenPanel() end
+    return false
 end)
 
 hook.Add("ShowSpare1", "Fireteam.Keybinds.ShowSpare1", function()
     if Fireteam.Class and Fireteam.Class.OpenSelectPanel then Fireteam.Class.OpenSelectPanel() end
+    return false
 end)
 
 hook.Add("ShowSpare2", "Fireteam.Keybinds.ShowSpare2", function()
     if Fireteam.TacMap and Fireteam.TacMap.ToggleCommandView then
         Fireteam.TacMap.ToggleCommandView()
     end
+    return false
 end)
 
 end -- CLIENT

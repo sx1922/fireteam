@@ -7,6 +7,18 @@ Fireteam.Squad = Fireteam.Squad or {}
 local squads = {}       -- { [id] = FTSquad }
 local nextSquadId = 1
 
+local function IsPvEPlayerFaction(faction)
+    if not Fireteam.Config or Fireteam.Config.Get("rounds.mode") ~= "pve" then return true end
+    local scenario = Fireteam.Rounds and Fireteam.Rounds.ResolveScenario
+        and Fireteam.Rounds.ResolveScenario() or nil
+    local pve = scenario and scenario.pve
+    if not (istable(pve) and istable(pve.player_factions)) then return true end
+    for _, allowed in ipairs(pve.player_factions) do
+        if allowed == faction then return true end
+    end
+    return false
+end
+
 -- ═══════════════════════════════════════
 -- 创建小队
 -- ═══════════════════════════════════════
@@ -42,6 +54,10 @@ function Fireteam.Squad.Create(ply, name, faction)
             ply:ChatPrint("[FIRETEAM] This faction is not available yet.")
             return nil
         end
+    end
+    if not IsPvEPlayerFaction(faction) then
+        ply:ChatPrint("[FIRETEAM] This faction is controlled by AI in PvE.")
+        return nil
     end
     -- 用当前存活小队数判断（nextSquadId 只增不减，直接比较会永久锁死）
     if table.Count(squads) >= Fireteam.Squad.MAX_SQUADS then
@@ -101,6 +117,10 @@ function Fireteam.Squad.Join(ply, squadId)
     end
     if squad.locked then
         ply:ChatPrint("[FIRETEAM] Squad is locked by its leader.")
+        return false
+    end
+    if not IsPvEPlayerFaction(squad.faction) then
+        ply:ChatPrint("[FIRETEAM] This faction is controlled by AI in PvE.")
         return false
     end
 

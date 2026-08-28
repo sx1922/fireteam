@@ -22,6 +22,19 @@ local function IsPvEMode()
     return (Fireteam.Config.Get("rounds.mode") or "pvp") == "pve"
 end
 
+function Fireteam.PvE.EnsureValidStage()
+    if not IsPvEMode() then return end
+    local total = #Fireteam.Rounds.GetObjectiveTemplates()
+    while stage <= total do
+        local templates = Fireteam.Rounds.GetObjectiveTemplates()
+        local template = templates[stage]
+        if template and template.type and Fireteam.Rounds.Objectives[template.type] then return end
+        Fireteam.Log.Warn("PvE", "跳过无效战役关卡 " .. tostring(stage))
+        stage = stage + 1
+    end
+    if total > 0 then stage = 1 end
+end
+
 --- 当前生效的 pve 配置块：剧本级覆盖 > 包级；无则 nil
 local function GetPackPvE()
     local scenario = Fireteam.Rounds.ResolveScenario()
@@ -219,6 +232,10 @@ hook.Add(Fireteam.HOOKS.CONFIG_CHANGED, "Fireteam.PvE.ModeOrScenarioChanged", fu
     if key == "rounds.mode" then
         Fireteam.Log.Info("PvE", string.format("模式切换: %s → %s（下一回合简报生效）",
             tostring(oldVal), tostring(newVal)))
+        if newVal ~= "pve" then
+            timer.Remove("Fireteam.PvE.Advance")
+            RemoveAllBots()
+        end
     end
 
     if stage ~= 1 or campaignCompleteShown then

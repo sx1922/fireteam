@@ -141,6 +141,7 @@ local function PickObjectiveTemplate(roundNumber)
     -- PvE 战役：按关卡顺序取目标（关卡推进由 pve 模块在回合结算时管理）
     if (Fireteam.Config.Get("rounds.mode") or "pvp") == "pve"
         and Fireteam.PvE and Fireteam.PvE.GetCurrentStageIndex then
+        if Fireteam.PvE.EnsureValidStage then Fireteam.PvE.EnsureValidStage() end
         local idx = math.Clamp(Fireteam.PvE.GetCurrentStageIndex(), 1, #templates)
         local t = templates[idx]
         if t and t.type and Fireteam.Rounds.Objectives[t.type] then
@@ -215,6 +216,7 @@ local function EnterActive()
     if (Fireteam.Config.Get("rounds.mode") or "pvp") == "pvp"
         and #machine.factionsAtStart < 2 then
         Fireteam.Log.Warn("回合", "PvP 需要至少两个参战阵营，跳过本回合")
+        machine.objectiveCtx = nil
         SetState(STATE.INTERMISSION, Fireteam.Rounds.GetTimings().intermission)
         return
     end
