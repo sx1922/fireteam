@@ -76,7 +76,7 @@ end
 -- 2. locale 双语键集一致
 -- ─────────────────────────────────────
 local en = dofile(root .. "/gamemodes/fireteam/gamemode/locale/en.lua")
-local zh = dofile(root .. "/gamemodes/fireteam/gamemode/locale/zh-CN.lua")
+local zh = dofile(root .. "/gamemodes/fireteam/gamemode/locale/zh-cn.lua")
 local missE, missZ = {}, {}
 for k in pairs(en) do if zh[k] == nil then missZ[#missZ + 1] = k end end
 for k in pairs(zh) do if en[k] == nil then missE[#missE + 1] = k end end
