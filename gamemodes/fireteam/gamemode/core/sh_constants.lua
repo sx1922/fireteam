@@ -145,6 +145,12 @@ Fireteam.NET = {
     -- 双向（同一字符串按 realm 各自收发）
     CLASS_ASSIGN         = "FT_ClassAssign",
 
+    -- 投票系统（服务端→客户端广播，客户端→服务端请求）
+    VOTE_START           = "FT_VoteStart",        -- 开始投票（服务端→客户端，含主题/选项/倒计时）
+    VOTE_CAST            = "FT_VoteCast",         -- 客户端→服务端，玩家投票（选项 id）
+    VOTE_UPDATE          = "FT_VoteUpdate",       -- 服务端→客户端，实时票数
+    VOTE_RESULT          = "FT_VoteResult",       -- 服务端→客户端，投票结果（胜者选项）
+
     -- 客户端 → 服务端（请求）
     CLIENT_READY         = "FT_ClientReady",        -- 客户端模块全量加载完毕，请求初始状态
     MARKER_PLACE         = "FT_MarkerPlace",
@@ -201,7 +207,12 @@ Fireteam.HOOKS = {
     INVENTORY_CLIENT_UPDATED  = "Fireteam.Inventory.ClientUpdated",-- （客户端背包快照已更新）
     ROUNDS_CLIENT_STATE_CHANGED = "Fireteam.Rounds.ClientStateChanged", -- state（客户端回合状态同步）
     VITALS_CLIENT_UPDATED     = "Fireteam.Vitals.ClientUpdated",   -- （客户端体征快照已更新）
-    COMMANDER_CHANGED         = "Fireteam.Commander.Changed"       -- faction, newCommander|nil（指挥官就任/腾位）
+    COMMANDER_CHANGED         = "Fireteam.Commander.Changed",       -- faction, newCommander|nil（指挥官就任/腾位）
+
+    -- 投票系统
+    VOTE_STARTED         = "Fireteam.Vote.Started",     -- topic, options, proposer
+    VOTE_PASSED          = "Fireteam.Vote.Passed",      -- topic, winnerOption
+    VOTE_FAILED          = "Fireteam.Vote.Failed"       -- topic（投票未达阈值）
 }
 
 Fireteam.Log.Info("常量", "✓ 常量已加载 (v" .. Fireteam.VERSION .. ")")

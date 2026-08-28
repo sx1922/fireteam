@@ -16,5 +16,14 @@ Desktop.ini
 originals/
 setting_packs/*/artwork/
 
+# Binary VTF/VMT materials (generated from PNGs in content/ — do not push to GitHub)
+materials/**/*.vtf
+materials/**/*.vmt
+materials/**/*.png
+
+# Sound binaries (large, local only)
+gamemodes/fireteam/content/sound/**/*.wav
+gamemodes/fireteam/content/sound/**/*.mp3
+
 # Design tool workspace (local mockups & asset drafts)
 .design/

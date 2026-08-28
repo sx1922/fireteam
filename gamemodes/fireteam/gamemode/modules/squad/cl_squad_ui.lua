@@ -128,17 +128,36 @@ local function DrawSquadHUD()
     end
 
     kit.DrawPanel(x, y, panelW, panelH, { fillAlpha = 165, borderColor = false })
+    kit.DrawCornerBracket(x, y, 10, "tl", "primary")
+    kit.DrawCornerBracket(x + panelW, y + panelH, 10, "br", "primary")
 
-    -- 标题行：绿色圆形小队编号徽章 + 队名
-    local badgeR = math.Round(10 * scale)
-    local badgeX, badgeY = x + 12 + badgeR, y + math.Round(17 * scale)
-    draw.NoTexture()
-    surface.DrawCircle(badgeX, badgeY, badgeR, kit.Color("success"))
+    -- 标题行：军牌方形编号徽章 + 队名
+    local badgeS = math.Round(18 * scale)
+    local badgeX, badgeY = x + 12, y + math.Round(8 * scale)
+    surface.SetDrawColor(kit.ColorA("success", 200))
+    surface.DrawRect(badgeX, badgeY, badgeS, badgeS)
+    surface.SetDrawColor(kit.ColorA("background", 200))
+    surface.DrawOutlinedRect(badgeX, badgeY, badgeS, badgeS, 1)
     draw.SimpleText(tostring(mySquad.id or "?"), kit.Font("small"),
-        badgeX, badgeY, kit.Color("background"), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        badgeX + badgeS / 2, badgeY + badgeS / 2, kit.Color("background"), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
     draw.SimpleText(mySquad.name or "Squad", kit.Font("medium"),
-        badgeX + badgeR + 8, badgeY, kit.Color("primary"), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
-    kit.DrawDivider(x + 8, y + math.Round(30 * scale), panelW - 16)
+        badgeX + badgeS + 8, badgeY + badgeS / 2, kit.Color("primary"), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+
+    -- 右侧阵营徽章（从阵营定义取 icon 路径，避免 faction key 与文件名不一致）
+    local factionBadge = nil
+    local facData = Fireteam.Setting.GetData("factions") or {}
+    local facDef = facData[mySquad.faction] or nil
+    if facDef and facDef.icon then
+        -- 去掉 .png 后缀，让 Material() 解析 .vmt
+        local iconPath = string.gsub(facDef.icon, "%.png$", "")
+        factionBadge = kit.Material(iconPath)
+    end
+    if factionBadge and not factionBadge:IsError() then
+        local fbSize = math.Round(16 * scale)
+        kit.DrawIcon(factionBadge, x + panelW - 12 - fbSize, y + math.Round(9 * scale), fbSize, kit.ColorA("text", 160))
+    end
+
+    kit.DrawStencilDivider(x + 8, y + math.Round(30 * scale), panelW - 16, "border")
 
     -- 成员行
     local fx = kit.EffectsAlpha()
@@ -152,10 +171,10 @@ local function DrawSquadHUD()
         local isLeader = info.idx == mySquad.leaderIdx
         local isCmdr = cmdrIdx ~= nil and info.idx == cmdrIdx
 
-        -- 存活状态圆点（死亡灰暗）
-        draw.NoTexture()
-        surface.DrawCircle(x + 16, rowY, math.Round(4 * scale),
-            info.alive and kit.Color("squad_ally") or kit.Color("text_muted"))
+        -- 存活状态方块（死亡灰暗）
+        local dotS = math.Round(6 * scale)
+        surface.SetDrawColor(info.alive and kit.ColorA("squad_ally", 220) or kit.ColorA("text_muted", 180))
+        surface.DrawRect(x + 13, rowY - dotS / 2, dotS, dotS)
 
         -- 前缀体系：◆ 队长 · ★ 阵营指挥官
         local nameX = x + 26
@@ -182,8 +201,14 @@ local function DrawSquadHUD()
             and Fireteam.Voice.GetSpeakerChannel
             and Fireteam.Voice.GetSpeakerChannel(info.idx) or nil
         if speaking then
-            draw.SimpleText("🔊", kit.Font("small"), x + panelW - barW - 22, rowY,
-                kit.ColorA("primary", 240 * fx), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            local voiceIcon = kit.Material("fireteam/ui/coldwar/icon-voice")
+            local vIconSize = math.Round(12 * scale)
+            if voiceIcon and not voiceIcon:IsError() then
+                kit.DrawIcon(voiceIcon, x + panelW - barW - 22 - vIconSize / 2, rowY - vIconSize / 2, vIconSize, kit.ColorA("primary", 240 * fx))
+            else
+                draw.SimpleText(">", kit.Font("small"), x + panelW - barW - 22, rowY,
+                    kit.ColorA("primary", 240 * fx), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
         end
 
         -- 血量迷你条（右侧）
@@ -335,7 +360,7 @@ function Fireteam.Squad.OpenPanel()
     if mySquad then
         local infoLabel = scroll:Add("DLabel")
         infoLabel:SetText(L("ui_current_squad", mySquad.name, mySquad.faction)
-            .. (mySquad.locked and "  🔒" or ""))
+            .. (mySquad.locked and "  ■" or ""))
         kit.StyleLabel(infoLabel, { font = "medium", color = "primary" })
         infoLabel:Dock(TOP)
         infoLabel:DockMargin(0, 0, 0, 4)
@@ -504,7 +529,7 @@ function Fireteam.Squad.OpenPanel()
         joinBtn:SetTall(34)
         joinBtn:Dock(TOP)
         joinBtn:DockMargin(40, 3, 40, 3)
-        local lockTag = squad.locked and ("  🔒 " .. L("ui_locked_tag")) or ""
+        local lockTag = squad.locked and ("  ■ " .. L("ui_locked_tag")) or ""
         joinBtn:SetText(squad.name .. " [" .. squad.faction .. "] · "
             .. L("ui_member_count", #(squad.members or {})) .. lockTag)
         kit.StyleButton(joinBtn, { style = squad.locked and "ghost" or "primary" })

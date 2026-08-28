@@ -4,43 +4,43 @@
 -- 两份内容需保持同步。
 
 return {
-    theme_id = "crt_green",
-    name = "CRT Green Phosphor",
+    theme_id = "coldwar_military",
+    name = "Cold War Military",
 
     palette = {
-        primary          = "#33ff33",
-        secondary        = "#1a8c1a",
-        background       = "#0a0a0a",
-        surface          = "#101810",
-        border           = "#1e3a1e",
-        text             = "#d0ffd0",
-        text_muted       = "#6fa06f",
-        accent           = "#39ff6a",
-        success          = "#33ff33",
-        warning          = "#ffcc00",
-        danger           = "#ff3333",
-        info             = "#64b4ff",
-        squad_ally       = "#66ff66",
-        squad_leader     = "#ffff33",
-        marker_waypoint  = "#33ff88",
-        marker_enemy     = "#ff3333",
-        marker_objective = "#ffcc00",
-        marker_danger    = "#ff6600",
-        marker_rally     = "#64b4ff",
-        marker_medical   = "#ff6699"
+        primary          = "#c4a35a",   -- 沙金/军牌色
+        secondary        = "#8a8560",   -- 卡其暗调
+        background       = "#2a2e1e",   -- 橄榄军绿
+        surface          = "#1e2218",   -- 深橄榄
+        border           = "#3a3520",   -- 暗卡其边框
+        text             = "#d4c9a0",   -- 卡其文字
+        text_muted       = "#8a8560",   -- 暗卡其
+        accent           = "#b87333",   -- 铁锈橙（模板喷漆感）
+        success          = "#5a7a3a",   -- 军绿
+        warning          = "#c4a35a",   -- 沙金
+        danger           = "#8b3a2a",   -- 铁锈红
+        info             = "#6a8a9a",   -- 灰蓝
+        squad_ally       = "#6a9a4a",   -- 友军绿
+        squad_leader     = "#c4a35a",   -- 队长金
+        marker_waypoint  = "#b87333",   -- 路点铁锈
+        marker_enemy     = "#8b3a2a",   -- 敌方锈红
+        marker_objective = "#c4a35a",   -- 目标金
+        marker_danger    = "#b87333",   -- 危险橙
+        marker_rally    = "#6a8a9a",   -- 集结灰蓝
+        marker_medical   = "#7a5a6a"    -- 医疗暗紫
     },
 
     font = {
-        primary   = "VT323",
+        primary   = "Courier Prime",
         fallback  = "Courier New",
         size_base = 16
     },
 
     effects = {
-        scanlines = true,
-        flicker   = true,
-        vignette  = 0.3,
-        grain     = 0.15
+        scanlines = false,
+        flicker   = false,
+        vignette  = 0.25,
+        grain     = 0.08
     },
 
     elements = {

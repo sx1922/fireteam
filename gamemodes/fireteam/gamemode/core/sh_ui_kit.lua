@@ -187,7 +187,7 @@ if CLIENT then
     --- 主题面板底板：圆角填充 + 可选描边
     function kit.DrawPanel(x, y, w, h, opts)
         opts = opts or {}
-        local radius = opts.radius or 4
+        local radius = opts.radius or 0
         local fillAlpha = opts.fillAlpha or 200
         draw.RoundedBox(radius, x, y, w, h, kit.ColorA(opts.fill or "surface", fillAlpha))
         if opts.borderColor ~= false then
@@ -233,11 +233,11 @@ if CLIENT then
             local down = s.ftDownLerp
 
             if style == "ghost" then
-                draw.RoundedBox(4, 0, 0, w, h, Color(accent.r, accent.g, accent.b, 18 + hover * 40))
+                draw.RoundedBox(0, 0, 0, w, h, Color(accent.r, accent.g, accent.b, 18 + hover * 40))
                 surface.SetDrawColor(Color(accent.r, accent.g, accent.b, 90 + hover * 120))
                 surface.DrawOutlinedRect(0, 0, w, h, 1)
             else
-                draw.RoundedBox(4, 0, 0, w, h, Color(accent.r, accent.g, accent.b, 40 + hover * 60 - down * 30))
+                draw.RoundedBox(0, 0, 0, w, h, Color(accent.r, accent.g, accent.b, 40 + hover * 60 - down * 30))
                 surface.SetDrawColor(Color(accent.r, accent.g, accent.b, 140 + hover * 100))
                 surface.DrawOutlinedRect(0, 0, w, h, 1)
             end
@@ -308,12 +308,168 @@ if CLIENT then
     --- 进度条（0~1）
     function kit.DrawProgressBar(x, y, w, h, frac, colorName)
         frac = math.Clamp(frac or 0, 0, 1)
-        draw.RoundedBox(2, x, y, w, h, kit.ColorA("background", 200))
+        draw.RoundedBox(0, x, y, w, h, kit.ColorA("background", 200))
         if frac > 0 then
-            draw.RoundedBox(2, x, y, math.max(w * frac, 2), h, kit.ColorA(colorName or "primary", 230))
+            draw.RoundedBox(0, x, y, math.max(w * frac, 2), h, kit.ColorA(colorName or "primary", 230))
         end
         surface.SetDrawColor(kit.ColorA("border", 200))
         surface.DrawOutlinedRect(x, y, w, h, 1)
+    end
+
+    -- ─────────────────────────────────────
+    -- 冷战军事风格组件
+    -- 直角面板、卡片按钮、图标材质管理
+    -- ─────────────────────────────────────
+
+    --- 材质缓存：按路径懒加载 VTF 贴图
+    local matCache = {}
+    function kit.Material(path)
+        local m = matCache[path]
+        if m then return m end
+        m = Material(path)
+        matCache[path] = m
+        return m
+    end
+
+    --- 绘制贴图图标（自动居中缩放）
+    --- @param mat Material 材质
+    --- @param x number 左上角 x
+    --- @param y number 左上角 y
+    --- @param size number 宽高（正方形）
+    --- @param color table|nil 着色（缺省用 text 色）
+    function kit.DrawIcon(mat, x, y, size, color)
+        if not mat or mat:IsError() then return end
+        local c = color or kit.Color("text")
+        surface.SetMaterial(mat)
+        surface.SetDrawColor(c.r, c.g, c.b, c.a or 255)
+        surface.DrawTexturedRect(x, y, size, size)
+    end
+
+    --- 冷战直角面板（无圆角，薄边框）
+    function kit.DrawSharpPanel(x, y, w, h, opts)
+        opts = opts or {}
+        local fillAlpha = opts.fillAlpha or 180
+        surface.SetDrawColor(kit.ColorA(opts.fill or "surface", fillAlpha))
+        surface.DrawRect(x, y, w, h)
+        if opts.borderColor ~= false then
+            surface.SetDrawColor(kit.ColorA(opts.borderColor or "border", opts.borderAlpha or 200))
+            surface.DrawOutlinedRect(x, y, w, h, 1)
+        end
+    end
+
+    --- 卡片按钮：图标 + 标题 + 描述 + 快捷键
+    --- 替换 StyleButton 用于 ESC 菜单等功能入口
+    --- @param btn Panel DButton
+    --- @param opts { icon=Material, label=string, desc=string, keyHint=string, style="ghost"|"primary"|"danger" }
+    function kit.StyleCardButton(btn, opts)
+        opts = opts or {}
+        local style = opts.style or "ghost"
+
+        btn:SetText("")
+        btn.Paint = function(s, w, h)
+            s.ftHoverLerp = Lerp(FrameTime() * 12, s.ftHoverLerp or 0, s:IsHovered() and 1 or 0)
+            s.ftDownLerp = Lerp(FrameTime() * 15, s.ftDownLerp or 0, s:IsDown() and 1 or 0)
+
+            local hover = s.ftHoverLerp
+            local down = s.ftDownLerp
+            local colName = (style == "danger" and "danger") or (style == "primary" and "primary") or "primary"
+            local accent = kit.Color(colName)
+
+            -- 底色填充
+            local fillA = 12 + hover * 30 - down * 20
+            surface.SetDrawColor(Color(accent.r, accent.g, accent.b, fillA))
+            surface.DrawRect(0, 0, w, h)
+
+            -- 左侧高亮条（hover 时渐现）
+            local barW = 3 + hover * 2
+            surface.SetDrawColor(Color(accent.r, accent.g, accent.b, 80 + hover * 175))
+            surface.DrawRect(0, 0, barW, h)
+
+            -- 边框
+            surface.SetDrawColor(Color(accent.r, accent.g, accent.b, 60 + hover * 80))
+            surface.DrawOutlinedRect(0, 0, w, h, 1)
+
+            -- 图标
+            local iconX = 14
+            local iconSize = math.min(h - 12, 32)
+            local iconY = (h - iconSize) / 2
+            if opts.icon and not opts.icon:IsError() then
+                surface.SetMaterial(opts.icon)
+                local icCol = kit.ColorA("text", 200 + hover * 55)
+                surface.SetDrawColor(icCol.r, icCol.g, icCol.b, icCol.a)
+                surface.DrawTexturedRect(iconX, iconY, iconSize, iconSize)
+            end
+
+            -- 标题
+            local textX = opts.icon and (iconX + iconSize + 12) or 14
+            if opts.label then
+                draw.SimpleText(opts.label, kit.Font("body"), textX, h / 2 - 7,
+                    kit.ColorA("text", 235 - down * 60),
+                    TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            end
+
+            -- 描述（小字）
+            if opts.desc then
+                draw.SimpleText(opts.desc, kit.Font("small"), textX, h / 2 + 9,
+                    kit.ColorA("text_muted", 200),
+                    TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+            end
+
+            -- 快捷键标签（右侧）
+            if opts.keyHint and opts.keyHint ~= "" then
+                local kw = 40
+                local kx = w - kw - 10
+                surface.SetDrawColor(kit.ColorA("border", 120 + hover * 80))
+                surface.DrawOutlinedRect(kx, h / 2 - 9, kw, 18, 1)
+                draw.SimpleText(opts.keyHint, kit.Font("small"), kx + kw / 2, h / 2,
+                    kit.ColorA("text_muted", 200 + hover * 55),
+                    TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+            end
+        end
+        return btn
+    end
+
+    --- 绘制角标装饰（L形边角框）
+    function kit.DrawCornerBracket(x, y, size, corner, color)
+        corner = corner or "tl"
+        color = color or "primary"
+        local c = kit.ColorA(color, 150)
+        local len = size or 12
+        surface.SetDrawColor(c)
+        if corner == "tl" then
+            surface.DrawRect(x, y, len, 1)
+            surface.DrawRect(x, y, 1, len)
+        elseif corner == "tr" then
+            surface.DrawRect(x + 1, y, len, 1)
+            surface.DrawRect(x + len, y, 1, len)
+        elseif corner == "bl" then
+            surface.DrawRect(x, y + len, len, 1)
+            surface.DrawRect(x, y + 1, 1, len)
+        elseif corner == "br" then
+            surface.DrawRect(x + 1, y + len, len, 1)
+            surface.DrawRect(x + len, y + 1, 1, len)
+        end
+    end
+
+    --- 冷战风格分隔线（中央菱形 + 渐隐线）
+    function kit.DrawStencilDivider(x, y, w, color)
+        color = color or "border"
+        local c = kit.ColorA(color, 180)
+        surface.SetDrawColor(c)
+        -- 左半线
+        surface.DrawRect(x, y, w / 2 - 6, 1)
+        -- 右半线
+        surface.DrawRect(x + w / 2 + 6, y, w / 2 - 6, 1)
+        -- 中央菱形
+        local cx, cy = x + w / 2, y
+        draw.NoTexture()
+        surface.SetDrawColor(kit.ColorA(color, 220))
+        surface.DrawPoly({
+            { x = cx,     y = cy - 3 },
+            { x = cx + 4, y = cy },
+            { x = cx,     y = cy + 3 },
+            { x = cx - 4, y = cy },
+        })
     end
 
     -- ─────────────────────────────────────
@@ -335,7 +491,7 @@ if CLIENT then
             render.UpdateScreenEffectTexture()
             surface.DrawTexturedRect(-x, -y, ScrW(), ScrH())
         end
-        draw.RoundedBox(6, 0, 0, panel:GetWide(), panel:GetTall(), kit.ColorA("background", 170))
+        draw.RoundedBox(0, 0, 0, panel:GetWide(), panel:GetTall(), kit.ColorA("background", 170))
     end
 
     --- 创建主题化窗口
@@ -366,10 +522,10 @@ if CLIENT then
             if opts.blur then
                 kit.DrawBlur(s)
             else
-                draw.RoundedBox(6, 0, 0, pw, ph, kit.ColorA("background", 225))
+                draw.RoundedBox(0, 0, 0, pw, ph, kit.ColorA("background", 225))
             end
 
-            draw.RoundedBox(6, 0, 0, pw, ph, kit.ColorA("surface", 210))
+            draw.RoundedBox(0, 0, 0, pw, ph, kit.ColorA("surface", 210))
             surface.SetDrawColor(kit.ColorA("border", 220))
             surface.DrawOutlinedRect(0, 0, pw, ph, 1)
 

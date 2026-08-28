@@ -143,8 +143,18 @@ function Fireteam.HUD.DrawHealth(ply)
     local x, y = kit.ResolveAnchor(elem.position or "bottom_left", panelW, panelH)
 
     kit.DrawPanel(x, y, panelW, panelH, { fillAlpha = 180 })
+    kit.DrawCornerBracket(x, y, 8, "tl", "primary")
+    kit.DrawCornerBracket(x + panelW, y + panelH, 8, "br", "primary")
 
     local padX, padY = 12, 10
+
+    -- 医疗箱图标装饰
+    local hpIcon = kit.Material("fireteam/items/medkit")
+    local iconSize = math.Round(14 * (ScrH() / 1080))
+    if hpIcon and not hpIcon:IsError() then
+        kit.DrawIcon(hpIcon, x + panelW - padX - iconSize, y + padY - 2, iconSize, kit.ColorA("text_muted", 140))
+    end
+
     local hp = ply:Health()
     local maxHp = math.max(ply:GetMaxHealth(), 1)
     local armor = ply:Armor()
@@ -229,6 +239,8 @@ function Fireteam.HUD.DrawCompass(ply)
     local fx = kit.EffectsAlpha()
 
     kit.DrawPanel(x, y, width, 36, { fillAlpha = 130, borderColor = false })
+    kit.DrawCornerBracket(x, y, 8, "tl", "primary")
+    kit.DrawCornerBracket(x + width, y + 36, 8, "br", "primary")
 
     -- 刻度：每 5° 短线，每 15° 数字 / 方位字母（边缘 20° 渐隐）
     for deg = 0, 345, 5 do
@@ -290,7 +302,8 @@ function Fireteam.HUD.DrawCompass(ply)
 
     -- 中央高亮当前角度（白框 + 底色遮盖下方刻度）
     local boxW = math.Round(38 * scale)
-    draw.RoundedBox(2, cx - boxW / 2, y + 2, boxW, 32, kit.ColorA("background", 235))
+    surface.SetDrawColor(kit.ColorA("background", 235))
+    surface.DrawRect(cx - boxW / 2, y + 2, boxW, 32)
     surface.SetDrawColor(kit.ColorA("text", 210 * fx))
     surface.DrawOutlinedRect(cx - boxW / 2, y + 2, boxW, 32, 1)
     local display = string.format("%03d", math.Round((360 - ang) % 360) % 360)
@@ -299,14 +312,14 @@ function Fireteam.HUD.DrawCompass(ply)
 end
 
 -- ═══════════════════════════════════════
--- 特效层（扫描线 / 暗角 / 颗粒 / CRT 闪烁）
+-- 战场氛围特效层（暗角 / 颗粒 / 胶片闪烁）
 -- 全部由 UI Kit 提供，参数来自主题 effects.*
 -- ═══════════════════════════════════════
 function Fireteam.HUD.DrawEffects(theme)
     if not theme.effects then return end
     local fx = theme.effects
 
-    -- CRT 整体闪烁：偶发暗帧叠加
+    -- 旧式胶片闪烁：偶发暗帧叠加（由主题 effects.flicker 控制）
     local flickerAlpha = 0
     if fx.flicker then
         local t = CurTime()
