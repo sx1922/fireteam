@@ -79,6 +79,26 @@ transaction-safe setting-pack activation, deterministic client/server module
 loading, inventory and weapon filtering are implemented. Replay/recording and
 additional official campaigns remain future work.
 
+## 代码审查结果（2026-08-28） / Code Review Results (2026-08-28)
+
+本轮按 [代码审查计划](docs/CODE_REVIEW_PLAN.md) 执行了静态架构与生命周期审查，结论如下：
+
+### 已确认并修复 / Confirmed and Fixed
+
+- **P1 设定包热切换半初始化**：激活流程已改为先加载并校验核心数据，失败时保留旧包状态。
+- **P1 客户端加载顺序不确定**：客户端现在复用模块优先级和字母序排序，与服务端一致。
+- **P2 API 接受无效剧本**：`SetScenario` 现在会拒绝当前设定包不存在的剧本 ID。
+- **P2 核心数据缺失静默通过**：支持 `required_data`，默认校验 `factions/classes/map_rules`。
+
+### 当前待跟踪 / Open Follow-ups
+
+- **P2 fallback 清单重复维护**：服务端和客户端各自维护模块 fallback 列表，新增模块存在漂移风险；后续应提取共享 manifest。
+- **P2 运行时覆盖不足**：静态测试无法验证 GMod 网络、HUD、第三方基座和实体生命周期；需要按计划完成真实服务器验收。
+
+验证证据：Lua 5.1 冒烟测试 36/36 通过，修改文件语法检查通过，`git diff --check` 通过。上述静态结果不等同于 GMod 运行时发布就绪。
+
+The review followed the [Code Review Plan](docs/CODE_REVIEW_PLAN.md). Setting-pack activation is transactional, client/server module ordering is deterministic, invalid scenario API requests are rejected, and required pack data is validated. Remaining P2 work is consolidating fallback manifests; live GMod acceptance is still required for networking, HUD, third-party bases, and entity lifecycles.
+
 ## 概述
 
 FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
