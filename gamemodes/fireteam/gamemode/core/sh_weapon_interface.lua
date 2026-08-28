@@ -66,23 +66,48 @@ end
 -- 按 Tag 过滤
 function Fireteam.WeaponInterface.FilterByTags(requiredTags, bannedTags)
     local result = {}
+    local settingData = Fireteam.Setting and Fireteam.Setting.GetData and Fireteam.Setting.GetData("weapons") or nil
+    local globalFilter = istable(settingData) and settingData.global_filter or nil
+    local allowedEra = istable(globalFilter) and globalFilter.allowed_era or nil
+    local globalBanned = istable(globalFilter) and globalFilter.banned_tags or nil
+    local aliases = {
+        carbine = { "carbine", "assault_rifle", "rifle" },
+        rifle = { "rifle", "assault_rifle" },
+    }
+    local function hasTag(tags, wanted)
+        if table.HasValue(tags, wanted) then return true end
+        for _, alias in ipairs(aliases[wanted] or {}) do
+            if table.HasValue(tags, alias) then return true end
+        end
+        return false
+    end
+    local function hasAnyTag(tags, wantedTags)
+        for _, wanted in ipairs(wantedTags or {}) do
+            if table.HasValue(tags, wanted) then return true end
+        end
+        return false
+    end
     for _, data in pairs(weaponCache) do
         local hasAll = true
         for _, tag in ipairs(requiredTags or {}) do
-            if not table.HasValue(data.tags, tag) then
+            if not hasTag(data.tags, tag) then
                 hasAll = false
                 break
             end
         end
         if hasAll then
             local isBanned = false
-            for _, tag in ipairs(bannedTags or {}) do
+            local allBanned = {}
+            for _, tag in ipairs(globalBanned or {}) do table.insert(allBanned, tag) end
+            for _, tag in ipairs(bannedTags or {}) do table.insert(allBanned, tag) end
+            for _, tag in ipairs(allBanned) do
                 if table.HasValue(data.tags, tag) then
                     isBanned = true
                     break
                 end
             end
-            if not isBanned then
+            local eraAllowed = not allowedEra or hasAnyTag(data.tags, allowedEra)
+            if not isBanned and eraAllowed then
                 table.insert(result, data)
             end
         end

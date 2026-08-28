@@ -38,6 +38,6 @@ return {
     ["tfa_nam_svd"] = { tags = { "warsaw_pact", "coldwar_east", "coldwar" }, category = "dmr" },
 
     -- 手雷补映射：F1（华约）/ M67（北约）破片手雷，供 grenade 槽匹配
-    ["weapon_f1gnade"] = { tags = { "warsaw_pact", "coldwar_east", "frag_grenade", "explosive" }, category = "grenade" },
-    ["weapon_m67gnade"] = { tags = { "nato", "coldwar_west", "frag_grenade", "explosive" }, category = "grenade" },
+    ["weapon_f1gnade"] = { tags = { "warsaw_pact", "coldwar_east", "coldwar", "frag_grenade", "explosive" }, category = "grenade" },
+    ["weapon_m67gnade"] = { tags = { "nato", "coldwar_west", "coldwar", "frag_grenade", "explosive" }, category = "grenade" },
 }

@@ -165,7 +165,12 @@ hook.Add(Fireteam.HOOKS.WEAPON_DISCOVER, "FIRETEAM.CW2Adapter", function()
             -- 应用设定包覆盖
             local ov = overrides[className]
             if istable(ov) then
-                if istable(ov.tags) then ftData.tags = ov.tags end
+                if istable(ov.tags) then
+                    local merged, seen = {}, {}
+                    for _, tag in ipairs(ftData.tags) do if not seen[tag] then seen[tag] = true table.insert(merged, tag) end end
+                    for _, tag in ipairs(ov.tags) do if not seen[tag] then seen[tag] = true table.insert(merged, tag) end end
+                    ftData.tags = merged
+                end
                 if ov.category then ftData.category = ov.category end
             end
 
