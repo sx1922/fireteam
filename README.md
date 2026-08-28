@@ -99,6 +99,18 @@ additional official campaigns remain future work.
 
 The review followed the [Code Review Plan](docs/CODE_REVIEW_PLAN.md). Setting-pack activation is transactional, client/server module ordering is deterministic, invalid scenario API requests are rejected, and required pack data is validated. Remaining P2 work is consolidating fallback manifests; live GMod acceptance is still required for networking, HUD, third-party bases, and entity lifecycles.
 
+### 深审进展（未完） / Deep Review In Progress
+
+本轮深审尚未结束，新增确认的待修复风险：
+
+- **P1 目标数据契约不足**：设定包目前只校验 `map_rules` 是表，未逐项校验 objective 的 `type`、处理函数和必需参数；异常目标可能在 ACTIVE Think 阶段触发 nil 调用。需要增加加载期 schema 校验和安全跳过策略。
+- **P2 网络入口缺少统一限流层**：`ITEM_MOVE`、`ITEM_USE`、标记和部分管理请求分别自行校验，但没有统一的 per-player 频率门控；恶意或误触发的高频请求可能造成快照广播和服务器开销。需要统一 RateLimiter 或消息级限流声明。
+- **P2 fallback manifest 仍重复维护**：服务端与客户端清单尚未合并为共享 manifest。
+
+因此，本 README 记录的是阶段性审查结果，不代表代码已经完成全部审查或达到运行时发布标准。
+
+The deep review is still in progress. Newly confirmed open risks are incomplete objective-data schema validation, the absence of a shared per-player network rate-limit layer, and duplicated client/server fallback manifests. This is a staged review report, not a claim of runtime release readiness.
+
 ## 概述
 
 FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
