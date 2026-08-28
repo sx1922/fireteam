@@ -34,6 +34,51 @@
 - [贡献指南](#贡献指南)
 - [许可证](#许可证)
 
+## English
+
+FIRETEAM is a modular Garry's Mod tactical fireteam framework. It separates
+gameplay code from data-driven setting packs and bridges optional weapon and
+vehicle bases through adapters. The repository ships with the **Iron Curtain
+Germany** Cold War pack and a blank `_template` pack.
+
+### Architecture
+
+- **Core:** configuration, networking, API registry, localization, module and
+  setting-pack loaders, weapon/vehicle abstraction.
+- **Modules:** squad, class/loadout, rounds, PvP/PvE, AI teammates, inventory,
+  vitals, stamina, voice, commander, HUD and tactical map.
+- **Adapters:** ARC9, TFA, CW 2.0, LVS and Simfphys; missing bases are skipped.
+- **Setting packs:** factions, classes, scenarios, weapon pools, items, HUD
+  themes and localized text are isolated per pack and can be hot-switched.
+
+### Installation and validation
+
+Copy the repository's `gamemodes/fireteam` directory into
+`garrysmod/gamemodes/`, or build a GMA from the `garrysmod/gamemodes` folder:
+
+```bash
+gmad create -folder fireteam -name "FIRETEAM" -out "fireteam.gma"
+```
+
+Start GMod, select **FIRETEAM**, and verify the server log reports successful
+module loading, setting-pack activation and weapon discovery. The repository
+smoke test can be run with Lua 5.1:
+
+```bash
+lua5.1 test/smoke_test.lua .
+```
+
+Static tests do not replace an in-server acceptance test. After installing the
+optional weapon bases, test class loadouts, PvP/PvE transitions, AI spawning,
+hot-swapping setting packs, keybinds and HUD rendering on a live GMod server.
+
+### Current status
+
+The project is alpha software. The core framework, Cold War scenarios,
+transaction-safe setting-pack activation, deterministic client/server module
+loading, inventory and weapon filtering are implemented. Replay/recording and
+additional official campaigns remain future work.
+
 ## 概述
 
 FIRETEAM 是一个 Garry's Mod 战术小队游戏模式框架。它提供：
