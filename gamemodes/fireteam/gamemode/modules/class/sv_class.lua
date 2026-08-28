@@ -95,10 +95,21 @@ function Fireteam.Class.ApplyLoadout(ply, classData)
         end
 
         if #candidates > 0 then
-            -- 随机取一个匹配的（后续可加选择逻辑）
-            local chosen = candidates[math.random(#candidates)]
-            if chosen and chosen.base then
-                ply:Give(chosen.base)
+            -- 随机尝试候选；Give 失败时继续寻找可用武器，避免静默空槽。
+            local start = math.random(#candidates)
+            local granted = false
+            for offset = 0, #candidates - 1 do
+                local chosen = candidates[((start + offset - 1) % #candidates) + 1]
+                if chosen and chosen.base and weapons.GetStored(chosen.base) then
+                    ply:Give(chosen.base)
+                    if ply:HasWeapon(chosen.base) then
+                        granted = true
+                        break
+                    end
+                end
+            end
+            if not granted and not slotDef.optional then
+                ply:ChatPrint("[FIRETEAM] ⚠ Failed to equip slot '" .. slotName .. "'")
             end
         elseif Fireteam.Inventory and Fireteam.Inventory.GrantForSlot
             and Fireteam.Inventory.GrantForSlot(ply, slotName, classData.faction) then
