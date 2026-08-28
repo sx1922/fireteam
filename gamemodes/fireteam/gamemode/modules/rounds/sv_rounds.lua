@@ -162,6 +162,22 @@ end
 local function EnterBriefing(nextRound)
     if nextRound then machine.roundNumber = machine.roundNumber + 1 end
 
+    -- 地图-剧本绑定校验：若当前地图不在剧本声明的 maps 列表中，跳过该剧本
+    local scenario = Fireteam.Rounds.ResolveScenario()
+    if scenario and scenario.maps and #scenario.maps > 0 then
+        local curMap = game.GetMap()
+        local mapOK = false
+        for _, m in ipairs(scenario.maps) do
+            if m == curMap then mapOK = true break end
+        end
+        if not mapOK then
+            Fireteam.Log.Warn("回合", string.format("当前地图 %s 不在剧本 %s 的地图列表中（要求: %s），回退到默认剧本",
+                curMap, scenario.id, table.concat(scenario.maps, ", ")))
+            Fireteam.Config.Set("rounds.scenario", "")  -- 清空指定，回到 default_scenario
+            scenario = Fireteam.Rounds.ResolveScenario() -- 重新解析
+        end
+    end
+
     -- PvE：先布设 AI 单位再构建目标——eliminate 的参战方快照必须包含 AI 阵营
     if Fireteam.PvE then Fireteam.PvE.OnEnterBriefing() end
 
