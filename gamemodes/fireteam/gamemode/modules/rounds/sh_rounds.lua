@@ -453,6 +453,7 @@ end
 
 local function CountFactionInZone(zonePos, radius)
     local byFaction = {}
+    if not isvector(zonePos) then return byFaction end
     local r2 = radius * radius
     for _, c in ipairs(AliveCombatants()) do
         if zonePos:DistToSqr(c.pos) <= r2 then
@@ -488,6 +489,7 @@ Fireteam.Rounds.RegisterObjective("hold_zone", {
 
     think = function(ctx, dt)
         if ctx.data.capturedBy then return end
+        if not isvector(ctx.data.zonePos) then return end
         local radius      = tonumber(ctx.template.radius) or 200
         local captureTime = tonumber(ctx.template.capture_time) or 30
         local counts      = CountFactionInZone(ctx.data.zonePos, radius)
@@ -690,6 +692,7 @@ Fireteam.Rounds.RegisterObjective("extract", {
 
     think = function(ctx, dt)
         if ctx.data.doneBy then return end
+        if not isvector(ctx.data.zonePos) then return end
         local radius   = tonumber(ctx.template.radius) or 200
         local holdTime = tonumber(ctx.template.hold_time) or 45
         local counts   = CountFactionInZone(ctx.data.zonePos, radius)

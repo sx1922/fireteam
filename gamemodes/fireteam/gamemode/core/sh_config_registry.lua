@@ -121,8 +121,9 @@ end
 function Fireteam.Config.Reset(key)
     local entry = registry[key]
     if entry then
-        Fireteam.Config.Set(key, entry.default)
+        return Fireteam.Config.Set(key, entry.default)
     end
+    return false
 end
 
 -- ─────────────────────────────────────

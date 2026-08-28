@@ -256,6 +256,7 @@ local function ThrowProjectile(ply, def)
     ent:SetBlastRadius(tonumber(throw.radius) or 350)
     ent:SetBlastDamage(tonumber(throw.damage) or 90)
     ent.Owner_ = ply
+    ent.FT_Attacker = ply
     ent:Spawn()
 
     local phys = ent:GetPhysicsObject()
