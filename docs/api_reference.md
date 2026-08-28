@@ -359,3 +359,132 @@ Fireteam.Inventory.RegisterUseHandler(Fireteam.INVENTORY_CATEGORY.CONSUMABLE,
 - **客户端禁读 `Setting.Discovered`**：必须走网络同步或带客户端回退路径的封装。
 - **`Squad.members` 的 key 是 Player**，不是 id 索引数组；查询用 `GetSquadMembers(squadId)`。
 - **API 无管理员校验**：面玩家的入口在校验，服务端直调 API 信任调用方。
+
+---
+
+## L. 第三方 DIY 快速上手
+
+> 目标：让不熟悉 FIRETEAM 源码的人，能照抄一个最小 addon 接入自己的内容。
+> 全部是 `lua/autorun/` 里的独立 .lua，不修改 FIRETEAM 本体。
+
+### 概览：四条扩展路径与注册时机
+
+| 你想加什么 | 入口 | 注册时机 |
+|-----------|------|----------|
+| 自定义**目标类型** | `Fireteam.Rounds.RegisterObjective(id, def)` | 文件加载期即可（逻辑跑在回合内） |
+| 自定义**剧本** | `Fireteam.Rounds.RegisterScenario(id, data)` | 文件加载期即可 |
+| 接入自己的**武器/载具** | `Fireteam.HOOKS.WEAPON_DISCOVER / VEHICLE_DISCOVER` | 在钩子回调里，每次刷新重枚举 |
+| 自定义**物品效果** | `Fireteam.Inventory.RegisterUseHandler(category, fn)` | 设定包激活后 |
+
+### 0. 最小骨架（放 `lua/autorun/sh_myaddon.lua`）
+
+```lua
+-- 只在前台/后台各自需要的端跑；这里用共享脚本加个服务端守卫。
+if not SERVER then return end
+
+-- 所有 Fireteam.API / Fireteam.X 都是惰性解析，模块缺失时返回 nil/false，
+-- 所以无需担心加载顺序。这一行是防 FIRETEAM 未装时不报错。
+if not Fireteam or not Fireteam.Rounds then return end
+
+-- ... 按下面某条路径接入 ...
+```
+
+### 1. 自定义目标类型（最难但也最自由）
+
+对应 `RegisterObjective`（`docs` F2 节）。占区范例：
+
+```lua
+Fireteam.Rounds.RegisterObjective("my_hold", {
+    label = "objective_my_hold",            -- locale key，客户端显示目标名
+    onStart = function(ctx) ctx.data.progress = 0 end,
+    think   = function(ctx, dt) ctx.data.progress = math.min(1, ctx.data.progress + dt) end,
+    isComplete = function(ctx) return ctx.data.progress >= 1, "usa" end,  -- done, winnerFaction
+    getProgress = function(ctx) return ctx.data.progress or 0 end,
+})
+```
+
+之后在剧本 `objectives` 里写 `{ type = "my_hold", ... }` 即可被 `PickObjectiveTemplate` 选用。
+
+### 2. 自定义剧本
+
+对应 `RegisterScenario`（`docs` F1 节）。完整剧本范例：
+
+```lua
+Fireteam.Rounds.RegisterScenario("my_battle", {
+    name = "My Battle", name_zh = "我的战役",
+    timings = { round_time = 300, briefing = 10 },
+    spawns = {
+        usa  = { { pos = { anchor = "map_center", offset = { x = -500, y = 0, z = 64 } } } },
+        ussr = { { pos = { anchor = "map_center", offset = { x = 500, y = 0, z = 64 } } } },
+    },
+    objectives = {
+        { name = "Hold Point", type = "hold_zone",
+          zone = { anchor = "map_center", offset = { x = 0, y = 0 } },
+          radius = 200, capture_time = 30 },
+    },
+    pve = { player_factions = {"usa"}, ai_factions = {"ussr"}, ai_behavior = "advance" },
+})
+```
+
+> ⚠️ `data` 被框架引用，注册后**勿原地改**；想改字段用 `AddScenarioObjective` / `SetScenarioTimings` 系列。
+
+### 3. 接入自己的武器 / 载具
+
+武器（`docs` G11）：基座守卫 + 发现钩子，每次刷新重枚举。
+
+```lua
+if not MYBASE then return end          -- 基座 addon 未装就跳过
+
+hook.Add(Fireteam.HOOKS.WEAPON_DISCOVER, "MyAddon.Weapons", function(cache)
+    for _, swep in ipairs(weapons.GetList()) do
+        if swep.MYBASE then
+            Fireteam.WeaponInterface.Register({
+                base = swep.ClassName, displayName = swep.PrintName,
+                tags = { "nato", "coldwar_west", "rifle" },   -- 决定发给哪国哪职业
+                category = Fireteam.WEAPON_CATEGORY.RIFLE,
+            })
+        end
+    end
+end)
+```
+
+载具（`docs` G12）：把钩子换成 `VEHICLE_DISCOVER`、注册函数换成 `VehicleInterface.Register`，
+tags 换成 `{ "warsaw_pact", "coldwar_east", "apc" }` 之类。
+
+### 4. 自定义物品效果
+
+对应 `RegisterUseHandler`（`docs` G10）。
+
+```lua
+-- 若没有 FirETEAM 物品系统则跳过
+if not (Fireteam.Inventory and Fireteam.Inventory.RegisterUseHandler) then return end
+
+Fireteam.Inventory.RegisterUseHandler(Fireteam.INVENTORY_CATEGORY.CONSUMABLE,
+    function(ply, itemId, itemDef)
+        if itemId ~= "my_item" then return false end    -- 不归你管，交回框架
+        -- ... 你的效果逻辑（如给玩家回血）...
+        return true                                     -- true = 已消费
+    end)
+```
+
+> 覆盖注意：`RegisterUseHandler` 同大类只保留最后一个处理器。若想接管绷带/医疗包
+> 这类已被 FIRETEAM 自身模块占据的大类，需与其兼容（看 `docs` G10 模块函数）。
+
+---
+
+## M. 常见问题（DIY 视角）
+
+**Q: 我的内容完全不生效？**
+A: 先确认 FIRETEAM 已加载（`print(Fireteam and Fireteam.VERSION)`），再确认入口对端
+（服务端逻辑要放 `if not SERVER then return end` 之后）。API 是惰性解析，模块未载不会报错只会静默失败。
+
+**Q: 武器没出现在发放池里？**
+A: 检查 `tags` 是否与目标职业的槽位标签匹配（如 `lmg`/`dmr`/`assault_rifle`），
+以及是否被 `weapons.lua` 的 `global_filter.banned_tags` 或 `restrictions` 拦掉。
+
+**Q: 监听器跑了很多次？**
+A: 正常。`WeaponInterface.RunDiscovery()` 每次清空缓存再跑钩子；你的回调要每次都重枚举注册，而不是只注册一次。
+
+**Q: 客户端能直接读设定包数据吗？**
+A: 不能读 `Fireteam.Setting.Discovered`（服务端表）。客户端走网络同步或
+`Fireteam.API.GetSettingData` 这类带客户端回退的封装。

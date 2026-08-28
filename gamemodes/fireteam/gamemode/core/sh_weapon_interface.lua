@@ -26,6 +26,25 @@ local weaponCache = {}  -- { className = FTWeaponData }
 -- ─────────────────────────────────────
 -- 注册武器（由适配器调用）
 -- ─────────────────────────────────────
+-- 【第三方 DIY 入口】想让自己的武器被 FIRETEAM 识别、按阵营/职业发放，按下面两步：
+--   ① 挂发现钩子（服务端武器扫描完成时触发；会先清空缓存再跑所有监听器）：
+--        hook.Add(Fireteam.HOOKS.WEAPON_DISCOVER, "MyAddon.Weapon", function(weaponList)
+--            if not MY_BASE_CLASS then return end          -- 基座未装则跳过
+--            for _, swep in ipairs(weapons.GetList()) do
+--                if swep.MY_BASE_CLASS then
+--                    Fireteam.WeaponInterface.Register({
+--                        base        = swep.ClassName,
+--                        displayName = swep.PrintName,
+--                        tags        = { "nato", "coldwar_west", "rifle" },
+--                        category    = Fireteam.WEAPON_CATEGORY.RIFLE,
+--                    })
+--                end
+--            end
+--        end)
+--   ② 在此函数里注册即可。tags 决定这把枪能被哪国的哪个职业槽位选到
+--      （如 "assault_rifle"、"lmg"、"dmr" 对应职业主武器槽）。
+--   注意：监听器会被多次触发（每次武器池刷新），必须每次重新枚举来源并注册，
+--   不要在文件顶层只注册一次。
 function Fireteam.WeaponInterface.Register(data)
     if not data or not data.base then
         Fireteam.Log.Error("武器接口", "Register 收到无效数据（缺少 base 字段）")

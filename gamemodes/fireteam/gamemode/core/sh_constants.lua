@@ -176,6 +176,16 @@ Fireteam.NET = {
 -- ═══════════════════════════════════════
 -- Hook 命名空间（防止与其他 addon 冲突）
 -- ═══════════════════════════════════════
+-- 【第三方 DIY 入口】通过 hook.Add(Fireteam.HOOKS.X, "MyAddon.Tag", fn) 订阅框架事件。
+-- 常用钩子与回调参数：
+--   Fireteam.HOOKS.WEAPON_DISCOVER / VEHICLE_DISCOVER : cache 表 —— 适配器注册点
+--   Fireteam.HOOKS.ROUND_STATE_CHANGED                : oldState, newState, round
+--   Fireteam.HOOKS.ROUND_ENDED                        : winner, reason, scores
+--   Fireteam.HOOKS.CLASS_ASSIGNED                     : ply, classId
+--   Fireteam.HOOKS.VITALS_STATE_CHANGED               : ply, oldState, newState
+--   Fireteam.HOOKS.COMMANDER_CHANGED                  : faction, newCommander|nil
+--   Fireteam.HOOKS.VOTE_PASSED / VOTE_FAILED          : topic, winnerOption
+-- 完整列表见 docs/api_reference.md H 节；不要在表内硬编码新钩子，扩展点位见各模块注释。
 Fireteam.HOOKS = {
     MODULE_LOADED       = "Fireteam.Module.Loaded",
     MODULE_UNLOADED     = "Fireteam.Module.Unloaded",  -- 保留：运行时卸载尚未实现，当前无触发点

@@ -206,6 +206,18 @@ end
 -- ─────────────────────────────────────
 
 --- 注册/替换一个完整剧本；id 与内置冲突时覆盖内置。data 由框架引用，注册后勿再原地修改。
+-- 【第三方 DIY 入口】新增一个可选的完整剧本（如把 "berlin" 改成你自己的战役）。
+--   data 形状与设定包 map_rules.rounds.scenarios 里的条目一致：
+--     Fireteam.Rounds.RegisterScenario("my_battle", {
+--         name = "My Battle", name_zh = "我的战役",
+--         timings  = { round_time = 300, briefing = 10 },
+--         spawns   = { usa = { { pos = { anchor = "map_center", offset = { x = -500, y = 0, z = 64 } } } } },
+--         objectives = { { name = "Hold X", type = "hold_zone",
+--                          zone = { anchor = "map_center", offset = { x = 0, y = 0 } },
+--                          radius = 200, capture_time = 30 } },
+--         pve      = { player_factions = {"usa"}, ai_factions = {"ussr"}, ai_behavior = "advance" },
+--     })
+--   data 被框架引用，注册后请勿原地修改；改字段请用下方 AddScenarioObjective/SetScenarioTimings 系列。
 function Fireteam.Rounds.RegisterScenario(id, data)
     if not isstring(id) or not istable(data) then return false end
     Fireteam.Rounds.CustomScenarios[id] = data
@@ -331,13 +343,24 @@ Fireteam.Log.Info("Rounds", "✓ 共享定义已加载")
 Fireteam.Rounds.Objectives = Fireteam.Rounds.Objectives or {}
 
 --- 注册目标类型
---- def 字段：
----   label                   显示用 locale key
----   onStart(ctx)            构建实例数据（可选）
----   think(ctx, dt)          服务端逐帧推进（必需）
----   isComplete(ctx)         -> done(bool), winnerFaction(string|nil)
----   getProgress(ctx)        -> 0..1（HUD 进度条）
----   describe(ctx)           -> 发给客户端的渲染参数表（可选）
+-- 【第三方 DIY 入口】自定义一种「任务目标」类型（占区/歼灭/摧毁/撤离之外的新玩法）。
+--   def 字段：
+--     label                 显示用 locale key（客户端据此显示目标名）
+--     onStart(ctx)          可选，构建实例数据（存 ctx.data.X）
+--     think(ctx, dt)        服务端逐帧推进（必需，dt 为帧间隔）
+--     isComplete(ctx)       -> done(bool), winnerFaction(string|nil)（必需，判定完成）
+--     getProgress(ctx)      -> 0..1（HUD 进度条，可选）
+--     describe(ctx)         -> 客户端渲染参数表（可选，发给 cl_rounds_ui）
+--   def 字段：label 显示名；think/isComplete 见下。
+-- 示例（占领圈目标的最小实现）：
+--     Fireteam.Rounds.RegisterObjective("my_hold", {
+--         label = "objective_my_hold",
+--         onStart = function(ctx) ctx.data.progress = 0 end,
+--         think   = function(ctx, dt) ctx.data.progress = math.min(1, ctx.data.progress + dt) end,
+--         isComplete = function(ctx) return ctx.data.progress >= 1, "usa" end,
+--         getProgress = function(ctx) return ctx.data.progress or 0 end,
+--     })
+-- 注册后即可在剧本 objectives 里用 type = "my_hold" 引用。
 function Fireteam.Rounds.RegisterObjective(id, def)
     def.id = id
     Fireteam.Rounds.Objectives[id] = def

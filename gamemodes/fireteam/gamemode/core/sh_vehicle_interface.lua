@@ -22,8 +22,23 @@ local vehicleCache = {}  -- { className = FTVehicleData }
 --- @field weapons table         载具武器 [{type, ammo}]
 
 -- ─────────────────────────────────────
--- 注册
+-- 注册（由适配器调用）
 -- ─────────────────────────────────────
+-- 【第三方 DIY 入口】让自己的载具被 FIRETEAM 识别、按阵营/角色发放：
+--   ① 挂发现钩子（载具扫描完成时触发）：hook.Add(Fireteam.HOOKS.VEHICLE_DISCOVER, "MyAddon.Vehicle", function(vehicleList) ... end)
+--   ② 回调里枚举来源（如 simfphys.GetVehicles() / scripted_ents.GetList()），
+--      对每个符合的调用本函数注册。
+--   FT 载具数据字段示例：
+--        Fireteam.VehicleInterface.Register({
+--            base        = "sent_class",
+--            displayName = "...",
+--            role        = Fireteam.VEHICLE_ROLE.APC,      -- TANK/APC/RECON/AIR/TRANSPORT/UTILITY
+--            tags        = { "warsaw_pact", "coldwar_east", "apc" },
+--            seats       = { { role = "driver" } },
+--            capacity    = 8, armorLevel = 2, speedTier = "medium",
+--            radioChannels = { "squad", "command" },
+--        })
+--   注意：监听器会被多次触发，须每次重新枚举来源注册。
 function Fireteam.VehicleInterface.Register(data)
     if not data or not data.base then return false end
 

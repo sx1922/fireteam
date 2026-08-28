@@ -1,0 +1,27 @@
+{
+  "extends": ["@commitlint/config-conventional"],
+  "rules": {
+    "scope-enum": [2, "always", [
+      "core", "api", "content", "docs", "ci",
+      "module:squad", "module:class", "module:marker", "module:voice",
+      "module:hud", "module:rounds", "module:pve", "module:vitals",
+      "module:inventory", "module:commander", "module:resupply",
+      "module:ai", "module:ballistics", "module:suppression",
+      "module:stamina", "module:tacmap", "module:spectate",
+      "module:seats", "module:admin", "module:packeditor",
+      "module:vote", "module:mainmenu", "module:medical",
+      "adapter:arc9", "adapter:tfa", "adapter:cw2",
+      "adapter:simfphys", "adapter:lvs",
+      "entity:ft_ammo_crate", "entity:ft_grenade_proj", "entity:ft_bot_teammate",
+      "setting:coldwar", "setting:_template",
+      "locale:en", "locale:zh-cn", "locale:zh-hant",
+      "locale:de", "locale:es", "locale:fr", "locale:ja", "locale:ko", "locale:ru"
+    ]],
+    "type-enum": [2, "always", [
+      "feat", "fix", "refactor", "perf", "style", "docs",
+      "test", "build", "chore", "revert", "i18n", "data"
+    ]],
+    "header-max-length": [2, "always", 72],
+    "body-leading-blank": [2, "always"]
+  }
+}

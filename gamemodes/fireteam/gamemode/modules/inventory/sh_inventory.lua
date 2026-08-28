@@ -46,6 +46,17 @@ function Fireteam.Inventory.ClearItems()
 end
 
 --- 注册某大类的使用处理器；返回 false 表示拒绝消耗（例如无目标可治）
+-- 【第三方 DIY 入口】自定义物品「使用效果」的唯一挂接点。让某物品在
+-- 快捷键/双击使用时触发你的逻辑（如绷带回血、弹药盒装填）：
+--   Fireteam.Inventory.RegisterUseHandler(Fireteam.INVENTORY_CATEGORY.CONSUMABLE,
+--       function(ply, itemId, itemDef)
+--           if itemId ~= "my_item" then return false end   -- 不归你管，交回框架
+--           -- ... 你的效果逻辑 ...
+--           return true                                    -- 返回 true 表示已消费
+--       end)
+-- 大类常量：CONSUMABLE（读完条生效）/ THROWABLE（手雷，内置抛掷）/ DEPLOYABLE（可放置）。
+-- 已注册的大类会被覆盖；需在设定包激活后注册。返回 false 时框架会给玩家
+-- "该物品无效果"提示并不消耗。
 function Fireteam.Inventory.RegisterUseHandler(category, fn)
     useHandlers[category] = fn
 end
