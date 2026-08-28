@@ -322,7 +322,7 @@ end)
 -- 网格拖拽落位（服务端权威碰撞校验）
 net.Receive(Fireteam.NET.ITEM_MOVE, function(_, ply)
     local itemId = net.ReadString()
-    local cellIndex = net.ReadUInt(6)
+    local cellIndex = net.ReadUInt(7)
     local x = net.ReadUInt(4)
     local y = net.ReadUInt(4)
     local cells = ply.FT_ItemCells

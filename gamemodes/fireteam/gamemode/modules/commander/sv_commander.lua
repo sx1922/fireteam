@@ -115,8 +115,11 @@ local function SettleElection(faction)
     if not el then return end
 
     local tally = {}
-    for _, candIdx in pairs(el.votes) do
-        tally[candIdx] = (tally[candIdx] or 0) + 1
+    for voterIdx, candIdx in pairs(el.votes) do
+        -- 计票时跳过已失效的候选（中途离队/断线被移除）
+        if el.candidates[candIdx] then
+            tally[candIdx] = (tally[candIdx] or 0) + 1
+        end
     end
 
     local bestIdx, bestN, tie = nil, 0, false
@@ -291,6 +294,12 @@ local function ValidatePlayer(ply)
         if idx and el.candidates[idx] then
             local sq = Fireteam.Squad.GetPlayerSquad(ply)
             if not (sq and sq.faction == faction and sq.leader == ply and sq.members[ply]) then
+                -- 清除失格候选人的全部选票，防止陈旧票数影响结算
+                for voterIdx, votedForIdx in pairs(el.votes) do
+                    if votedForIdx == idx then
+                        el.votes[voterIdx] = nil
+                    end
+                end
                 el.candidates[idx] = nil
             end
         end

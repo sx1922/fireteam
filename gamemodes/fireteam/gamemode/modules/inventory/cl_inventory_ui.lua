@@ -194,7 +194,7 @@ function Fireteam.Inventory.OpenBackpack()
             and Fireteam.Inventory.CanPlaceCells(cells, gx, gy, dragState.w, dragState.h, dragState.index) then
             net.Start(Fireteam.NET.ITEM_MOVE)
                 net.WriteString(dragState.id)
-                net.WriteUInt(dragState.index, 6)
+                net.WriteUInt(dragState.index, 7)
                 net.WriteUInt(math.Clamp(gx, 0, 15), 4)
                 net.WriteUInt(math.Clamp(gy, 0, 15), 4)
             net.SendToServer()

@@ -77,8 +77,19 @@ end
 local lootBodies = {}   -- { [ragdoll] = { ammo={typeId=count}, items={id=count} } }
 
 --- 死亡布娃娃的战利品快照（harness 可测）
+--- B7 修复：优先消费 EnterDowned 缴械前的快照（FT_DeathLoot），
+--- 因为 StripWeapons 后 GetWeapons() 已空、0.2s 后回退枚举只会得到空表。
+--- 快照缺失时（非 vitals 流程的死亡，如 kill 命令）回退到当帧武器枚举。
 function Fireteam.Resupply.BuildLoot(victim)
     local ammo, items = {}, {}
+
+    if istable(victim.FT_DeathLoot) then
+        local snap = victim.FT_DeathLoot
+        victim.FT_DeathLoot = nil   -- 一次性消费，防止重复搜刮
+        return snap
+    end
+
+    -- 回退路径：非 vitals 死亡（kill 命令/自杀），武器可能仍在
     for _, wep in ipairs(victim:GetWeapons()) do
         if IsValid(wep) then
             for _, typeId in ipairs({ wep:GetPrimaryAmmoType(), wep:GetSecondaryAmmoType() }) do

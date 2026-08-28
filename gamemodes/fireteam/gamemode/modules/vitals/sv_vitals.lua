@@ -217,6 +217,26 @@ local function EnterDowned(ply, attacker)
     for _, wep in ipairs(ply:GetWeapons()) do
         if IsValid(wep) then table.insert(ply.FT_DownedWeapons, wep:GetClass()) end
     end
+
+    -- B7 修复：缴械前快照弹药 + 背包，供尸体搜刮在真死时消费
+    -- （StripWeapons 后 GetWeapons() 即空，0.2s 后 BuildLoot 拿不到任何弹药）
+    ply.FT_DeathLoot = nil
+    do
+        local ammo = {}
+        for _, wep in ipairs(ply:GetWeapons()) do
+            if IsValid(wep) then
+                for _, typeId in ipairs({ wep:GetPrimaryAmmoType(), wep:GetSecondaryAmmoType() }) do
+                    if type(typeId) == "number" and typeId > 0 then
+                        ammo[typeId] = (ammo[typeId] or 0) + ply:GetAmmoCount(typeId)
+                    end
+                end
+            end
+        end
+        local items = Fireteam.Inventory and Fireteam.Inventory.GetAll
+            and Fireteam.Inventory.GetAll(ply) or {}
+        ply.FT_DeathLoot = { ammo = ammo, items = items }
+    end
+
     ply:StripWeapons()
 
     -- 匍匐机动：压到爬行档（跳力先存待还原；速度走统一收口）

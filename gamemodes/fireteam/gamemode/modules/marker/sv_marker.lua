@@ -35,7 +35,7 @@ function Fireteam.Marker.Add(ply, pos, markerType, label, opts)
     -- 检查数量限制
     local myCount = 0
     for _, m in pairs(activeMarkers) do
-        if m.owner == ply then myCount = myCount + 1 end
+        if m.ownerIdx == ply:EntIndex() then myCount = myCount + 1 end
     end
     local maxMarkers = Fireteam.Config.Get("marker.max_per_player") or Fireteam.Marker.MAX_PER_PLAYER
     if myCount >= maxMarkers then
@@ -48,7 +48,9 @@ function Fireteam.Marker.Add(ply, pos, markerType, label, opts)
         type      = markerType or Fireteam.Marker.TYPE.WAYPOINT,
         pos       = pos,
         label     = label or "",
-        owner     = ply,
+        -- B5 修复：以 entIndex+昵称快照存储（实体引用断线后失效，无法判等/清理）
+        ownerIdx  = ply:EntIndex(),
+        ownerName = ply:Nick(),
         -- 阵营级标记不带 squadId（避免被客户端小队过滤器放行到别队语义混淆），
         -- 以 faction 字段标识广播域
         squadId   = not factionWide and squad.id or nil,
@@ -80,7 +82,7 @@ function Fireteam.Marker.Remove(ply, markerId)
     if not marker then return false end
 
     -- 权限：放置者、本队队长（小队级标记）、或该阵营指挥官（阵营级标记）
-    local allowed = marker.owner == ply
+    local allowed = marker.ownerIdx == ply:EntIndex()
     if not allowed and marker.faction then
         local isCmdr = Fireteam.Commander
             and Fireteam.Commander.IsFactionCommander
@@ -173,8 +175,8 @@ local function SerializeMarkers(markers)
             label     = m.label,
             squadId   = m.squadId,
             faction   = m.faction,
-            ownerIdx  = IsValid(m.owner) and m.owner:EntIndex() or 0,
-            ownerName = IsValid(m.owner) and m.owner:Nick() or "?",
+            ownerIdx  = m.ownerIdx or 0,
+            ownerName = m.ownerName or "?",
             expiresAt = m.expiresAt
         })
     end
