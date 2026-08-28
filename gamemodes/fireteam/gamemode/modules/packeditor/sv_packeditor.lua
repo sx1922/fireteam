@@ -67,9 +67,20 @@ local function WriteExport(packId, files)
     local root = Fireteam.PackEditor.EXPORT_ROOT .. packId .. "/"
     file.CreateDir(root)
 
+    -- 白名单：fname 必须来自 SETTING_DATA_FILES 或固定元数据键，拒绝路径穿越
+    local allowed = {}
+    for _, name in ipairs(Fireteam.SETTING_DATA_FILES) do allowed[name] = true end
+    allowed["pack"]      = true
+    allowed["hud_theme"] = true
+
     local written = {}
     for fname, tbl in pairs(files) do
         if istable(tbl) then
+            -- 拒绝路径分隔符/穿越/非白名单键（恶意客户端提交 ../ 可覆盖 data/ 任意文件）
+            if not allowed[fname] or fname:find("[/\\]") or fname:find("%.%.") then
+                Fireteam.Log.Warn("编辑器", "拒绝非法文件名: " .. tostring(fname))
+                continue
+            end
             local diskName
             if fname == "pack" then
                 diskName = Fireteam.SETTING_PACK_META_FILE

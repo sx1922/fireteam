@@ -65,7 +65,8 @@ local FALLBACK_MODULES = {
 function Fireteam.Modules.Discover()
     Fireteam.Modules.Registry = {}
 
-    local dirs = file.Find(MODULE_BASE_PATH .. "*", "GAME")
+    -- file.Find 返回 (files, directories)：只取第二个返回值（目录列表）
+    local _, dirs = file.Find(MODULE_BASE_PATH .. "*", "GAME")
     if #dirs == 0 then
         dirs = FALLBACK_MODULES
         Fireteam.Log.Warn("模块", "file.Find 未发现模块目录，回退内置清单（GMA 分发场景）")

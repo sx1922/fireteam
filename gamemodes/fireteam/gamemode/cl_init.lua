@@ -46,7 +46,8 @@ end
 
 -- 立即加载，不等 InitPostEntity：客户端文件在进服时已由 AddCSLuaFile
 -- 全量下发，此处延迟只会让 net.Receive 注册晚于服务器首帧广播（丢消息）。
-local dirs = file.Find(MODULE_BASE_PATH .. "*", "GAME")
+-- file.Find 返回 (files, directories)：只取第二个返回值（目录列表）
+local _, dirs = file.Find(MODULE_BASE_PATH .. "*", "GAME")
 if #dirs == 0 then
     dirs = FALLBACK_MODULES
     Fireteam.Log.Warn("模块", "file.Find 未发现模块目录，回退内置清单（GMA 分发场景）")

@@ -252,5 +252,19 @@ return {
     ui_cmd_relinquish      = "Relinquish Command",
     ui_cmd_vote            = "Vote: %s",
     ui_cmd_election        = "ELECTION · %ds left · %s",
-    ui_cmd_election_hud    = "★ election: %ds left"
+    ui_cmd_election_hud    = "★ election: %ds left",
+
+    -- Voting panel (P12)
+    ui_vote_title          = "FIELD VOTE",
+    ui_vote_scenario       = "Scenario Vote",
+    ui_vote_mode           = "Mode Vote",
+    ui_vote_proposed_by    = "Proposer: %s",
+    ui_vote_remaining      = "%ds remaining",
+    ui_vote_cast           = "Vote",
+    ui_vote_voted          = "✓ Voted",
+    ui_vote_count          = "%d votes",
+    ui_vote_result_pass    = "Passed: %s (%d votes)",
+    ui_vote_result_fail    = "Threshold not met",
+    ui_vote_click_to_vote  = "Click to vote",
+    ui_vote_timeout        = "Vote timed out"
 }

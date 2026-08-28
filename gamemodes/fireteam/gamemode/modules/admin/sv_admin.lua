@@ -79,11 +79,13 @@ local function ExecuteAction(ply, act)
         local id = tostring(act.id)
         if not Fireteam.Setting.Discovered[id] then return false end
         Fireteam.Log.Info("管理", ply:Nick() .. " 切换设定包 → " .. id)
-        local ok, err = pcall(Fireteam.Setting.Activate, id)
+        local ok, activated = pcall(Fireteam.Setting.Activate, id)
         if not ok then
-            Fireteam.Log.Error("管理", "切换设定包失败: " .. tostring(err))
+            Fireteam.Log.Error("管理", "切换设定包异常: " .. tostring(activated))
+        elseif not activated then
+            Fireteam.Log.Warn("管理", "切换设定包返回 false: " .. id)
         end
-        return ok
+        return ok and activated == true
 
     elseif act.type == "round_next" then
         if Fireteam.Rounds and Fireteam.Rounds.AdminAdvance then

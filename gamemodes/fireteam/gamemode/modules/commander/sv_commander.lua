@@ -115,10 +115,27 @@ local function SettleElection(faction)
     if not el then return end
 
     local tally = {}
+    local validCandidates = 0
     for voterIdx, candIdx in pairs(el.votes) do
         -- 计票时跳过已失效的候选（中途离队/断线被移除）
         if el.candidates[candIdx] then
             tally[candIdx] = (tally[candIdx] or 0) + 1
+        end
+    end
+    -- 统计仍在池中的有效候选人数
+    for _ in pairs(el.candidates) do validCandidates = validCandidates + 1 end
+
+    -- 仅剩唯一有效候选 → 立即当选，无需投票/延长（验证：ValidatePlayer 清除失格者后触发）
+    if validCandidates == 1 then
+        elections[faction] = nil
+        for idx in pairs(el.candidates) do
+            local winner = el.candidates[idx]
+            if IsValid(winner) then
+                Elect(faction, winner)
+            else
+                SyncToAll()
+            end
+            return
         end
     end
 

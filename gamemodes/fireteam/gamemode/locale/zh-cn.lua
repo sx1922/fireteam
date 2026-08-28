@@ -252,5 +252,19 @@ return {
     ui_cmd_relinquish      = "让出指挥权",
     ui_cmd_vote            = "投票: %s",
     ui_cmd_election        = "选举进行中 · 剩余 %d 秒 · %s",
-    ui_cmd_election_hud    = "★ 选举剩余 %d 秒"
+    ui_cmd_election_hud    = "★ 选举剩余 %d 秒",
+
+    -- 投票面板（P12）
+    ui_vote_title          = "战场投票",
+    ui_vote_scenario       = "剧本切换投票",
+    ui_vote_mode           = "模式切换投票",
+    ui_vote_proposed_by    = "发起人: %s",
+    ui_vote_remaining      = "剩余 %d 秒",
+    ui_vote_cast           = "投票",
+    ui_vote_voted          = "✓ 已投票",
+    ui_vote_count          = "%d 票",
+    ui_vote_result_pass    = "投票通过: %s（%d 票）",
+    ui_vote_result_fail    = "投票未达阈值",
+    ui_vote_click_to_vote  = "点击投票",
+    ui_vote_timeout        = "投票超时"
 }

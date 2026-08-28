@@ -424,13 +424,24 @@ function Fireteam.Rounds.AdminAdvance()
 end
 
 --- 管理接口：强制结算。winner 为 faction id / "draw" / nil(按比分)
+--- winner 必须是当前回合的合法阵营，否则回退到比分结算（防胜者字符串注入）
 function Fireteam.Rounds.AdminEnd(winner)
     if machine.state ~= STATE.ACTIVE then return false end
     local w
     if winner == "draw" then
         w = nil
     elseif winner then
-        w = winner
+        -- 校验 winner 是否属于当前回合的有效阵营
+        local valid = false
+        for _, f in ipairs(machine.factionsAtStart) do
+            if f == winner then valid = true break end
+        end
+        if not valid then
+            Fireteam.Log.Warn("回合", "AdminEnd 拒绝非法胜者: " .. tostring(winner))
+            w = EvaluateWinner(nil)
+        else
+            w = winner
+        end
     else
         w = EvaluateWinner(nil)
     end
