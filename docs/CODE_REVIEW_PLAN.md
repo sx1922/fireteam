@@ -70,7 +70,7 @@ P0/P1 findings must be fixed or explicitly accepted before release; P2/P3 findin
 - 每个修复写入 `worklog/`，包含发现、影响、修复、验证和未验证边界。
 - 只提交用户范围内的文件，保留原有未跟踪文件。
 - 同步所有部署镜像文件并校验 SHA-256。
-- 使用 Conventional Commit，中英文 subject/body，附 `AI-Assisted: true`。
+- 使用 Conventional Commit，并采用中英文 subject/body。
 - 推送前复查提交差异、测试结果和工作区状态。
 
 ## 5. 审查清单 / Checklist
