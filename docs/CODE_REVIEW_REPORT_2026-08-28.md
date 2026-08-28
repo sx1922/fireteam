@@ -34,3 +34,11 @@ This review covered static architecture, module lifecycle, round state machine, 
 本报告是阶段性审查结果，不代表运行时发布就绪。下一轮应优先修复 objective schema 校验和统一限流层，然后在真实 GMod 服务器验证启动、热切换、回合推进、PvP/PvE、装备、HUD、按键和第三方基座。
 
 This is an interim review report, not a runtime release sign-off. The next pass should prioritize objective schema validation and a shared rate-limit layer, followed by live-server acceptance of startup, hot-switching, rounds, PvP/PvE, loadouts, HUD, keybinds, and third-party bases.
+
+## 本轮追加审查 / Additional Findings
+
+- **P1 设定包事务边界仍不完整**：`Activate()` 在数据校验后执行 locale 注入与配置覆盖；若这些步骤抛错，旧包已被卸载而新包尚未提交，仍可能形成半切换状态。需要把 locale/config 应用纳入统一事务，或在异常时恢复旧数据与 locale。
+- **P2 目标运行时契约未固化**：`BuildObjectiveContext()` 的返回值在 ACTIVE Think 中被直接调用，设定包 objective 的字段校验尚未覆盖 `type`、`think`、`isComplete` 和参数引用。
+- **P2 网络限流仍分散**：当前消息入口虽有参数校验，但尚无统一的 token bucket/per-player 限流接口。
+
+These findings remain open; no runtime release approval is implied.
