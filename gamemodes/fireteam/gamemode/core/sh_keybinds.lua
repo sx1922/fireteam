@@ -62,9 +62,9 @@ CreateClientConVar("ft_binds_applied", "0", true, false,
 --- 读取某键当前绑定的命令；未绑定返回 ""
 local function CurrentBind(key)
     local code = input.GetKeyCode and input.GetKeyCode(key) or nil
-    if not code then return "" end
+    if not code then return nil end
     local bound = input.LookupKeyBinding(code)
-    return bound or ""
+    return bound
 end
 
 local function ReadBackup()
@@ -86,7 +86,8 @@ local function WriteBackupOnce(entries)
 
     local lines = {}
     for _, e in ipairs(entries) do
-        lines[#lines + 1] = e.key .. "\t" .. CurrentBind(e.key)
+        local bind = CurrentBind(e.key)
+        lines[#lines + 1] = e.key .. "\t" .. (bind or "<unknown>")
     end
     file.Write(BACKUP_FILE, table.concat(lines, "\n"))
     return true
@@ -134,7 +135,9 @@ function Fireteam.Keybinds.Restore()
     end
 
     for _, e in ipairs(entries) do
-        if e.cmd ~= "" then
+        if e.cmd == "<unknown>" then
+            Fireteam.Log.Warn("键位", "跳过无法识别原绑定的按键: " .. e.key)
+        elseif e.cmd ~= "" then
             RunConsoleCommand("bind", e.key, e.cmd)
             Fireteam.Log.Info("键位", "还原 " .. e.key .. " → " .. e.cmd)
         else

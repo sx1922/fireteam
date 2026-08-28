@@ -212,6 +212,12 @@ end
 
 local function EnterActive()
     machine.factionsAtStart = Fireteam.Rounds.GetActiveFactions()
+    if (Fireteam.Config.Get("rounds.mode") or "pvp") == "pvp"
+        and #machine.factionsAtStart < 2 then
+        Fireteam.Log.Warn("回合", "PvP 需要至少两个参战阵营，跳过本回合")
+        SetState(STATE.INTERMISSION, Fireteam.Rounds.GetTimings().intermission)
+        return
+    end
     if Fireteam.PvE then Fireteam.PvE.OnEnterActive() end
     SetAllFrozen(false)
     SetState(STATE.ACTIVE, Fireteam.Rounds.GetTimings().round_time)
@@ -464,7 +470,7 @@ end)
 
 hook.Add("InitPostEntity", "Fireteam.Rounds.Boot", function()
     timer.Simple(5, function()
-        if Fireteam.Rounds.IsEnabled() then EnterWarmup() end
+        if Fireteam.Rounds.IsEnabled() and machine.state == STATE.IDLE then EnterWarmup() end
     end)
 end)
 
