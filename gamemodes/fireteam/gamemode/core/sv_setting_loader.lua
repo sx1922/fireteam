@@ -99,6 +99,16 @@ local function LoadDataFiles(meta)
     return data
 end
 
+local function ValidateRequiredData(meta, data)
+    local required = meta.required_data or { "factions", "classes", "map_rules" }
+    for _, fname in ipairs(required) do
+        if not istable(data[fname]) then
+            return false, "缺少或无效核心数据: " .. tostring(fname)
+        end
+    end
+    return true
+end
+
 -- ─────────────────────────────────────
 -- 应用配置覆盖
 -- ─────────────────────────────────────
@@ -177,20 +187,25 @@ function Fireteam.Setting.Activate(packId)
         return false
     end
 
-    -- 卸载旧包
+    -- 先在临时数据中完整加载并校验；失败时保留当前包不变。
+    local ok, data = pcall(LoadDataFiles, meta)
+    if not ok then
+        Fireteam.Log.Error("设定包", "✗ 数据加载失败 '" .. packId .. "': " .. tostring(data))
+        return false
+    end
+    local valid, reason = ValidateRequiredData(meta, data)
+    if not valid then
+        Fireteam.Log.Error("设定包", "✗ 数据校验失败 '" .. packId .. "': " .. reason)
+        return false
+    end
+
+    -- 数据确认后才卸载旧包并提交新包。
     if Fireteam.Setting.Active then
         hook.Run(Fireteam.HOOKS.SETTING_UNLOAD, Fireteam.Setting.Active.id)
         Fireteam.Setting.Data = {}
         if Fireteam.Locale and Fireteam.Locale.ClearPack then
             Fireteam.Locale.ClearPack()
         end
-    end
-
-    -- 加载数据
-    local ok, data = pcall(LoadDataFiles, meta)
-    if not ok then
-        Fireteam.Log.Error("设定包", "✗ 数据加载失败 '" .. packId .. "': " .. tostring(data))
-        return false
     end
 
     -- 注入设定包专属词条（<pack>/locale/<lang>.lua）

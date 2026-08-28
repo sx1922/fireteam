@@ -10,6 +10,7 @@ return {
     author = "FIRETEAM Team",
     description = "Cold War tactical setting, 1968-1985. Eight playable factions — US, UK, West Germany, France vs USSR, East Germany, Poland, Czechoslovakia — across two scenarios: the Fulda Gap corridor battle (default) and the Battle of West Berlin.",
     icon = "materials/fireteam/packs/coldwar_icon.png",
+    required_data = { "factions", "classes", "map_rules" },
 
     era = { start = 1968, ["end"] = 1985 },
 

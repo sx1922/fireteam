@@ -28,6 +28,10 @@ end, "Switch PvP/PvE mode (takes effect next round)",
 
 Reg("SetScenario", function(scenarioId)
     if not isstring(scenarioId) then return false end
+    if Fireteam.Rounds and Fireteam.Rounds.GetScenarioList then
+        local list = Fireteam.Rounds.GetScenarioList()
+        if list and scenarioId ~= "" and not list[scenarioId] then return false end
+    end
     if not (Fireteam.Config and Fireteam.Config.Set) then return false end
     Fireteam.Config.Set("rounds.scenario", scenarioId)
     return true

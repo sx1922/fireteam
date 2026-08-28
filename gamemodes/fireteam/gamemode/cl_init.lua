@@ -54,6 +54,11 @@ if #dirs == 0 then
 end
 
 local failed = {}
+local priorities = Fireteam.MODULE_LOAD_PRIORITY or {}
+table.sort(dirs, function(a, b)
+    local pa, pb = priorities[a] or 100, priorities[b] or 100
+    return pa == pb and a < b or pa < pb
+end)
 for _, dir in ipairs(dirs) do
     if dir ~= "adapters" then
         local basePath = MODULE_BASE_PATH .. dir .. "/"
