@@ -397,8 +397,10 @@ end)
 
 ## 按键操作
 
-**键位不硬编码物理键码**：一律走「引擎 hook + `ft_*` 命令」，玩家可任意重绑，
-并可用 `ft_binds_restore` 一键还原原始绑定。
+**键位不硬编码物理键码**：一律走「引擎 hook + `PlayerButtonDown` 按键钩子 + `ft_*` 命令」。
+GMod 引擎禁止 Lua 调用 `bind`（`RunConsoleCommand: Command is blocked!`），因此默认键位
+**从不写入玩家配置**，由按键钩子直接分发；玩家可任意重绑，绑了 `ft_*` 命令的键自动
+优先于默认动作（不会双触发）。
 
 ### A 级｜引擎入口（重绑对应 bind 后自动跟随）
 
@@ -410,12 +412,12 @@ end)
 | F4 | `ShowSpare2` | 全屏指挥视图 |
 | Tab | `ScoreboardShow` | 网格背包（**名单页在面板内**，替代原版计分板） |
 
-### B/C 级｜命令 + 推荐键（`ft_binds_apply` 应用，可自由重绑）
+### B/C 级｜命令 + 推荐键（按键钩子默认生效，进服即用）
 
 | 推荐键 | 命令 | 功能 | 级别 |
 | --- | --- | --- | --- |
-| 7 / 8 / 9 / 0 | `ft_item_slot1..4` | 快捷栏使用物品 | B（接管 slot7–slot0，固定 loadout 下这些槽位恒空） |
-| M | `ft_map` | 战术地图 | C |
+| 7 / 8 / 9 / 0 | `ft_item_slot1..4` | 快捷栏使用物品 | B（与引擎 slot7–slot0 并存，后者在固定 loadout 下恒空；如需完全接管可手动 `bind 7 ft_item_slot1`） |
+| M | `ft_map` | 战术地图 | C（玩家已占用则自动让位） |
 | N | `ft_marker` | 在准星位置放置标记 | C |
 | H | `ft_hud_squad` | 显示/隐藏左下小队栏（仅自己） | C |
 | CapsLock | `ft_command` | 全屏指挥视图 | C |
@@ -430,13 +432,13 @@ end)
 
 WASD、Space、Shift、Ctrl、Alt、`E` 使用、`R` 换弹、`F` 手电、`Y`/`U` 聊天、
 `` ` `` 控制台、`Esc`、全部鼠标键（含 vanilla 的 `+voicerecord` 绑定）。
-即使推荐表被第三方改坏，写入前也会被保护名单拦下。
+推荐表若误配了这些键，`ft_binds_apply` 的保护名单会警告拦截。
 
 ### 键位管理命令
 
 ```bash
-ft_binds_apply     # 应用推荐键位（首次进服自动执行一次）
-ft_binds_restore   # 从 data/fireteam/binds_backup.txt 完整还原原始绑定
+ft_binds_apply     # 展示默认键位说明（首次进服自动提示一次；不再写玩家 bind）
+ft_binds_restore   # 兼容保留：清理旧版键位备份（现在从不改玩家绑定，无需还原）
 ft_binds_list      # 列出所有 FIRETEAM 命令与当前实际绑定
 ```
 
@@ -445,7 +447,7 @@ ft_binds_list      # 列出所有 FIRETEAM 命令与当前实际绑定
 
 ## 主菜单与指挥视图
 
-- **主菜单（F1 / `ft_menu`）**：当前剧本/模式/回合状态 + 小队、职业、背包、地图、指挥视图、管理面板入口。按钮上的按键提示由 `input.LookupBinding` 反查，玩家重绑后自动跟随。
+- **主菜单（F1 / `ft_menu`）**：当前剧本/模式/回合状态 + 小队、职业、背包、地图、指挥视图、管理面板入口。按钮上的按键提示由 `input.LookupBinding` 反查，玩家重绑后自动跟随；未绑定时回退显示默认键位。
   **ESC 保持引擎原生行为**（改设置、断开连接照常可用）。
 - **指挥视图（F4 / CapsLock / `ft_command`）**（模仿《战术小队》队伍界面）：全屏左右分栏——左侧大地图（复用战术地图投影，含队友朝向/名字、小队标记、回合目标圈，可点击放路点），右侧队伍情况栏（成员存活/血量条/职业/倒地红显/队长菱形）。
 

@@ -37,11 +37,15 @@ local function FormatTime(secs)
     return string.format("%02d:%02d", math.floor(secs / 60), secs % 60)
 end
 
---- 查找按键绑定提示
+--- 查找按键绑定提示（玩家未绑定时回退到默认键位）
 local function KeyHint(cmd, engineHint)
     local bound = input.LookupBinding(cmd)
     if bound and bound ~= "" then return string.upper(bound) end
     if engineHint then return engineHint end
+    if Fireteam.Keybinds and Fireteam.Keybinds.DefaultKeyFor then
+        local def = Fireteam.Keybinds.DefaultKeyFor(cmd)
+        if def then return string.upper(def) end
+    end
     return ""
 end
 

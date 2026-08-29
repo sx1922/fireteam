@@ -37,11 +37,6 @@ function Fireteam.Inventory.OpenBackpack()
     local W, H = math.Round(900 * scaleW), math.Round(620 * (ScrH() / 1080))
     invPanel = kit.CreateFrame(L("ui_inventory_title"), W, H, { blur = true })
 
-    local cp = CellPx()
-    local gridW = Fireteam.Inventory.GRID_W * cp
-    local gridH = Fireteam.Inventory.GRID_H * cp
-    local leftW = math.Round(230 * scaleW)
-
     -- ─── 页签：装备 / 名单 ───
     -- Tab（ScoreboardShow）已被背包接管，原版计分板不再出现，
     -- 因此把玩家名单作为本面板的第二页补回来。
@@ -60,53 +55,76 @@ function Fireteam.Inventory.OpenBackpack()
 
     local pageH = gearPage:GetTall()
 
-    -- ─── 左侧：当前武器 + 健康检查 ───
+    -- ─── 三栏居中布局：身体图 | 物品网格 | 武器+血量 ───
+    local cp = CellPx()
+    local gridW = Fireteam.Inventory.GRID_W * cp
+    local gridH = Fireteam.Inventory.GRID_H * cp
+    local leftW = math.Round(180 * scaleW)
+    local rightW = math.Round(180 * scaleW)
+    local colGap = 12
+    local totalRowW = leftW + colGap + gridW + colGap + rightW
+    local colStartX = math.Round((W - totalRowW) / 2)
+
+    -- ─── 左栏：身体部位状态图 ───
     local left = vgui.Create("DPanel", gearPage)
-    left:SetPos(4, 4)
+    left:SetPos(colStartX, 4)
     left:SetSize(leftW, pageH - 8)
     left.Paint = function(s, w, h)
-        draw.SimpleText(L("ui_inventory_weapons"), kit.Font("small"), 8, 6,
+        draw.SimpleText(L("ui_inventory_health"), kit.Font("small"), 8, 6,
             kit.Color("text_muted"), TEXT_ALIGN_LEFT)
-        local y = 28
+        kit.DrawDivider(4, 22, w - 8)
+
         local lp = LocalPlayer()
-        if IsValid(lp) then
-            for _, wep in ipairs(lp:GetWeapons()) do
-                draw.SimpleText(language.GetPhrase(wep.PrintName or wep:GetClass()),
-                    kit.Font("small"), 8, y, kit.Color("text"), TEXT_ALIGN_LEFT)
-                y = y + 20
-                if y > h * 0.42 then break end
-            end
+        if not IsValid(lp) then return end
+        local vt = Fireteam.Vitals and Fireteam.Vitals.Client
+            and Fireteam.Vitals.Client[lp:EntIndex()] or nil
+        if not istable(vt) then return end
+
+        -- 总血量大字
+        local hp = lp:Health()
+        local maxHp = math.max(lp:GetMaxHealth(), 1)
+        local hpColorName = "primary"
+        if hp <= 25 then hpColorName = "danger"
+        elseif hp <= 50 then hpColorName = "warning" end
+        draw.SimpleText(tostring(hp), kit.Font("title"), w / 2, 36,
+            kit.ColorA(hpColorName, 235), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        draw.SimpleText("/ " .. maxHp .. "  AR " .. lp:Armor(), kit.Font("small"), w / 2, 60,
+            kit.ColorA("text_muted", 190), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
+        kit.DrawProgressBar(8, 72, w - 16, 5, hp / maxHp, hpColorName)
+
+        -- 出血提示
+        if (tonumber(vt.bleed) or 0) > 0 then
+            draw.SimpleText(string.format(Fireteam.Locale.Get("vitals_bleeding"),
+                tonumber(vt.bleed)), kit.Font("small"), w / 2, 84,
+                kit.ColorA("danger", 220), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
         end
 
-        local healthY = h * 0.48
-        draw.SimpleText(L("ui_inventory_health"), kit.Font("small"), 8, healthY,
-            kit.Color("text_muted"), TEXT_ALIGN_LEFT)
-        local vy = healthY + 22
-        local vt = Fireteam.Vitals and Fireteam.Vitals.Client
-            and Fireteam.Vitals.Client[LocalPlayer():EntIndex()] or nil
-        if istable(vt) and istable(vt.limbs) then
+        -- 部位血量列表
+        local vy = 100
+        if istable(vt.limbs) then
             for _, part in ipairs(Fireteam.Vitals.LIMB_ORDER or {}) do
-                local hp = tonumber(vt.limbs[part]) or 0
-                local maxHp = Fireteam.Vitals.LIMBS[part] or 1
-                local frac = math.Clamp(hp / maxHp, 0, 1)
+                local partHp = tonumber(vt.limbs[part]) or 0
+                local maxPartHp = Fireteam.Vitals.LIMBS[part] or 1
+                local frac = math.Clamp(partHp / maxPartHp, 0, 1)
                 local col = "squad_ally"
                 if frac <= 0 then col = "danger"
                 elseif frac <= 0.4 then col = "warning" end
                 draw.SimpleText(Fireteam.Locale.Get("vitals_limb_" .. part),
                     kit.Font("small"), 8, vy, kit.Color("text"), TEXT_ALIGN_LEFT)
-                kit.DrawProgressBar(72, vy + 3, 110, 8, frac, col)
+                kit.DrawProgressBar(w - 100, vy + 3, 88, 8, frac, col)
                 if istable(vt.fractures) and vt.fractures[part] then
-                    draw.SimpleText("✕", kit.Font("small"), 190, vy,
-                        kit.Color("danger"), TEXT_ALIGN_LEFT, TEXT_ALIGN_CENTER)
+                    draw.SimpleText("✕", kit.Font("small"), w - 6, vy,
+                        kit.Color("danger"), TEXT_ALIGN_RIGHT, TEXT_ALIGN_CENTER)
                 end
                 vy = vy + 24
+                if vy > h - 28 then break end
             end
         end
     end
 
-    -- ─── 右侧：10×6 网格 ───
+    -- ─── 中栏：10×6 网格 ───
     local grid = vgui.Create("DPanel", gearPage)
-    grid:SetPos(leftW + 16, 4)
+    grid:SetPos(colStartX + leftW + colGap, 4)
     grid:SetSize(gridW, gridH)
     grid.Paint = function(s, w, h)
         draw.RoundedBox(4, 0, 0, w, h, kit.ColorA("background", 210))
@@ -202,9 +220,9 @@ function Fireteam.Inventory.OpenBackpack()
         dragState = nil
     end
 
-    -- ─── 底部：快捷栏（右键物品绑定 1-4 槽；键位由 core/sh_keybinds.lua 分配）───
+    -- ─── 底部快捷栏（中栏网格下方，与网格等宽居中）───
     local hotbar = vgui.Create("DPanel", gearPage)
-    hotbar:SetPos(leftW + 16, 4 + gridH + 12)
+    hotbar:SetPos(colStartX + leftW + colGap, 4 + gridH + 12)
     hotbar:SetSize(gridW, cp + 22)
     hotbar.Paint = function(s, w, h)
         draw.SimpleText(L("ui_inventory_hotbar_hint"), kit.Font("small"), 2, 0,
@@ -215,8 +233,11 @@ function Fireteam.Inventory.OpenBackpack()
             surface.SetDrawColor(kit.ColorA("border", 190))
             surface.DrawOutlinedRect(x, 20, cp, cp, 1)
 
-            -- 槽位提示显示「当前实际绑定键」，玩家重绑后自动跟随
+            -- 槽位提示显示「当前实际绑定键」，玩家重绑后自动跟随；未绑定时回退默认键
             local bound = input.LookupBinding("ft_item_slot" .. slot)
+            if (not bound or bound == "") and Fireteam.Keybinds and Fireteam.Keybinds.DefaultKeyFor then
+                bound = Fireteam.Keybinds.DefaultKeyFor("ft_item_slot" .. slot)
+            end
             draw.SimpleText(bound and string.upper(bound) or tostring(slot),
                 kit.Font("small"), x + 5, 24,
                 kit.ColorA("text_muted", 190), TEXT_ALIGN_LEFT, TEXT_ALIGN_TOP)
@@ -229,6 +250,35 @@ function Fireteam.Inventory.OpenBackpack()
                     kit.ColorA(cnt > 0 and "text" or "text_muted", 230),
                     TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER)
             end
+        end
+    end
+
+    -- ─── 右栏：当前武器列表 ───
+    local right = vgui.Create("DPanel", gearPage)
+    right:SetPos(colStartX + leftW + colGap + gridW + colGap, 4)
+    right:SetSize(rightW, pageH - 8)
+    right.Paint = function(s, w, h)
+        draw.SimpleText(L("ui_inventory_weapons"), kit.Font("small"), 8, 6,
+            kit.Color("text_muted"), TEXT_ALIGN_LEFT)
+        kit.DrawDivider(4, 22, w - 8)
+
+        local lp = LocalPlayer()
+        if not IsValid(lp) then return end
+        local y = 30
+        for _, wep in ipairs(lp:GetWeapons()) do
+            local name = language.GetPhrase(wep.PrintName or wep:GetClass())
+            draw.SimpleText(name, kit.Font("small"), 8, y, kit.Color("text"), TEXT_ALIGN_LEFT)
+
+            -- 弹药信息（如有）
+            local clip = wep.Clip1 and wep:Clip1() or -1
+            if clip >= 0 then
+                local reserve = lp:GetAmmoCount(wep:GetPrimaryAmmoType())
+                draw.SimpleText(clip .. " / " .. reserve, kit.Font("small"),
+                    w - 8, y, kit.ColorA("text_muted", 190),
+                    TEXT_ALIGN_RIGHT, TEXT_ALIGN_LEFT)
+            end
+            y = y + 22
+            if y > h - 16 then break end
         end
     end
 
@@ -356,7 +406,10 @@ hook.Add("HUDPaint", "Fireteam.Inventory.HUD", function()
     end
     if not hasItems and not hasHotbar then return end
 
-    -- ─── 度量（芯片行宽用于 hotbar 居中）───
+    local fx = kit.EffectsAlpha()
+    local scaleH = ScrH() / 1080
+
+    -- ─── 度量（芯片行宽用于布局）───
     local shown = {}
     for itemId, count in pairs(Fireteam.Inventory.ClientCounts) do
         if (tonumber(count) or 0) > 0 and Fireteam.Inventory.ClientDefs[itemId] then
@@ -366,7 +419,7 @@ hook.Add("HUDPaint", "Fireteam.Inventory.HUD", function()
     table.sort(shown)
 
     surface.SetFont(kit.Font("small"))
-    local chipH, padX, gap = math.Round(30 * (ScrH() / 1080)), 10, 6
+    local chipH, padX, gap = math.Round(30 * scaleH), 10, 6
     chipH = math.max(chipH, 24)
     local widths, totalW = {}, 0
     for i, itemId in ipairs(shown) do
@@ -378,15 +431,20 @@ hook.Add("HUDPaint", "Fireteam.Inventory.HUD", function()
         if i > 1 then totalW = totalW + gap end
     end
 
+    -- ─── 快捷栏尺寸 ───
+    local slotSize = math.Round(44 * scaleH)
+    local hbW = Fireteam.Inventory.HOTBAR_SIZE * slotSize + (Fireteam.Inventory.HOTBAR_SIZE - 1) * 6
+    local centerW = math.max(totalW, 200, hbW)
+
     local elem = kit.GetElement("consumables")
     local x, y = kit.ResolveAnchor(elem.position or "bottom_center",
-        math.max(totalW, 200), chipH + 18)
-    local fx = kit.EffectsAlpha()
+        centerW, chipH + 18)
+    -- 垂直堆叠：抬升避开指南针(36) + 间隙 + 体力条(7) + 间隙 = 52px
+    y = y - 52
 
     -- ─── 快捷栏（4 槽，数字 7/8/9/0 触发）───
-    local slotSize = math.Round(44 * (ScrH() / 1080))
-    local hbW = Fireteam.Inventory.HOTBAR_SIZE * slotSize + (Fireteam.Inventory.HOTBAR_SIZE - 1) * 6
-    local hbX, hbY = x + math.max(totalW, 200) / 2 - hbW / 2, y - slotSize - 10
+    local hbX = x + centerW / 2 - hbW / 2
+    local hbY = y - slotSize - 10
     local keys = { 7, 8, 9, 0 }
     for slot = 1, Fireteam.Inventory.HOTBAR_SIZE do
         local sx = hbX + (slot - 1) * (slotSize + 6)

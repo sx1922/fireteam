@@ -1,6 +1,11 @@
 -- core/sh_keybinds.lua
 -- FIRETEAM Keybind Layer
--- 键位不硬编码物理键码：一律「引擎 hook + concommand」，玩家可自由重绑。
+-- 键位不硬编码物理键码：一律「引擎 hook / 按键钩子 + concommand」，玩家可自由重绑。
+--
+-- 引擎限制：Garry's Mod 禁止 Lua 调用 bind/unbind（RunConsoleCommand: Command is
+-- blocked!），因此 B/C 级默认键位不走 bind 写入，改由客户端 PlayerButtonDown/
+-- PlayerButtonUp 钩子直接分发。玩家手动在控制台 bind 到 ft_* 命令仍然有效
+-- （concommand 层保留），且优先于钩子默认动作。
 --
 -- 接管分级（worklog 041 决策）：
 --   A 级 引擎 hook 接管 —— 零改玩家配置，玩家重绑对应 bind 后自动跟随
@@ -8,12 +13,14 @@
 --        ShowHelp/ShowTeam/ShowSpare1/ShowSpare2 (F1..F4) → 主菜单/小队/职业/指挥视图
 --        SpawnMenuOpen / ContextMenuOpen → 禁用（战术模式不造物）
 --        PlayerNoClip → 服务端拒绝非管理员
---   B 级 强制 bind 接管 —— vanilla 行为在本模式下已死（7/8/9/0 武器槽位恒空）
---   C 级 空闲键投放 —— m/n/h/CapsLock/g/i
+--   B 级 按键钩子强制接管 —— vanilla 行为在本模式下已死（7/8/9/0 武器槽位恒空）；
+--        引擎默认 slot7..slot0 bind 仍在（无副作用），如需完全接管可手动
+--        bind 7 ft_item_slot1 等
+--   C 级 按键钩子空闲键投放 —— m/n/h/CapsLock/g/i；玩家已占用（绑了非 ft 命令）
+--        的键自动让位
 --   D 级 绝不触碰 —— WASD/Space/Shift/Ctrl/Alt/E/R/F/Y/U/`/Esc/鼠标/vanilla 说话键
 --
--- ft_binds_apply 会先把被覆盖键的原绑定备份到 data/fireteam/binds_backup.txt，
--- ft_binds_restore 可完整还原。cvar ft_binds_applied 保证只自动应用一次。
+-- cvar ft_binds_applied 保留用于首次进服提示一次（历史上是 bind 应用标记）。
 
 if not Fireteam then Fireteam = {} end
 Fireteam.Keybinds = Fireteam.Keybinds or {}
@@ -49,107 +56,72 @@ local PROTECTED = {
 
 if CLIENT then
 
-local BACKUP_DIR  = "fireteam"
-local BACKUP_FILE = "fireteam/binds_backup.txt"
+local BACKUP_FILE = "fireteam/binds_backup.txt" -- bind 时代遗留，Restore 时清理
 
 CreateClientConVar("ft_binds_applied", "0", true, false,
-    "FIRETEAM 推荐键位是否已应用过（0 时首次进服自动应用一次）")
+    "FIRETEAM 默认键位提示是否已展示过（0 时首次进服提示一次）")
 
 -- ─────────────────────────────────────
--- 备份 / 还原
+-- 键名 → 按键码
 -- ─────────────────────────────────────
 
---- 读取某键当前绑定的命令；未绑定返回 ""
-local function CurrentBind(key)
-    local code = input.GetKeyCode and input.GetKeyCode(key) or nil
-    if not code then return nil end
-    local bound = input.LookupKeyBinding(code)
-    return bound
-end
+local KEY_CODES = {}
+--- 特殊键兜底：部分键名 input.GetKeyCode 不识别，直接查 KEY_* 全局
+local KEY_FALLBACK = {
+    capslock = KEY_CAPSLOCK or KEY_CAPSLOCKTOGGLE,
+}
 
-local function ReadBackup()
-    if not file.Exists(BACKUP_FILE, "DATA") then return nil end
-    local raw = file.Read(BACKUP_FILE, "DATA")
-    if not raw or raw == "" then return nil end
-    local out = {}
-    for line in string.gmatch(raw, "[^\r\n]+") do
-        local key, cmd = string.match(line, "^([^\t]+)\t(.*)$")
-        if key then out[#out + 1] = { key = key, cmd = cmd } end
+local function KeyCodeOf(key)
+    local cached = KEY_CODES[key]
+    if cached ~= nil then return cached end
+    local code = KEY_FALLBACK[string.lower(key)]
+    if code == nil and input.GetKeyCode then
+        code = input.GetKeyCode(key)
     end
-    return out
+    if code then KEY_CODES[key] = code end
+    return code
 end
 
---- 首次覆盖前把原绑定落盘（已存在备份则不覆盖，避免二次应用把 FIRETEAM 命令写进备份）
-local function WriteBackupOnce(entries)
-    if file.Exists(BACKUP_FILE, "DATA") then return false end
-    if not file.IsDir(BACKUP_DIR, "DATA") then file.CreateDir(BACKUP_DIR) end
-
-    local lines = {}
-    for _, e in ipairs(entries) do
-        local bind = CurrentBind(e.key)
-        lines[#lines + 1] = e.key .. "\t" .. (bind or "<unknown>")
+--- 命令 → 默认键名（供 UI 键位提示在玩家未绑定时回退显示）
+function Fireteam.Keybinds.DefaultKeyFor(cmd)
+    local bare = cmd
+    local c1 = string.sub(bare, 1, 1)
+    if c1 == "+" or c1 == "-" then bare = string.sub(bare, 2) end
+    for _, e in ipairs(Fireteam.Keybinds.DEFAULTS) do
+        if e.cmd == cmd or e.cmd == c1 .. bare then return e.key end
     end
-    file.Write(BACKUP_FILE, table.concat(lines, "\n"))
-    return true
+    return nil
 end
 
 -- ─────────────────────────────────────
--- 应用 / 还原命令
+-- 应用 / 还原命令（bind 时代遗留接口，现为提示 + 清理）
 -- ─────────────────────────────────────
 
 function Fireteam.Keybinds.Apply(silent)
-    local plan = {}
+    -- 引擎禁止 Lua 写 bind，默认键位由 PlayerButtonDown 钩子分发，无需写入玩家配置
     for _, e in ipairs(Fireteam.Keybinds.DEFAULTS) do
         if PROTECTED[string.lower(e.key)] then
-            Fireteam.Log.Warn("键位", "跳过受保护按键: " .. e.key)
-        else
-            plan[#plan + 1] = e
-        end
-    end
-
-    local backedUp = WriteBackupOnce(plan)
-
-    for _, e in ipairs(plan) do
-        local before = CurrentBind(e.key)
-        RunConsoleCommand("bind", e.key, e.cmd)
-        if not silent then
-            local from = (before ~= "" and before) or "(未绑定)"
-            Fireteam.Log.Info("键位", string.format("%s: %s → %s [%s级]",
-                e.key, from, e.cmd, e.tier))
+            Fireteam.Log.Warn("键位", "推荐表包含受保护按键（请修正 DEFAULTS）: " .. e.key)
         end
     end
 
     RunConsoleCommand("ft_binds_applied", "1")
     if not silent then
-        Fireteam.Log.Info("键位", "✓ 已应用推荐键位 " .. #plan .. " 项"
-            .. (backedUp and "（原绑定已备份，ft_binds_restore 可还原）" or ""))
+        Fireteam.Log.Info("键位", "✓ 默认键位由按键钩子接管 " .. #Fireteam.Keybinds.DEFAULTS
+            .. " 项（不修改玩家绑定，可在 GMod 设置 → 键盘 自由改键）")
     end
-    return #plan
+    return #Fireteam.Keybinds.DEFAULTS
 end
 
 function Fireteam.Keybinds.Restore()
-    local entries = ReadBackup()
-    if not entries then
-        Fireteam.Log.Warn("键位", "没有可还原的备份（尚未应用过推荐键位）")
-        return false
+    -- 历史遗留：bind 接管时代用于还原被覆盖的原生绑定。
+    -- 现在从不写入玩家绑定，无需还原；仅清理旧版备份文件。
+    if file.Exists(BACKUP_FILE, "DATA") then
+        file.Delete(BACKUP_FILE)
+        Fireteam.Log.Info("键位", "已清理旧版键位备份 " .. BACKUP_FILE)
     end
-
-    for _, e in ipairs(entries) do
-        if e.cmd == "<unknown>" then
-            Fireteam.Log.Warn("键位", "跳过无法识别原绑定的按键: " .. e.key)
-        elseif e.cmd ~= "" then
-            RunConsoleCommand("bind", e.key, e.cmd)
-            Fireteam.Log.Info("键位", "还原 " .. e.key .. " → " .. e.cmd)
-        else
-            RunConsoleCommand("unbind", e.key)
-            Fireteam.Log.Info("键位", "解绑 " .. e.key .. "（原本未绑定）")
-        end
-    end
-
-    file.Delete(BACKUP_FILE)
-    RunConsoleCommand("ft_binds_applied", "0")
-    Fireteam.Log.Info("键位", "✓ 已还原原始键位 " .. #entries .. " 项")
-    return true
+    Fireteam.Log.Info("键位", "默认键位由按键钩子接管，未修改过玩家绑定，无需还原")
+    return false
 end
 
 --- 当前键位总览（F10 键位页与控制台共用）
@@ -160,7 +132,7 @@ function Fireteam.Keybinds.Describe()
             key      = e.key,
             cmd      = e.cmd,
             tier     = e.tier,
-            boundNow = input.LookupBinding(e.cmd) or "",
+            boundNow = input.LookupBinding(e.cmd) or e.key,
         }
     end
     return out
@@ -179,11 +151,14 @@ concommand.Add("ft_binds_list", function()
         .. " 走引擎绑定，重绑后自动跟随")
 end)
 
--- 首次进服自动应用一次（幂等；玩家 ft_binds_restore 后不会再自动应用）
+-- 首次进服提示一次（幂等；ft_binds_applied 已置 1 的玩家不再提示）
 hook.Add("InitPostEntity", "Fireteam.Keybinds.FirstRun", function()
     timer.Simple(2, function()
         if GetConVar("ft_binds_applied"):GetInt() == 0 then
             Fireteam.Keybinds.Apply(false)
+            chat.AddText(Color(255, 200, 80), "[FIRETEAM] ", color_white,
+                "默认键位 m/n/h/CapsLock/g/i 与 7/8/9/0 已生效。如需完全接管 7-0 物品栏，"
+                .. "可在控制台输入 bind 7 ft_item_slot1（以此类推）手动绑定。")
         end
     end)
 end)
@@ -193,12 +168,16 @@ end)
 -- 面板类命令统一走各模块的 Toggle 语义，热键按第二次即关闭。
 -- ═══════════════════════════════════════
 
---- 输入框聚焦时吞掉命令（bind 在文本框聚焦时通常不触发，此处为双保险）
+--- 输入框聚焦时吞掉命令（按键钩子同样遵守此守卫）
 local function Guard()
     return not Fireteam.UI or Fireteam.UI.CanTogglePanel()
 end
 
+--- 命令注册表：concommand 与按键钩子共用同一份动作体
+local ACTIONS = {}
+
 local function Cmd(name, fn)
+    ACTIONS[name] = fn
     concommand.Add(name, function()
         if not Guard() then return end
         local ok, err = pcall(fn)
@@ -296,6 +275,78 @@ hook.Add("ShowSpare2", "Fireteam.Keybinds.ShowSpare2", function()
         Fireteam.TacMap.ToggleCommandView()
     end
     return false
+end)
+
+-- ═══════════════════════════════════════
+-- B/C 级：PlayerButtonDown 钩子分发（引擎禁止 Lua 写 bind，改用按键钩子）
+-- ═══════════════════════════════════════
+
+--- 是否允许钩子分发默认动作（否则交给玩家自己的 bind / 让位）
+local function ShouldDispatch(e)
+    local code = KeyCodeOf(e.key)
+    if not code then return true end -- 键名映射失败时兜底分发
+    local bound = input.LookupKeyBinding(code)
+    if not bound or bound == "" then return true end
+
+    -- 玩家已有绑定：剥离 +/- 前缀后判断归属
+    local cmd = bound
+    local c1 = string.sub(cmd, 1, 1)
+    if c1 == "+" or c1 == "-" then cmd = string.sub(cmd, 2) end
+
+    if string.find(cmd, "^ft_") then
+        return false -- 绑的是 FIRETEAM 命令：交给玩家 bind 执行，避免双触发
+    end
+    if e.tier == "C" then
+        return false -- C 级空闲键：尊重玩家占用，让位
+    end
+    return true -- B 级：vanilla 槽位在本模式已死，强制接管
+end
+
+--- 执行动作体（与 concommand 同源；语音键需要按下/松开两态）
+local function RunAction(cmd, pressed)
+    if string.sub(cmd, 1, 1) == "+" then
+        local kind = string.match(cmd, "^%+ft_voice_(%w+)$")
+        if kind and Fireteam.Voice then
+            if pressed and Fireteam.Voice.BeginTalk then
+                Fireteam.Voice.BeginTalk(kind)
+            elseif not pressed and Fireteam.Voice.EndTalk then
+                Fireteam.Voice.EndTalk(kind)
+            end
+        end
+        return
+    end
+
+    local fn = ACTIONS[cmd]
+    if not fn then return end
+    if not Guard() then return end
+    local ok, err = pcall(fn)
+    if not ok then
+        Fireteam.Log.Error("键位", "热键 " .. cmd .. " 执行失败: " .. tostring(err))
+    end
+end
+
+hook.Add("PlayerButtonDown", "Fireteam.Keybinds.HotkeyDown", function(ply, button)
+    if ply ~= LocalPlayer() then return end
+    for _, e in ipairs(Fireteam.Keybinds.DEFAULTS) do
+        if KeyCodeOf(e.key) == button then
+            if ShouldDispatch(e) then
+                RunAction(e.cmd, true)
+            end
+            return
+        end
+    end
+end)
+
+hook.Add("PlayerButtonUp", "Fireteam.Keybinds.HotkeyUp", function(ply, button)
+    if ply ~= LocalPlayer() then return end
+    for _, e in ipairs(Fireteam.Keybinds.DEFAULTS) do
+        if KeyCodeOf(e.key) == button then
+            if string.sub(e.cmd, 1, 1) == "+" then
+                RunAction(e.cmd, false)
+            end
+            return
+        end
+    end
 end)
 
 end -- CLIENT
